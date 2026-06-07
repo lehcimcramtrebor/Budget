@@ -423,6 +423,25 @@
 
             <hr class="border-stone-200 dark:border-stone-800" />
 
+            <!-- Sécurité & Protection -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Sécurité des Données</h4>
+                <div id="storage_status_card" class="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200/40 dark:border-stone-800/40 flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-stone-700 dark:text-stone-300">Protection auto-nettoyage :</span>
+                        <span id="storage_status_badge" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-850 text-stone-500">Vérification...</span>
+                    </div>
+                    <p id="storage_status_desc" class="text-[10px] text-stone-500 dark:text-stone-400 leading-normal font-medium">
+                        Vérification du statut de stockage auprès du navigateur...
+                    </p>
+                    <button id="btn_request_persistence" onclick="tryRequestPersistence()" class="hidden w-full py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 text-emerald-650 dark:text-emerald-450 rounded-xl font-bold text-xs active:scale-95 transition-all border border-emerald-100 dark:border-emerald-900/30 flex items-center justify-center gap-1.5 mt-1 shadow-sm">
+                        <span>🛡️</span> Activer la protection renforcée
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-stone-200 dark:border-stone-800" />
+
             <!-- Backup & Restore -->
             <div class="space-y-3">
                 <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Sauvegarde & Restauration</h4>

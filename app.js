@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initUI();
     registerServiceWorker();
     initPWAInstall();
+    initStoragePersistence();
 });
 
 function initDatabase() {
@@ -1109,4 +1110,81 @@ function initPWAInstall() {
         installBtn.classList.add("hidden");
     });
 }
+
+// --- STORAGE PERSISTENCE LOGIC (ANTI-CLEANUP) ---
+function checkStoragePersistence() {
+    if (navigator.storage && navigator.storage.persisted) {
+        navigator.storage.persisted().then((persisted) => {
+            updateStorageUI(persisted);
+        }).catch(err => {
+            console.error("Erreur vérification stockage :", err);
+            updateStorageUI(false);
+        });
+    } else {
+        updateStorageUI(null);
+    }
+}
+
+function initStoragePersistence() {
+    if (navigator.storage && navigator.storage.persisted) {
+        navigator.storage.persisted().then((persisted) => {
+            if (persisted) {
+                updateStorageUI(true);
+            } else {
+                navigator.storage.persist().then((granted) => {
+                    updateStorageUI(granted);
+                }).catch(err => {
+                    console.warn("Demande de persistance automatique impossible :", err);
+                    updateStorageUI(false);
+                });
+            }
+        }).catch(() => {
+            updateStorageUI(false);
+        });
+    } else {
+        updateStorageUI(null);
+    }
+}
+
+function updateStorageUI(persisted) {
+    const badge = document.getElementById("storage_status_badge");
+    const desc = document.getElementById("storage_status_desc");
+    const btn = document.getElementById("btn_request_persistence");
+    
+    if (!badge || !desc || !btn) return;
+    
+    if (persisted === null) {
+        badge.innerText = "Non supporté";
+        badge.className = "text-[10px] font-black px-2 py-0.5 rounded-full bg-stone-150 dark:bg-stone-800 text-stone-550 dark:text-stone-400 border border-stone-200 dark:border-stone-750";
+        desc.innerHTML = "Votre navigateur actuel ne supporte pas la protection du stockage. Vos données risquent d'être effacées automatiquement par l'OS en cas d'espace faible. Pensez à exporter régulièrement vos données au format JSON.";
+        btn.classList.add("hidden");
+    } else if (persisted) {
+        badge.innerText = "🛡️ Protégé";
+        badge.className = "text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/30";
+        desc.innerHTML = "<strong>Statut persistant activé !</strong> Le navigateur a accepté de sécuriser le stockage local. Vos données ne seront pas supprimées automatiquement, même en cas de stockage faible.";
+        btn.classList.add("hidden");
+    } else {
+        badge.innerText = "⚠️ Temporaire";
+        badge.className = "text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-605 dark:text-amber-450 border border-amber-250/50 dark:border-amber-900/30";
+        desc.innerHTML = "Le navigateur considère vos données comme temporaires. Elles risquent d'être effacées en cas de manque d'espace disque. Vous pouvez tenter d'activer la protection manuellement ci-dessous.";
+        btn.classList.remove("hidden");
+    }
+}
+
+function tryRequestPersistence() {
+    if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persist().then((granted) => {
+            if (granted) {
+                showGenericAlert("Protection activée !", "Le stockage est maintenant persistant. Vos données sont sécurisées contre les nettoyages automatiques.", "🛡️");
+            } else {
+                showGenericAlert("Protection refusée", "Le navigateur a refusé d'activer la protection automatique pour l'instant.<br><br>💡 <strong>Astuce :</strong> Ajoutez cette application à votre <strong>écran d'accueil</strong> (PWA) et ouvrez-la depuis l'icône, puis réessayez de cliquer ici pour forcer l'autorisation.", "💡");
+            }
+            updateStorageUI(granted);
+        }).catch(err => {
+            console.error("Erreur demande persistance :", err);
+            checkStoragePersistence();
+        });
+    }
+}
+
 
