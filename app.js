@@ -16,6 +16,8 @@ let state = {
     }
 };
 
+let hasUnsavedChanges = false;
+
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
     initDatabase();
@@ -69,17 +71,15 @@ function initUI() {
     const currentMonthLabel = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
     document.getElementById("current_date_label").innerText = currentMonthLabel;
 
-    // Show quick save button if File System Access API is supported
-    const quickSaveBtn = document.getElementById("btn_quick_save");
-    if (quickSaveBtn && 'showSaveFilePicker' in window) {
-        quickSaveBtn.classList.remove("hidden");
-    }
+    updateQuickSaveUI();
 
     updateUI();
 }
 
 function saveState() {
     localStorage.setItem("budget_hmr_simple", JSON.stringify(state));
+    hasUnsavedChanges = true;
+    updateQuickSaveUI();
 }
 
 // --- CORE LOGIC & CALCULATIONS ---
@@ -823,6 +823,8 @@ async function exportJSONData() {
             } catch (saveErr) {
                 console.error("Erreur lors de la sauvegarde du handle :", saveErr);
             }
+            hasUnsavedChanges = false;
+            updateQuickSaveUI();
             showGenericAlert("Export réussi", "Vos données de budget ont été enregistrées avec succès !", "📤");
         } catch (err) {
             if (err.name !== 'AbortError') {
@@ -837,6 +839,8 @@ async function exportJSONData() {
         dlAnchorElem.setAttribute("href", dataStr);
         dlAnchorElem.setAttribute("download", defaultFileName);
         dlAnchorElem.click();
+        hasUnsavedChanges = false;
+        updateQuickSaveUI();
     }
 }
 
@@ -1276,6 +1280,8 @@ async function quickExportJSON() {
                 const writable = await handle.createWritable();
                 await writable.write(jsonString);
                 await writable.close();
+                hasUnsavedChanges = false;
+                updateQuickSaveUI();
                 showGenericAlert("Sauvegarde rapide", `Les données ont été écrasées avec succès dans votre fichier de sauvegarde local :<br><br>📁 <strong>${handle.name}</strong>`, "💾");
                 return;
             }
@@ -1288,6 +1294,26 @@ async function quickExportJSON() {
             console.error("Erreur lors de la sauvegarde rapide :", err);
             await exportJSONData();
         }
+    }
+}
+
+function updateQuickSaveUI() {
+    const btn = document.getElementById("btn_quick_save");
+    if (!btn) return;
+
+    if (!('showSaveFilePicker' in window)) {
+        btn.classList.add("hidden");
+        return;
+    }
+
+    btn.classList.remove("hidden");
+
+    if (hasUnsavedChanges) {
+        btn.classList.add("animate-unsaved");
+        btn.setAttribute("title", "Sauvegarde rapide disponible (Modifications non sauvegardées dans le fichier JSON)");
+    } else {
+        btn.classList.remove("animate-unsaved");
+        btn.setAttribute("title", "Sauvegarde rapide (À jour)");
     }
 }
 
