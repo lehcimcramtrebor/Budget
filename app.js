@@ -914,6 +914,12 @@ const tourSteps = [
         placement: "bottom"
     },
     {
+        elementId: "btn_quick_save",
+        title: "Sauvegarde Rapide 💾",
+        message: "Cette disquette s'anime d'une pulsation orange dès que vous modifiez votre budget. Cliquez dessus pour enregistrer instantanément vos changements dans votre fichier de sauvegarde JSON sans avoir à choisir son dossier à chaque fois !",
+        placement: "bottom"
+    },
+    {
         elementId: "expense_form",
         title: "Saisie Rapide",
         message: "Enregistrez vos dépenses ou vos remboursements (calcul inverse). La saisie est simplifiée : que vous tapiez un point ou une virgule, elle normalise automatiquement !",
