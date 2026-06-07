@@ -801,7 +801,7 @@ function saveUserSettings() {
 
 async function exportJSONData() {
     const jsonString = JSON.stringify(state, null, 2);
-    const defaultFileName = `budget_hmr_backup_${new Date().toISOString().substring(0, 10)}.json`;
+    const defaultFileName = "BUDGET-BACKUP.json";
 
     // Try using File System Access API (showSaveFilePicker)
     if ('showSaveFilePicker' in window) {
@@ -915,8 +915,10 @@ const tourSteps = [
     },
     {
         elementId: "btn_quick_save",
-        title: "Sauvegarde Rapide 💾",
-        message: "Cette disquette s'anime d'une pulsation orange dès que vous modifiez votre budget. Cliquez dessus pour enregistrer instantanément vos changements dans votre fichier de sauvegarde JSON sans avoir à choisir son dossier à chaque fois !",
+        title: "Sauvegarde & Export 💾",
+        message: ('showSaveFilePicker' in window)
+            ? "Cette disquette s'anime d'une pulsation orange dès que vous modifiez votre budget. Cliquez dessus pour enregistrer instantanément vos changements dans votre fichier BUDGET-BACKUP.json !"
+            : "Cette disquette s'anime d'une pulsation orange dès que vous modifiez votre budget. Cliquez dessus pour télécharger votre fichier de sauvegarde BUDGET-BACKUP.json !",
         placement: "bottom"
     },
     {
@@ -1307,19 +1309,22 @@ function updateQuickSaveUI() {
     const btn = document.getElementById("btn_quick_save");
     if (!btn) return;
 
-    if (!('showSaveFilePicker' in window)) {
-        btn.classList.add("hidden");
-        return;
-    }
-
     btn.classList.remove("hidden");
 
     if (hasUnsavedChanges) {
         btn.classList.add("animate-unsaved");
-        btn.setAttribute("title", "Sauvegarde rapide disponible (Modifications non sauvegardées dans le fichier JSON)");
+        if ('showSaveFilePicker' in window) {
+            btn.setAttribute("title", "Sauvegarde rapide disponible (Modifications non sauvegardées dans le fichier BUDGET-BACKUP.json)");
+        } else {
+            btn.setAttribute("title", "Télécharger la sauvegarde JSON (Modifications non sauvegardées)");
+        }
     } else {
         btn.classList.remove("animate-unsaved");
-        btn.setAttribute("title", "Sauvegarde rapide (À jour)");
+        if ('showSaveFilePicker' in window) {
+            btn.setAttribute("title", "Sauvegarde rapide (À jour)");
+        } else {
+            btn.setAttribute("title", "Télécharger la sauvegarde JSON (À jour)");
+        }
     }
 }
 
