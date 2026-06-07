@@ -948,7 +948,7 @@ const tourSteps = [
     {
         elementId: "btn_settings",
         title: "Réglages & Données",
-        message: "Accédez à ce menu pour changer votre prénom, faire des sauvegardes JSON manuelles, charger des données de test ou relancer ce guide !",
+        message: "Accédez à ce menu pour changer votre prénom, importer une sauvegarde JSON, réinitialiser l'application ou relancer ce guide !",
         placement: "left"
     }
 ];
