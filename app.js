@@ -607,6 +607,28 @@ function closeGenericConfirmModal() {
     }, 300);
 }
 
+function showGenericAlert(title, message, icon = "ℹ️") {
+    document.getElementById("generic_alert_title").innerText = title;
+    document.getElementById("generic_alert_message").innerHTML = message;
+    document.getElementById("generic_alert_icon").innerText = icon;
+
+    const modal = document.getElementById("generic_alert_modal");
+    modal.classList.remove("hidden");
+    setTimeout(() => {
+        modal.classList.remove("opacity-0");
+        modal.querySelector(".glass-card").classList.remove("scale-95");
+    }, 10);
+}
+
+function closeGenericAlertModal() {
+    const modal = document.getElementById("generic_alert_modal");
+    modal.classList.add("opacity-0");
+    modal.querySelector(".glass-card").classList.add("scale-95");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+    }, 300);
+}
+
 // Bind generic modal confirm button click
 document.getElementById("generic_confirm_btn").addEventListener("click", () => {
     if (activeConfirmCallback) {
@@ -770,12 +792,12 @@ function importJSONData(event) {
                 saveState();
                 initUI();
                 closeSettingsModal();
-                alert("Données importées avec succès !");
+                showGenericAlert("Import réussi", "Vos données de budget ont été importées avec succès !", "📥");
             } else {
-                alert("Le format du fichier JSON n'est pas valide pour BUDGETHMR.");
+                showGenericAlert("Format invalide", "Le format du fichier JSON n'est pas valide pour BUDGETHMR.", "⚠️");
             }
         } catch (err) {
-            alert("Erreur lors de la lecture du fichier : " + err.message);
+            showGenericAlert("Erreur de lecture", "Erreur lors de la lecture du fichier : " + err.message, "❌");
         }
     };
     reader.readAsText(file);
@@ -801,21 +823,6 @@ function clearDatabase() {
     );
 }
 
-function loadSampleData() {
-    const sampleExpenses = [
-        { id: "s1", title: "Courses Supermarché", amount: 114.50, date: "6 juin" },
-        { id: "s2", title: "Boulangerie", amount: 3.50, date: "6 juin" },
-        { id: "s3", title: "Essence voiture", amount: 60.00, date: "5 juin" },
-        { id: "s4", title: "Cinéma", amount: 24.00, date: "4 juin" },
-        { id: "s5", title: "Restaurant", amount: 55.00, date: "3 juin" }
-    ];
-
-    state.expenses = sampleExpenses;
-    saveState();
-    updateUI();
-    closeSettingsModal();
-    alert("Données de test chargées avec succès !");
-}
 
 // --- INTERACTIVE TOUR LOGIC ---
 let currentTourStep = 0;
