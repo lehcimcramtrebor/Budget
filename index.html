@@ -3,10 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUDGETHMR - Simplifié</title>
+    <title>BUDGETHMR — Suivi de budget mensuel simple, rapide et gratuit</title>
 
-    <meta name="description" content="Suivi de budget mensuel ultra simple. Configurez vos frais fixes et saisissez vos dépenses quotidiennes.">
+    <meta name="description" content="Gérez votre budget mensuel sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
     <meta name="theme-color" content="#f5f5f4" id="meta-theme-color">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://lehcimcramtrebor.github.io/Budget/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lehcimcramtrebor.github.io/Budget/">
+    <meta property="og:title" content="BUDGETHMR — Suivi de budget mensuel simple, rapide et gratuit">
+    <meta property="og:description" content="Gérez votre budget mensuel sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
+    <meta property="og:image" content="https://lehcimcramtrebor.github.io/Budget/icon.svg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://lehcimcramtrebor.github.io/Budget/">
+    <meta property="twitter:title" content="BUDGETHMR — Suivi de budget mensuel simple, rapide et gratuit">
+    <meta property="twitter:description" content="Gérez votre budget mensuel sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
+    <meta property="twitter:image" content="https://lehcimcramtrebor.github.io/Budget/icon.svg">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "BUDGETHMR",
+      "alternateName": "Budget HMR",
+      "url": "https://lehcimcramtrebor.github.io/Budget/",
+      "description": "Suivi de budget mensuel ultra-simple. Configurez vos revenus, frais fixes et suivez vos dépenses quotidiennes en temps réel.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "EUR"
+      }
+    }
+    </script>
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="BudgetHMR">
@@ -97,7 +134,7 @@
         </div>
 
         <!-- Center: Logo -->
-        <div id="app_logo" class="flex flex-col items-center justify-center text-center cursor-pointer select-none">
+        <h1 id="app_logo" class="flex flex-col items-center justify-center text-center cursor-pointer select-none">
             <span class="text-xl sm:text-2xl font-black italic tracking-tight font-display select-none">
                 <span class="text-stone-800 dark:text-stone-100">BUDGET</span>
                 <span id="logo_suffix" class="text-brand-500 dark:text-brand-400 drop-shadow-[0_2px_8px_rgba(var(--brand-500)/0.25)]">HMR</span>
@@ -105,7 +142,7 @@
             <span class="text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-[0.25em] mt-0.5 font-display select-none">
                 Reste à Vivre
             </span>
-        </div>
+        </h1>
 
         <!-- Right: Theme Button -->
         <div class="flex justify-end">
