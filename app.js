@@ -761,13 +761,40 @@ function saveUserSettings() {
     updateUI();
 }
 
-// --- DATABASE OPERATIONS ---
-function exportJSONData() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-    const dlAnchorElem = document.createElement("a");
-    dlAnchorElem.setAttribute("href", dataStr);
-    dlAnchorElem.setAttribute("download", `budget_hmr_backup_${new Date().toISOString().substring(0, 10)}.json`);
-    dlAnchorElem.click();
+async function exportJSONData() {
+    const jsonString = JSON.stringify(state, null, 2);
+    const defaultFileName = `budget_hmr_backup_${new Date().toISOString().substring(0, 10)}.json`;
+
+    // Try using File System Access API (showSaveFilePicker)
+    if ('showSaveFilePicker' in window) {
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: defaultFileName,
+                types: [{
+                    description: 'Fichier Sauvegarde BUDGETHMR',
+                    accept: {
+                        'application/json': ['.json']
+                    }
+                }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(jsonString);
+            await writable.close();
+            showGenericAlert("Export réussi", "Vos données de budget ont été enregistrées avec succès !", "📤");
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                console.error("Erreur lors de la sauvegarde :", err);
+                showGenericAlert("Erreur de sauvegarde", "Une erreur est survenue lors de l'enregistrement du fichier : " + err.message, "❌");
+            }
+        }
+    } else {
+        // Fallback for older browsers or mobile
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonString);
+        const dlAnchorElem = document.createElement("a");
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", defaultFileName);
+        dlAnchorElem.click();
+    }
 }
 
 function importJSONData(event) {
