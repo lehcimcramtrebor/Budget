@@ -69,6 +69,12 @@ function initUI() {
     const currentMonthLabel = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
     document.getElementById("current_date_label").innerText = currentMonthLabel;
 
+    // Show quick save button if File System Access API is supported
+    const quickSaveBtn = document.getElementById("btn_quick_save");
+    if (quickSaveBtn && 'showSaveFilePicker' in window) {
+        quickSaveBtn.classList.remove("hidden");
+    }
+
     updateUI();
 }
 
@@ -812,6 +818,11 @@ async function exportJSONData() {
             const writable = await handle.createWritable();
             await writable.write(jsonString);
             await writable.close();
+            try {
+                await saveFileHandle(handle);
+            } catch (saveErr) {
+                console.error("Erreur lors de la sauvegarde du handle :", saveErr);
+            }
             showGenericAlert("Export réussi", "Vos données de budget ont été enregistrées avec succès !", "📤");
         } catch (err) {
             if (err.name !== 'AbortError') {
@@ -1184,6 +1195,99 @@ function tryRequestPersistence() {
             console.error("Erreur demande persistance :", err);
             checkStoragePersistence();
         });
+    }
+}
+
+// --- INDEXEDDB HELPERS FOR QUICK BACKUP ---
+const DB_NAME = "budget_hmr_files";
+const STORE_NAME = "handles";
+const KEY_NAME = "last_backup_handle";
+
+function getDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            db.createObjectStore(STORE_NAME);
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function saveFileHandle(handle) {
+    try {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.put(handle, KEY_NAME);
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    } catch (e) {
+        console.error("Erreur IndexedDB lors du stockage du handle :", e);
+    }
+}
+
+async function getFileHandle() {
+    try {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readonly");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.get(KEY_NAME);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    } catch (e) {
+        console.error("Erreur IndexedDB lors de la récupération du handle :", e);
+        return null;
+    }
+}
+
+async function verifyPermission(fileHandle, readWrite) {
+    const options = {};
+    if (readWrite) {
+        options.mode = 'readwrite';
+    }
+    if ((await fileHandle.queryPermission(options)) === 'granted') {
+        return true;
+    }
+    if ((await fileHandle.requestPermission(options)) === 'granted') {
+        return true;
+    }
+    return false;
+}
+
+// --- QUICK BACKUP ACTION ---
+async function quickExportJSON() {
+    if (!('showSaveFilePicker' in window)) {
+        exportJSONData();
+        return;
+    }
+
+    try {
+        const handle = await getFileHandle();
+        if (handle) {
+            const hasPermission = await verifyPermission(handle, true);
+            if (hasPermission) {
+                const jsonString = JSON.stringify(state, null, 2);
+                const writable = await handle.createWritable();
+                await writable.write(jsonString);
+                await writable.close();
+                showGenericAlert("Sauvegarde rapide", `Les données ont été écrasées avec succès dans votre fichier de sauvegarde local :<br><br>📁 <strong>${handle.name}</strong>`, "💾");
+                return;
+            }
+        }
+        
+        // Pas de handle ou autorisation refusée -> export complet avec sélecteur de fichier
+        await exportJSONData();
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error("Erreur lors de la sauvegarde rapide :", err);
+            await exportJSONData();
+        }
     }
 }
 
