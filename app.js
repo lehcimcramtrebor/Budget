@@ -754,6 +754,37 @@ function closeSettingsModal() {
     }, 300);
 }
 
+function shareApp() {
+    const shareData = {
+        title: 'BUDGETHMR — Mon Budget Simplifié',
+        text: 'Découvre BUDGETHMR, l\'application web PWA ultra-simple et gratuite pour suivre ton budget mensuel et ton reste à vivre en temps réel !',
+        url: 'https://lehcimcramtrebor.github.io/Budget/index.html'
+    };
+
+    if (navigator.share) {
+        navigator.share(shareData)
+            .then(() => console.log('Partage réussi !'))
+            .catch((err) => {
+                if (err.name !== 'AbortError') {
+                    console.error('Erreur lors du partage :', err);
+                }
+            });
+    } else {
+        const dummyInput = document.createElement("input");
+        dummyInput.value = shareData.url;
+        document.body.appendChild(dummyInput);
+        dummyInput.select();
+        try {
+            document.execCommand('copy');
+            showGenericAlert("Lien copié", "Le lien de l'application a été copié dans votre presse-papiers. Vous pouvez maintenant le partager !", "🔗");
+        } catch (err) {
+            console.error('Impossible de copier le lien :', err);
+            showGenericAlert("Partager l'application", `Copiez ce lien pour le partager : <br><strong class="select-all">${shareData.url}</strong>`, "🔗");
+        }
+        document.body.removeChild(dummyInput);
+    }
+}
+
 function saveUserSettings() {
     const nameVal = document.getElementById("settings_username").value.trim();
     state.settings.username = toTitleCase(nameVal);
