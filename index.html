@@ -73,10 +73,11 @@
                 --brand-300: 94 234 212; --brand-400: 45 212 191; --brand-500: 13 148 136;
                 --brand-600: 15 118 110; --brand-700: 17 94 89; --brand-800: 20 76 72; --brand-900: 20 61 58;
             }
-            [data-theme="alerte"] {
-                --brand-50: 255 241 242; --brand-100: 255 228 230; --brand-200: 254 205 211;
-                --brand-300: 253 164 175; --brand-400: 251 113 133; --brand-500: 244 63 94;
-                --brand-600: 225 29 72; --brand-700: 190 24 74; --brand-800: 159 18 57; --brand-900: 136 19 55;
+			[data-theme="alerte"] {
+                /* Vrais Rouges (Base Red Tailwind) pour casser complètement avec le thème Rose */
+                --brand-50: 254 242 242; --brand-100: 254 226 226; --brand-200: 252 165 165;
+                --brand-300: 252 121 121; --brand-400: 248 113 113; --brand-500: 239 68 68;
+                --brand-600: 220 38 38; --brand-700: 185 28 28; --brand-800: 153 27 27; --brand-900: 127 29 29;
             }
             [data-theme="warning"] {
                 --brand-50: 254 253 232; --brand-100: 254 249 195; --brand-200: 253 224 71;
@@ -84,9 +85,10 @@
                 --brand-600: 180 83 9; --brand-700: 146 64 14; --brand-800: 120 53 4; --brand-900: 120 53 4;
             }
             /* --- FEMININE THEME (ROSE) --- */
-            .theme-feminin,
+            /* Utilisation de :not() pour exclure les états critiques afin que le rouge et l'orange restent prioritaires */
+            .theme-feminin[data-theme="neutre"],
             .theme-feminin[data-theme="sain"],
-            .theme-feminin[data-theme="neutre"] {
+            .theme-feminin:not([data-theme="alerte"]):not([data-theme="warning"]) {
                 --brand-50: 253 242 248; --brand-100: 252 231 243; --brand-200: 251 207 232;
                 --brand-300: 244 114 182; --brand-400: 236 72 153; --brand-500: 219 39 119;
                 --brand-600: 190 24 93; --brand-700: 157 23 77; --brand-800: 131 24 67; --brand-900: 80 7 36;
