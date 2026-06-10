@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BudgetHMR</string>
+    <string name="title_activity_main">BudgetHMR</string>
+    <string name="package_name">com.helmicretro.budget</string>
+    <string name="custom_url_scheme">com.helmicretro.budget</string>
+</resources>

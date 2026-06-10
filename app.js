@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
     registerServiceWorker();
     initPWAInstall();
     initStoragePersistence();
+    initApkDownload();
 });
 
 function initDatabase() {
@@ -803,7 +804,41 @@ async function exportJSONData() {
     const jsonString = JSON.stringify(state, null, 2);
     const defaultFileName = "BUDGET-BACKUP.json";
 
-    // Try using File System Access API (showSaveFilePicker)
+    // 1. If running in Capacitor, use Filesystem to write a temporary file and Share to export it natively
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem && window.Capacitor.Plugins.Share) {
+        try {
+            const { Filesystem, Share } = window.Capacitor.Plugins;
+            
+            // Write to a temporary file in the app cache
+            await Filesystem.writeFile({
+                path: defaultFileName,
+                data: jsonString,
+                directory: 'CACHE',
+                encoding: 'utf8'
+            });
+            
+            // Get the native file URI
+            const uriResult = await Filesystem.getUri({
+                directory: 'CACHE',
+                path: defaultFileName
+            });
+
+            // Share the file URI
+            await Share.share({
+                title: defaultFileName,
+                files: [uriResult.uri],
+                dialogTitle: 'Exporter les données de budget'
+            });
+            
+            hasUnsavedChanges = false;
+            updateQuickSaveUI();
+            return;
+        } catch (err) {
+            console.error("Erreur export natif :", err);
+        }
+    }
+
+    // 2. Try using File System Access API (showSaveFilePicker)
     if ('showSaveFilePicker' in window) {
         try {
             const handle = await window.showSaveFilePicker({
@@ -875,6 +910,8 @@ function importJSONData(event) {
         }
     };
     reader.readAsText(file);
+    // Reset file input value so selecting the same file again triggers change event
+    event.target.value = "";
 }
 
 function clearDatabase() {
@@ -1136,6 +1173,10 @@ function initPWAInstall() {
 
 // --- STORAGE PERSISTENCE LOGIC (ANTI-CLEANUP) ---
 function checkStoragePersistence() {
+    if (window.Capacitor) {
+        updateStorageUI("capacitor");
+        return;
+    }
     if (navigator.storage && navigator.storage.persisted) {
         navigator.storage.persisted().then((persisted) => {
             updateStorageUI(persisted);
@@ -1149,6 +1190,10 @@ function checkStoragePersistence() {
 }
 
 function initStoragePersistence() {
+    if (window.Capacitor) {
+        updateStorageUI("capacitor");
+        return;
+    }
     if (navigator.storage && navigator.storage.persisted) {
         navigator.storage.persisted().then((persisted) => {
             if (persisted) {
@@ -1176,7 +1221,12 @@ function updateStorageUI(persisted) {
     
     if (!badge || !desc || !btn) return;
     
-    if (persisted === null) {
+    if (persisted === "capacitor") {
+        badge.innerText = "🛡️ Application Native";
+        badge.className = "text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/30";
+        desc.innerHTML = "<strong>Stockage natif permanent !</strong> En utilisant la version installée (APK), le système Android sécurise vos données de manière isolée et cryptée. Elles ne risquent pas d'être effacées automatiquement par le navigateur.";
+        btn.classList.add("hidden");
+    } else if (persisted === null) {
         badge.innerText = "Non supporté";
         badge.className = "text-[10px] font-black px-2 py-0.5 rounded-full bg-stone-150 dark:bg-stone-800 text-stone-550 dark:text-stone-400 border border-stone-200 dark:border-stone-750";
         desc.innerHTML = "Votre navigateur actuel ne supporte pas la protection du stockage. Vos données risquent d'être effacées automatiquement par l'OS en cas d'espace faible. Pensez à exporter régulièrement vos données au format JSON.";
@@ -1326,6 +1376,33 @@ function updateQuickSaveUI() {
             btn.setAttribute("title", "Télécharger la sauvegarde JSON (À jour)");
         }
     }
+}
+
+// --- APK DETECTION & DOWNLOAD LOGIC ---
+function initApkDownload() {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isNative = !!window.Capacitor;
+    const apkBtn = document.getElementById("apk_download_btn");
+    
+    if (apkBtn && isAndroid && !isNative) {
+        apkBtn.classList.remove("hidden");
+    }
+}
+
+function showApkDownloadPrompt() {
+    showGenericConfirm(
+        "Version APK Android",
+        "Le navigateur web peut parfois vider votre cache et supprimer vos budgets enregistrés sans votre accord (notamment si votre téléphone manque d'espace).<br><br>Installer la <strong>version APK Android</strong> résout ce problème en stockant vos données de manière isolée et permanente.<br><br>Voulez-vous télécharger <strong>BUDGET-HMR.APK</strong> maintenant ?",
+        "🤖",
+        () => {
+            const dlLink = document.createElement("a");
+            dlLink.href = "./BUDGET-HMR.APK";
+            dlLink.download = "BUDGET-HMR.APK";
+            document.body.appendChild(dlLink);
+            dlLink.click();
+            document.body.removeChild(dlLink);
+        }
+    );
 }
 
 
