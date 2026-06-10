@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark transition-colors duration-300" data-theme="neutre">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BUDGETHMR — Suivi de budget mensuel simple, rapide et gratuit</title>
+
+    <meta name="description" content="Gérez votre budget mensuel sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
+    <meta name="theme-color" content="#f5f5f4" id="meta-theme-color">
+    <meta name="robots" content="index, follow">
+    <meta name="google-site-verification" content="SkK3HBDsdeI-tBzHBTAycfL6WxyedDxN2t9WFh3DXU0" />
+    <link rel="canonical" href="https://lehcimcramtrebor.github.io/Budget/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lehcimcramtrebor.github.io/Budget/">
+    <meta property="og:title" content="BUDGETHMR — Suivi de budget mensuel simple, rapide et gratuit">
+    <meta property="og:description" content="Gérez votre budget mensuel sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
+    <meta property="og:image" content="https://lehcimcramtrebor.github.io/Budget/icon.svg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://lehcimcramtrebor.github.io/Budget/">
+    <meta property="twitter:title" content="BUDGETHMR — Suivi de budget mensuel simple, rapide et gratuit">
+    <meta property="twitter:description" content="Gérez votre budget mensuel sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
+    <meta property="twitter:image" content="https://lehcimcramtrebor.github.io/Budget/icon.svg">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "BUDGETHMR",
+      "alternateName": "Budget HMR",
+      "url": "https://lehcimcramtrebor.github.io/Budget/",
+      "description": "Suivi de budget mensuel ultra-simple. Configurez vos revenus, frais fixes et suivez vos dépenses quotidiennes en temps réel.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "EUR"
+      }
+    }
+    </script>
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="BudgetHMR">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="manifest" href="manifest.json">
+
+    <script src="assets/js/tailwind.js"></script>
+    <link href="assets/css/inter.css" rel="stylesheet">
+    <link href="assets/css/premium-fonts.css" rel="stylesheet">
+    
+    <script src="tailwind.config.js"></script>
+
+    <style type="text/tailwindcss">
+        /* --- DESIGN SYSTEM (Je-DIY & RE-FLEX) --- */
+        @layer base {
+            h1, h2, h3, h4, h5, h6, .font-display {
+                font-family: 'Outfit', sans-serif;
+            }
+            :root, [data-theme="neutre"] {
+                --brand-50: 238 242 255; --brand-100: 224 231 255; --brand-200: 199 210 254;
+                --brand-300: 165 180 252; --brand-400: 129 140 248; --brand-500: 79 70 229;
+                --brand-600: 67 56 202; --brand-700: 55 48 163; --brand-800: 49 46 129; --brand-900: 49 46 129;
+            }
+            [data-theme="sain"] {
+                --brand-50: 240 253 250; --brand-100: 204 251 241; --brand-200: 153 246 228;
+                --brand-300: 94 234 212; --brand-400: 45 212 191; --brand-500: 13 148 136;
+                --brand-600: 15 118 110; --brand-700: 17 94 89; --brand-800: 20 76 72; --brand-900: 20 61 58;
+            }
+			[data-theme="alerte"] {
+                /* Vrais Rouges (Base Red Tailwind) pour casser complètement avec le thème Rose */
+                --brand-50: 254 242 242; --brand-100: 254 226 226; --brand-200: 252 165 165;
+                --brand-300: 252 121 121; --brand-400: 248 113 113; --brand-500: 239 68 68;
+                --brand-600: 220 38 38; --brand-700: 185 28 28; --brand-800: 153 27 27; --brand-900: 127 29 29;
+            }
+            [data-theme="warning"] {
+                --brand-50: 254 253 232; --brand-100: 254 249 195; --brand-200: 253 224 71;
+                --brand-300: 250 204 21; --brand-400: 234 179 8; --brand-500: 217 119 6;
+                --brand-600: 180 83 9; --brand-700: 146 64 14; --brand-800: 120 53 4; --brand-900: 120 53 4;
+            }
+            /* --- FEMININE THEME (ROSE) --- */
+            /* Utilisation de :not() pour exclure les états critiques afin que le rouge et l'orange restent prioritaires */
+            .theme-feminin[data-theme="neutre"],
+            .theme-feminin[data-theme="sain"],
+            .theme-feminin:not([data-theme="alerte"]):not([data-theme="warning"]) {
+                --brand-50: 253 242 248; --brand-100: 252 231 243; --brand-200: 251 207 232;
+                --brand-300: 244 114 182; --brand-400: 236 72 153; --brand-500: 219 39 119;
+                --brand-600: 190 24 93; --brand-700: 157 23 77; --brand-800: 131 24 67; --brand-900: 80 7 36;
+            }
+        }
+
+        @layer components {
+            .btn-adjust { 
+                @apply w-10 h-10 shrink-0 rounded-xl bg-white dark:bg-stone-800 hover:bg-brand-100 dark:hover:bg-stone-800 hover:border-brand-300 dark:hover:border-stone-700 font-black text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-all active:scale-95 shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40; 
+            }
+            .form-input {
+                @apply w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-800 rounded-xl px-4 font-semibold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all shadow-inner;
+            }
+            .glass-card {
+                @apply bg-white dark:bg-stone-900 p-6 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10;
+            }
+        }
+
+        html, body { overscroll-behavior-y: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] { -moz-appearance: textfield; }
+
+        @keyframes unsaved-pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.08);
+                border-color: rgba(245, 158, 11, 0.5) !important;
+                box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
+            }
+        }
+        .animate-unsaved {
+            animation: unsaved-pulse 1.6s infinite ease-in-out !important;
+            border-color: #f59e0b !important;
+            background-color: rgba(245, 158, 11, 0.1) !important;
+            color: #d97706 !important;
+        }
+        .dark .animate-unsaved {
+            border-color: #b45309 !important;
+            background-color: rgba(245, 158, 11, 0.15) !important;
+            color: #fbbf24 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-2 sm:p-4 md:p-8 bg-gradient-to-br from-stone-100 via-stone-50 to-stone-200 dark:from-stone-950 dark:via-stone-950 dark:to-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300">
+
+<div id="main_app_container" class="max-w-md mx-auto w-full pb-8">
+    
+    <!-- TOP HEADER -->
+    <div class="grid grid-cols-3 items-center gap-2 mt-2 mb-4 px-1 select-none">
+        <!-- Left: Settings Button -->
+        <div class="flex justify-start items-center gap-2">
+            <button onclick="openSettingsModal()" id="btn_settings" class="group w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40" title="Réglages & Données">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-500 ease-out group-hover:rotate-45"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button id="pwa_install_btn" class="group w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40 active:scale-95 hidden" title="Installer l'application">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-350 ease-out group-hover:translate-y-0.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
+            <input type="file" id="import_file" accept=".json" class="hidden" onchange="importJSONData(event)">
+        </div>
+
+        <!-- Center: Logo -->
+        <h1 id="app_logo" class="flex flex-col items-center justify-center text-center cursor-pointer select-none">
+            <span class="text-xl sm:text-2xl font-black italic tracking-tight font-display select-none">
+                <span class="text-stone-800 dark:text-stone-100">BUDGET</span>
+                <span id="logo_suffix" class="text-brand-500 dark:text-brand-400 drop-shadow-[0_2px_8px_rgba(var(--brand-500)/0.25)]">HMR</span>
+            </span>
+            <span class="text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-[0.25em] mt-0.5 font-display select-none">
+                Reste à Vivre
+            </span>
+        </h1>
+
+        <!-- Right: Theme & Quick Save Buttons -->
+        <div class="flex justify-end items-center gap-2">
+            <button onclick="quickExportJSON()" id="btn_quick_save" class="group w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40 active:scale-95" title="Sauvegarder les données (JSON)">
+                <svg xmlns="http://www.w3.org/2500/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:scale-110"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            </button>
+            <button onclick="toggleTheme()" id="theme_toggle_btn" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40" title="Mode Sombre/Clair">
+                <!-- Dynamically populated -->
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN BANNER: RESTE A VIVRE -->
+    <div class="sticky top-0 z-30 bg-stone-100/90 dark:bg-stone-950/90 backdrop-blur-md pt-2 pb-3 -mx-4 px-4 transition-all duration-300">
+        <div class="glass-card overflow-hidden bg-gradient-to-br from-brand-500 to-brand-600 dark:from-brand-600 dark:to-brand-800 border-brand-500/40 shadow-[0_4px_20px_rgba(var(--brand-500)/0.25)] text-white">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-xs font-bold text-white/80 uppercase tracking-wider">Reste à dépenser</p>
+                    <h2 class="text-4xl font-black text-white mt-1 drop-shadow-sm" id="remaining_balance_disp">0.00 €</h2>
+                </div>
+                <div class="text-right">
+                    <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm text-white font-black text-xs rounded-full border border-white/10" id="current_date_label">Budget</span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/15 text-[11px] leading-tight">
+                <div>
+                    <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Budget Base (+)</span>
+                    <span class="text-sm font-black text-white" id="base_budget_disp">0.00 €</span>
+                </div>
+                <div class="border-l border-white/15 pl-2">
+                    <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Frais Fixes (-)</span>
+                    <span class="text-sm font-black text-white" id="fixed_charges_disp">0.00 €</span>
+                </div>
+                <div class="border-l border-white/15 pl-2">
+                    <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Dépenses (-)</span>
+                    <span class="text-sm font-black text-white" id="expenses_disp">0.00 €</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN INTERFACE -->
+    <div class="space-y-4 mt-2">
+        
+        <!-- CARD 1: SAISIE RAPIDE -->
+        <div class="glass-card">
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 mb-4 flex items-center gap-2">
+                <span>⚡</span> Saisie Rapide
+            </h3>
+            <form id="expense_form" onsubmit="addExpense(event)" class="space-y-3">
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <input type="text" id="exp_title" placeholder="Libellé (ex: Carrefour...)" class="form-input" required autocomplete="off" maxlength="25" onblur="this.value = toTitleCase(this.value)">
+                    </div>
+                    <div>
+                        <div class="relative">
+                            <input type="text" id="exp_amount" inputmode="decimal" placeholder="0,00" class="form-input text-right pr-7 font-black" required oninput="normalizeAmountInput(event)">
+                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 font-black text-stone-400 pointer-events-none text-xs">€</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="w-full h-12 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 text-sm">
+                    <span>💾</span> Enregistrer la Dépense
+                </button>
+                <button type="button" onclick="confirmAddRefund()" class="w-full h-12 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-semibold rounded-xl border border-emerald-100 dark:border-emerald-900/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm mt-2 shadow-sm">
+                    <span>💵</span> Enregistrer un Remboursement
+                </button>
+            </form>
+        </div>
+
+        <!-- CARD 2: DEPENSES EN COURS -->
+        <div class="glass-card">
+            <div onclick="toggleExpensesCollapse()" class="flex justify-between items-center cursor-pointer select-none group">
+                <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 flex items-center gap-2">
+                    <span>🛒</span> Opérations en cours
+                </h3>
+                <div class="flex items-center gap-2">
+                    <span id="expenses_summary" class="text-xs font-semibold text-stone-500 dark:text-stone-400 opacity-80 group-hover:opacity-100 transition-opacity"></span>
+                    <span id="expenses_chevron" class="text-stone-400 transition-transform duration-200 text-xs inline-block">▼</span>
+                </div>
+            </div>
+            
+            <div id="expenses_content" class="mt-4 transition-all duration-300">
+                <div id="expenses_container" class="space-y-2 max-h-56 overflow-y-auto pr-1 hide-scrollbar">
+                    <!-- Loaded dynamically -->
+                </div>
+                
+                <div id="empty_state" class="hidden text-center py-6 text-stone-400 space-y-1">
+                    <span class="text-2xl">🤷‍♂️</span>
+                    <p class="font-bold text-xs">Aucune opération enregistrée</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 3: PARAMETRAGE BUDGET & CHARGES FIXES -->
+        <div class="glass-card">
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 mb-4 flex items-center gap-2">
+                <span>⚙️</span> Frais Fixes & Budget Base
+            </h3>
+            
+            <div class="space-y-4">
+                <!-- Revenues Section -->
+                <div>
+                    <div onclick="toggleRevenuesCollapse()" class="flex justify-between items-center cursor-pointer select-none group mb-2">
+                        <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider cursor-pointer">Revenus Mensuels</label>
+                        <div class="flex items-center gap-2">
+                            <span id="revenues_summary" class="text-[10px] font-semibold text-stone-500 dark:text-stone-400 opacity-80 group-hover:opacity-100 transition-opacity"></span>
+                            <span id="revenues_chevron" class="text-stone-400 transition-transform duration-200 text-xs inline-block">▼</span>
+                        </div>
+                    </div>
+                    
+                    <div id="revenues_content" class="transition-all duration-300">
+                        <div id="revenues_container" class="space-y-2 max-h-40 overflow-y-auto pr-1 hide-scrollbar mb-3">
+                            <!-- Loaded dynamically -->
+                        </div>
+                        
+                        <!-- Add revenue form -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="text" id="new_revenue_title" placeholder="Nom (ex: Salaire)" class="form-input h-10 text-xs font-semibold" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
+                            <div class="relative">
+                                <input type="text" inputmode="decimal" id="new_revenue_amount" placeholder="Montant" class="form-input h-10 text-right pr-6 text-xs font-black" oninput="normalizeAmountInput(event)">
+                                <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-450 text-[10px] pointer-events-none">€</span>
+                            </div>
+                            <button type="button" onclick="addRevenue()" class="h-10 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-brand-600 dark:text-brand-400 font-bold rounded-xl active:scale-95 transition-all text-xs">
+                                ➕ Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-stone-200 dark:border-stone-800" />
+
+                <!-- Fixed Charges List -->
+                <div>
+                    <div onclick="toggleFixedChargesCollapse()" class="flex justify-between items-center cursor-pointer select-none group mb-2">
+                        <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider cursor-pointer">Frais Fixes Mensuels</label>
+                        <div class="flex items-center gap-2">
+                            <span id="fixed_charges_summary" class="text-[10px] font-semibold text-stone-500 dark:text-stone-400 opacity-80 group-hover:opacity-100 transition-opacity"></span>
+                            <span id="fixed_charges_chevron" class="text-stone-400 transition-transform duration-200 text-xs inline-block">▼</span>
+                        </div>
+                    </div>
+                    
+                    <div id="fixed_charges_content" class="transition-all duration-300">
+                        <div id="fixed_charges_container" class="space-y-2 max-h-40 overflow-y-auto pr-1 hide-scrollbar mb-3">
+                            <!-- Loaded dynamically -->
+                        </div>
+                        
+                        <!-- Add fixed charge form -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="text" id="new_charge_title" placeholder="Nom (ex: Loyer)" class="form-input h-10 text-xs font-semibold" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
+                            <div class="relative">
+                                <input type="text" inputmode="decimal" id="new_charge_amount" placeholder="Montant" class="form-input h-10 text-right pr-6 text-xs font-black" oninput="normalizeAmountInput(event)">
+                                <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-450 text-[10px] pointer-events-none">€</span>
+                            </div>
+                            <button type="button" onclick="addFixedCharge()" class="h-10 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-brand-600 dark:text-brand-400 font-bold rounded-xl active:scale-95 transition-all text-xs">
+                                ➕ Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RENEW BUDGET ACTION -->
+        <div class="px-2 pt-2">
+            <button onclick="confirmReset()" class="w-full h-12 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-bold rounded-xl border border-red-100 dark:border-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm shadow-sm">
+                <span>🔄</span> Renouveler le Budget (Effacer les opérations)
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CONFIRM RESET MODAL -->
+<div id="confirm_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col text-center space-y-4">
+        <div class="text-3xl">⚠️</div>
+        <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display">Renouveler le mois ?</h3>
+        <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">Toutes les opérations en cours seront effacées définitivement.<br>Le budget de base et les frais fixes seront conservés.</p>
+        <div class="grid grid-cols-2 gap-2 pt-2">
+            <button onclick="closeConfirmModal()" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95">Annuler</button>
+            <button onclick="resetBudget()" class="py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-xs active:scale-95">Confirmer</button>
+        </div>
+    </div>
+</div>
+
+<!-- GENERIC CONFIRMATION MODAL -->
+<div id="generic_confirm_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col text-center space-y-4">
+        <div class="text-3xl" id="generic_confirm_icon">⚠️</div>
+        <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display" id="generic_confirm_title">Confirmation</h3>
+        <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold" id="generic_confirm_message">Voulez-vous effectuer cette action ?</p>
+        <div class="grid grid-cols-2 gap-2 pt-2">
+            <button onclick="closeGenericConfirmModal()" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95">Annuler</button>
+            <button id="generic_confirm_btn" class="py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95">Confirmer</button>
+        </div>
+    </div>
+</div>
+
+<!-- GENERIC ALERT MODAL -->
+<div id="generic_alert_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col text-center space-y-4">
+        <div class="text-3xl" id="generic_alert_icon">ℹ️</div>
+        <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display" id="generic_alert_title">Information</h3>
+        <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold" id="generic_alert_message">Message...</p>
+        <div class="pt-2">
+            <button onclick="closeGenericAlertModal()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="edit_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col space-y-4">
+        <div class="flex justify-between items-center">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 font-display" id="edit_modal_title">Modifier</h3>
+            <button onclick="closeEditModal()" class="w-6 h-6 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 font-bold flex items-center justify-center hover:bg-stone-200 dark:hover:bg-stone-700 active:scale-90 transition-all text-[10px]">✕</button>
+        </div>
+        <form id="edit_form" onsubmit="saveEdit(event)" class="space-y-3">
+            <div>
+                <label class="block text-[8px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-1">Libellé</label>
+                <input type="text" id="edit_title" class="form-input h-10 text-xs font-semibold" required autocomplete="off" maxlength="25" onblur="this.value = toTitleCase(this.value)">
+            </div>
+            <div>
+                <label class="block text-[8px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-1">Montant</label>
+                <div class="relative">
+                    <input type="text" id="edit_amount" inputmode="decimal" placeholder="0,00" class="form-input h-10 text-right pr-7 text-xs font-black" required oninput="normalizeAmountInput(event)">
+                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 font-black text-stone-400 pointer-events-none text-xs">€</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button type="button" onclick="closeEditModal()" class="py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95">Annuler</button>
+                <button type="submit" class="py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-black text-stone-800 dark:text-stone-100 flex items-center gap-2 font-display">
+                <span>⚙️</span> Réglages & Données
+            </h3>
+            <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 font-bold flex items-center justify-center hover:bg-stone-200 dark:hover:bg-stone-700 active:scale-90 transition-all">✕</button>
+        </div>
+        
+        <div class="space-y-6 overflow-y-auto px-1 -mx-1 hide-scrollbar">
+            <!-- Username settings -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Préférences</h4>
+                <div>
+                    <label class="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">Nom d'utilisateur</label>
+                    <input type="text" id="settings_username" placeholder="Votre prénom" class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 mb-2" oninput="saveUserSettings()" onblur="this.value = toTitleCase(this.value); saveUserSettings()">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Style Visuel</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setVisualTheme('masculin')" id="theme_opt_masculin" class="py-2 px-3 rounded-xl font-bold text-xs border active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                            💙 Bleu/Vert
+                        </button>
+                        <button onclick="setVisualTheme('feminin')" id="theme_opt_feminin" class="py-2 px-3 rounded-xl font-bold text-xs border active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                            💗 Rose
+                        </button>
+                    </div>
+                </div>
+                
+                <button onclick="startTour()" class="w-full py-2 bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 rounded-xl font-bold text-xs hover:bg-brand-100 dark:hover:bg-brand-900/40 active:scale-98 transition-all border border-brand-100 dark:border-brand-900/30 flex items-center justify-center gap-1.5 mb-2">
+                    <span>✨</span> Nouveau ? Lancer le guide interactif
+                </button>
+
+                <button onclick="shareApp()" class="w-full py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-xl font-bold text-xs active:scale-98 transition-all border border-stone-200 dark:border-stone-700 flex items-center justify-center gap-1.5">
+                    <span>🔗</span> Partager l'application
+                </button>
+            </div>
+
+            <hr class="border-stone-200 dark:border-stone-800" />
+
+            <!-- Sécurité & Protection -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Sécurité des Données</h4>
+                <div id="storage_status_card" class="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200/40 dark:border-stone-800/40 flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-stone-700 dark:text-stone-300">Protection auto-nettoyage :</span>
+                        <span id="storage_status_badge" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-850 text-stone-500">Vérification...</span>
+                    </div>
+                    <p id="storage_status_desc" class="text-[10px] text-stone-500 dark:text-stone-400 leading-normal font-medium">
+                        Vérification du statut de stockage auprès du navigateur...
+                    </p>
+                    <button id="btn_request_persistence" onclick="tryRequestPersistence()" class="hidden w-full py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 text-emerald-650 dark:text-emerald-450 rounded-xl font-bold text-xs active:scale-95 transition-all border border-emerald-100 dark:border-emerald-900/30 flex items-center justify-center gap-1.5 mt-1 shadow-sm">
+                        <span>🛡️</span> Activer la protection renforcée
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-stone-200 dark:border-stone-800" />
+
+            <!-- Backup & Restore -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Sauvegarde & Restauration</h4>
+                <button onclick="document.getElementById('import_file').click()" class="w-full py-2.5 px-3 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-stone-200 dark:border-stone-700">
+                    <span>📥</span> Importer JSON
+                </button>
+                
+                <button onclick="clearDatabase()" class="w-full py-2.5 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-xl font-bold text-xs hover:bg-red-100 dark:hover:bg-red-950/40 active:scale-98 transition-all border border-red-100 dark:border-red-900/30">
+                    🗑️ Réinitialiser l'application
+                </button>
+            </div>
+
+            <hr class="border-stone-200 dark:border-stone-850" />
+
+            <!-- Version & Dev Contact Footer -->
+            <div class="flex flex-col items-center justify-center text-center space-y-2 pt-2 pb-1 text-[10px] font-semibold text-stone-400 dark:text-stone-500">
+                <div class="flex items-center gap-3">
+                    <a href="mailto:lehcimcramtrebor.ztriw@gmail.com?subject=BUDGET%20PWA" class="hover:text-brand-500 transition-colors flex items-center gap-1 select-none">
+                        ✉️ Contact Dev
+                    </a>
+                    <span class="text-stone-300 dark:text-stone-800">•</span>
+                    <a href="https://www.paypal.com/paypalme/MichelWirtz" target="_blank" rel="noopener noreferrer" class="hover:text-brand-500 transition-colors flex items-center gap-1 text-amber-500 dark:text-amber-600 font-bold select-none">
+                        ☕ Offrir un café (PayPal)
+                    </a>
+                </div>
+                <div class="text-[9px] font-bold opacity-60 tracking-wider">
+                    BUDGETHMR — Version 1.3.0
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TOUR TOOLTIP OVERLAY -->
+<div id="tour_overlay" class="fixed inset-0 bg-stone-950/40 z-50 pointer-events-none hidden transition-opacity duration-300"></div>
+<div id="tour_tooltip" class="fixed z-50 glass-card w-72 p-4 shadow-xl border border-stone-200/50 dark:border-stone-850 hidden flex flex-col space-y-3 transform scale-95 opacity-0 transition-all duration-300">
+    <div class="flex justify-between items-center">
+        <h4 class="text-[10px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest" id="tour_step_num">Étape 1 sur 6</h4>
+        <button onclick="endTour()" class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-xs">✕</button>
+    </div>
+    <div class="space-y-1">
+        <h3 class="text-xs font-black text-stone-800 dark:text-stone-100 font-display" id="tour_title">Titre de l'étape</h3>
+        <p class="text-[10px] text-stone-500 dark:text-stone-400 leading-relaxed font-semibold" id="tour_message">Message explicatif...</p>
+    </div>
+    <div class="flex justify-between items-center pt-2">
+        <button onclick="endTour()" class="text-[9px] font-bold text-stone-400 hover:text-stone-600 dark:hover:text-stone-300">Passer</button>
+        <button onclick="nextTourStep()" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-bold text-[9px] active:scale-95 transition-all" id="tour_next_btn">Suivant</button>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
