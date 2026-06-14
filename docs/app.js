@@ -936,7 +936,10 @@ function clearDatabase() {
 
 
 // --- INTERACTIVE TOUR LOGIC ---
+let tourTrackingActive = false;
+let tourAnimationId = null;
 let currentTourStep = 0;
+
 const tourSteps = [
     {
         elementId: "app_logo",
@@ -959,7 +962,7 @@ const tourSteps = [
         placement: "bottom"
     },
     {
-        elementId: "expense_form",
+        elementId: "tour_add_title",
         title: "Saisie Rapide",
         message: "Enregistrez vos dépenses ou vos remboursements (calcul inverse). La saisie est simplifiée : que vous tapiez un point ou une virgule, elle normalise automatiquement !",
         placement: "bottom"
@@ -990,6 +993,100 @@ const tourSteps = [
     }
 ];
 
+function repositionTooltip() {
+    const step = tourSteps[currentTourStep];
+    if (!step) return;
+    const target = document.getElementById(step.elementId);
+    const tooltip = document.getElementById("tour_tooltip");
+    if (!target || !tooltip) return;
+
+    const isVisible = target.offsetWidth > 0 || target.offsetHeight > 0;
+    if (!isVisible) {
+        // Fallback: center of screen
+        tooltip.style.top = "50%";
+        tooltip.style.left = "50%";
+        tooltip.style.transform = "translate(-50%, -50%) scale(1)";
+        return;
+    }
+
+    const rect = target.getBoundingClientRect();
+    const tooltipW = tooltip.offsetWidth;
+    const tooltipH = tooltip.offsetHeight;
+    const margin = 16;
+
+    let preferredPlacement = step.placement || "bottom";
+
+    // Function to calculate clamped position coordinates
+    function getPosition(placement) {
+        let t = 0;
+        let l = 0;
+        if (placement === "bottom") {
+            t = rect.bottom + 12;
+            l = rect.left + (rect.width - tooltipW) / 2;
+        } else if (placement === "top") {
+            t = rect.top - tooltipH - 12;
+            l = rect.left + (rect.width - tooltipW) / 2;
+        } else if (placement === "left") {
+            t = rect.top + (rect.height - tooltipH) / 2;
+            l = rect.left - tooltipW - 12;
+        } else if (placement === "right") {
+            t = rect.top + (rect.height - tooltipH) / 2;
+            l = rect.right + 12;
+        }
+
+        // Clamp to viewport
+        t = Math.max(margin, Math.min(t, window.innerHeight - tooltipH - margin));
+        l = Math.max(margin, Math.min(l, window.innerWidth - tooltipW - margin));
+
+        return { top: t, left: l };
+    }
+
+    let pos = getPosition(preferredPlacement);
+
+    // Collision detection
+    const targetBox = {
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom
+    };
+
+    function hasCollision(top, left) {
+        const tooltipBox = {
+            left: left,
+            right: left + tooltipW,
+            top: top,
+            bottom: top + tooltipH
+        };
+        return tooltipBox.left < targetBox.right &&
+               tooltipBox.right > targetBox.left &&
+               tooltipBox.top < targetBox.bottom &&
+               tooltipBox.bottom > targetBox.top;
+    }
+
+    if (hasCollision(pos.top, pos.left)) {
+        const opposites = {
+            "bottom": "top",
+            "top": "bottom",
+            "left": "right",
+            "right": "left"
+        };
+        const oppositePlacement = opposites[preferredPlacement];
+        const altPos = getPosition(oppositePlacement);
+        pos = altPos;
+    }
+
+    tooltip.style.top = `${pos.top}px`;
+    tooltip.style.left = `${pos.left}px`;
+    tooltip.style.transform = ""; // clear center transform
+}
+
+function trackTourTooltip() {
+    if (!tourTrackingActive) return;
+    repositionTooltip();
+    tourAnimationId = requestAnimationFrame(trackTourTooltip);
+}
+
 function startTour() {
     closeSettingsModal();
     currentTourStep = 0;
@@ -1000,6 +1097,11 @@ function startTour() {
     fixedChargesCollapsed = false;
     updateUI();
 
+    const mainAppContainer = document.getElementById("main_app_container");
+    if (mainAppContainer) {
+        mainAppContainer.classList.add("tour-active-padding");
+    }
+
     const overlay = document.getElementById("tour_overlay");
     const tooltip = document.getElementById("tour_tooltip");
     
@@ -1008,6 +1110,9 @@ function startTour() {
         tooltip.classList.remove("hidden");
         tooltip.classList.add("z-[70]"); // ensure it is above overlay
         
+        tourTrackingActive = true;
+        trackTourTooltip();
+
         setTimeout(() => {
             overlay.classList.remove("opacity-0");
             showTourStep();
@@ -1035,7 +1140,7 @@ function showTourStep() {
 
     // Clear previous highlights
     document.querySelectorAll(".tour-highlight").forEach(el => {
-        el.classList.remove("tour-highlight", "ring-4", "ring-brand-500", "dark:ring-brand-400", "animate-pulse", "z-[60]", "relative");
+        el.classList.remove("tour-highlight");
     });
 
     const isVisible = target && (target.offsetWidth > 0 || target.offsetHeight > 0);
@@ -1045,47 +1150,27 @@ function showTourStep() {
         target.scrollIntoView({ behavior: "smooth", block: "center" });
 
         // Highlight target
-        target.classList.add("tour-highlight", "ring-4", "ring-brand-500", "dark:ring-brand-400", "animate-pulse", "z-[60]", "relative");
+        target.classList.add("tour-highlight");
 
-        // Position tooltip
+        // Position tooltip and fade it in
+        tooltip.classList.remove("hidden");
+        tooltip.classList.add("opacity-0", "scale-95");
+        
+        repositionTooltip();
+        
         setTimeout(() => {
-            const rect = target.getBoundingClientRect();
-            const tooltipRect = tooltip.getBoundingClientRect();
-            
-            let top = 0;
-            let left = 0;
-
-            if (step.placement === "bottom") {
-                top = rect.bottom + 12;
-                left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-            } else if (step.placement === "top") {
-                top = rect.top - tooltipRect.height - 12;
-                left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-            } else if (step.placement === "left") {
-                top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
-                left = rect.left - tooltipRect.width - 12;
-            } else if (step.placement === "right") {
-                top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
-                left = rect.right + 12;
-            }
-
-            // Adjust bounds (keep on screen)
-            const margin = 16;
-            left = Math.max(margin, Math.min(left, window.innerWidth - tooltipRect.width - margin));
-            top = Math.max(margin, Math.min(top, window.innerHeight - tooltipRect.height - margin));
-
-            tooltip.style.top = `${top}px`;
-            tooltip.style.left = `${left}px`;
-            tooltip.style.transform = ""; // clear center transform fallback if any
-            
             tooltip.classList.remove("opacity-0", "scale-95");
-        }, 400);
+        }, 50);
     } else {
         // Fallback: center of screen
-        tooltip.style.top = "50%";
-        tooltip.style.left = "50%";
-        tooltip.style.transform = "translate(-50%, -50%) scale(1)";
-        tooltip.classList.remove("opacity-0", "scale-95");
+        tooltip.classList.remove("hidden");
+        tooltip.classList.add("opacity-0", "scale-95");
+        
+        repositionTooltip();
+        
+        setTimeout(() => {
+            tooltip.classList.remove("opacity-0", "scale-95");
+        }, 50);
     }
 }
 
@@ -1095,10 +1180,26 @@ function nextTourStep() {
 }
 
 function endTour() {
+    tourTrackingActive = false;
+    if (tourAnimationId) {
+        cancelAnimationFrame(tourAnimationId);
+        tourAnimationId = null;
+    }
+
+    const mainAppContainer = document.getElementById("main_app_container");
+    if (mainAppContainer) {
+        mainAppContainer.classList.remove("tour-active-padding");
+    }
+
     const overlay = document.getElementById("tour_overlay");
     const tooltip = document.getElementById("tour_tooltip");
 
-    if (overlay) overlay.classList.add("hidden");
+    if (overlay) {
+        overlay.classList.add("opacity-0");
+        setTimeout(() => {
+            overlay.classList.add("hidden");
+        }, 300);
+    }
     if (tooltip) {
         tooltip.classList.add("opacity-0", "scale-95");
         setTimeout(() => {
@@ -1111,7 +1212,7 @@ function endTour() {
 
     // Remove highlights
     document.querySelectorAll(".tour-highlight").forEach(el => {
-        el.classList.remove("tour-highlight", "ring-4", "ring-brand-500", "dark:ring-brand-400", "animate-pulse", "z-[60]", "relative");
+        el.classList.remove("tour-highlight");
     });
 }
 
