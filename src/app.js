@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initPWAInstall();
     initStoragePersistence();
     initApkDownload();
+    setupHapticFeedback();
 });
 
 function initDatabase() {
@@ -240,6 +241,7 @@ function addExpense(event) {
     saveState();
     expensesCollapsed = false; // Auto-expand when adding new
     updateUI();
+    triggerHaptic('success');
 
     // Clear Inputs
     titleInput.value = "";
@@ -264,6 +266,7 @@ function deleteExpense(id) {
             state.expenses = state.expenses.filter(e => e.id !== id);
             saveState();
             updateUI();
+            triggerHaptic('confirm');
         }
     );
 }
@@ -304,6 +307,7 @@ function confirmAddRefund() {
             saveState();
             expensesCollapsed = false; // Auto-expand
             updateUI();
+            triggerHaptic('success');
 
             // Clear inputs
             titleInput.value = "";
@@ -341,6 +345,7 @@ function addFixedCharge() {
         saveState();
         fixedChargesCollapsed = false; // Auto-expand when adding new
         updateUI();
+        triggerHaptic('success');
 
         // Clear Inputs
         titleInput.value = "";
@@ -359,6 +364,7 @@ function deleteFixedCharge(id) {
             state.fixedCharges = state.fixedCharges.filter(c => c.id !== id);
             saveState();
             updateUI();
+            triggerHaptic('confirm');
         }
     );
 }
@@ -380,6 +386,7 @@ function addRevenue() {
         saveState();
         revenuesCollapsed = false; // Auto-expand when adding new
         updateUI();
+        triggerHaptic('success');
 
         // Clear Inputs
         titleInput.value = "";
@@ -398,6 +405,7 @@ function deleteRevenue(id) {
             state.revenues = state.revenues.filter(r => r.id !== id);
             saveState();
             updateUI();
+            triggerHaptic('confirm');
         }
     );
 }
@@ -733,6 +741,7 @@ function saveEdit(event) {
     saveState();
     closeEditModal();
     updateUI();
+    triggerHaptic('success');
 }
 
 
@@ -798,6 +807,7 @@ function saveUserSettings() {
     state.settings.username = toTitleCase(nameVal);
     saveState();
     updateUI();
+    triggerHaptic('success');
 }
 
 async function exportJSONData() {
@@ -832,6 +842,7 @@ async function exportJSONData() {
             
             hasUnsavedChanges = false;
             updateQuickSaveUI();
+            triggerHaptic('success');
             return;
         } catch (err) {
             console.error("Erreur export natif :", err);
@@ -861,6 +872,7 @@ async function exportJSONData() {
             hasUnsavedChanges = false;
             updateQuickSaveUI();
             showGenericAlert("Export réussi", "Vos données de budget ont été enregistrées avec succès !", "📤");
+            triggerHaptic('success');
         } catch (err) {
             if (err.name !== 'AbortError') {
                 console.error("Erreur lors de la sauvegarde :", err);
@@ -876,6 +888,7 @@ async function exportJSONData() {
         dlAnchorElem.click();
         hasUnsavedChanges = false;
         updateQuickSaveUI();
+        triggerHaptic('success');
     }
 }
 
@@ -902,6 +915,7 @@ function importJSONData(event) {
                 initUI();
                 closeSettingsModal();
                 showGenericAlert("Import réussi", "Vos données de budget ont été importées avec succès !", "📥");
+                triggerHaptic('success');
             } else {
                 showGenericAlert("Format invalide", "Le format du fichier JSON n'est pas valide pour BUDGETHMR.", "⚠️");
             }
@@ -932,6 +946,129 @@ function clearDatabase() {
             closeSettingsModal();
         }
     );
+}
+
+// --- HAPTIC FEEDBACK (VIBRATION) ENGINE ---
+let lastClickVibrateTime = 0;
+let lastScrollTop = 0;
+let lastScrollTime = 0;
+const SCROLL_THRESHOLD = 30; // pixels
+const SCROLL_THROTTLE = 60;   // ms
+
+async function triggerHaptic(typeOrDuration = 'click') {
+    let duration = typeof typeOrDuration === 'number' ? typeOrDuration : 40;
+    let type = typeof typeOrDuration === 'string' ? typeOrDuration : 'click';
+
+    // 1. Utiliser le plugin natif Capacitor Haptics si disponible
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
+        try {
+            const haptics = window.Capacitor.Plugins.Haptics;
+            if (type === 'success') {
+                // Sensation de dessin d'un "V" de validation : MEDIUM -> LIGHT (après 120ms) -> HEAVY (après 120ms)
+                await haptics.impact({ style: 'MEDIUM' });
+                setTimeout(async () => {
+                    await haptics.impact({ style: 'LIGHT' });
+                    setTimeout(async () => {
+                        await haptics.impact({ style: 'HEAVY' });
+                    }, 120);
+                }, 120);
+            } else if (type === 'confirm') {
+                // Double vibration successive légère espacée de 120ms (évite la sensation de vibration continue longue)
+                await haptics.impact({ style: 'LIGHT' });
+                setTimeout(async () => {
+                    await haptics.impact({ style: 'LIGHT' });
+                }, 120);
+            } else if (type === 'focus') {
+                await haptics.impact({ style: 'LIGHT' }); // Retour d'activation de zone de saisie
+            } else if (type === 'scroll') {
+                await haptics.vibrate({ duration: 12 }); // Micro-vibration de défilement ultra-courte (12ms)
+            } else { // 'click'
+                await haptics.impact({ style: 'LIGHT' }); // Clic standard très discret
+            }
+            return;
+        } catch (e) {
+            console.warn("Capacitor Haptics non disponible, bascule sur l'API Web standard", e);
+        }
+    }
+
+    // 2. Fallback sur l'API Vibrations HTML5 classique
+    if (navigator.vibrate) {
+        if (type === 'success') {
+            navigator.vibrate([50, 120, 20, 120, 150]); // Profil V
+        } else if (type === 'confirm') {
+            navigator.vibrate([20, 120, 20]); // Double impulsion de 20ms
+        } else if (type === 'focus') {
+            navigator.vibrate(35); // Impulsion intermédiaire (35ms)
+        } else if (type === 'scroll') {
+            navigator.vibrate(12); // Micro-impulsion de 12ms
+        } else { // 'click'
+            navigator.vibrate(20); // Impulsion légère de 20ms
+        }
+    }
+}
+
+function isClickableElement(el) {
+    if (!el || el === document.body || el === document.documentElement) return false;
+    const tag = el.tagName;
+    const classes = el.classList;
+    if (tag === 'BUTTON' || tag === 'A' || el.getAttribute('role') === 'button' || el.onclick) {
+        return true;
+    }
+    if (tag === 'INPUT' && (el.type === 'checkbox' || el.type === 'radio' || el.type === 'file' || el.type === 'submit' || el.type === 'button')) {
+        return true;
+    }
+    if (classes.contains('cursor-pointer') || classes.contains('custom-option') || classes.contains('custom-option-month') || classes.contains('custom-option-year') || classes.contains('autocomplete-item')) {
+        return true;
+    }
+    return isClickableElement(el.parentElement);
+}
+
+function setupHapticFeedback() {
+    // 1. Évitement de clavier pour les inputs de type texte/nombre
+    document.addEventListener('focusin', (e) => {
+        const target = e.target;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+            const type = target.type;
+            if (type !== 'hidden' && type !== 'checkbox' && type !== 'radio' && type !== 'file' && type !== 'submit' && type !== 'button' && type !== 'image') {
+                triggerHaptic('focus');
+            }
+        }
+    });
+
+    // 2. Gestion globale des vibrations de clic sur éléments interactifs
+    const handleGlobalClickHaptic = (e) => {
+        const now = Date.now();
+        if (now - lastClickVibrateTime < 100) return;
+        if (isClickableElement(e.target)) {
+            triggerHaptic('click');
+            lastClickVibrateTime = now;
+        }
+    };
+    document.addEventListener('click', handleGlobalClickHaptic);
+    document.addEventListener('mousedown', handleGlobalClickHaptic);
+
+    // 3. Gestion globale des vibrations rapides de défilement (scroll)
+    document.addEventListener('scroll', (e) => {
+        const target = e.target;
+        let scrollTop = 0;
+        if (target === document || target === window || target === document.documentElement || target === document.body) {
+            scrollTop = window.scrollY || document.documentElement.scrollTop;
+        } else if (target instanceof HTMLElement) {
+            scrollTop = target.scrollTop;
+        } else {
+            return;
+        }
+        
+        const now = Date.now();
+        if (now - lastScrollTime > SCROLL_THROTTLE) {
+            const diff = Math.abs(scrollTop - lastScrollTop);
+            if (diff > SCROLL_THRESHOLD) {
+                triggerHaptic('scroll');
+                lastScrollTop = scrollTop;
+                lastScrollTime = now;
+            }
+        }
+    }, true);
 }
 
 
