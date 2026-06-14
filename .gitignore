@@ -1,2 +1,5 @@
 node_modules/
 www/
+
+!src/BUDGET-HMR.APK
+!docs/BUDGET-HMR.APK

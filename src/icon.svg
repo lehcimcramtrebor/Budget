@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGradient" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#1e1b4b" /> <!-- dark indigo -->
+      <stop offset="60%" stop-color="#0f172a" /> <!-- slate-900 -->
+      <stop offset="100%" stop-color="#020617" /> <!-- slate-950 -->
+    </radialGradient>
+
+    <!-- Glowing effect gradients -->
+    <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" /> <!-- indigo-400 -->
+      <stop offset="50%" stop-color="#2dd4bf" /> <!-- teal-400 -->
+      <stop offset="100%" stop-color="#ec4899" /> <!-- pink-500 -->
+    </linearGradient>
+
+    <!-- Metallic/Gold gradient for accents -->
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="glowIntense" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="15" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- App Icon Background -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGradient)" stroke="#312e81" stroke-width="4" />
+  <rect x="12" y="12" width="488" height="488" rx="116" fill="none" stroke="#818cf8" stroke-width="2" opacity="0.15" />
+
+  <!-- Abstract geometric grid lines (high-tech aesthetic) -->
+  <path d="M 64 256 L 448 256 M 256 64 L 256 448" stroke="#334155" stroke-width="1.5" opacity="0.2" />
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#334155" stroke-width="1.5" opacity="0.2" />
+
+  <!-- Main Symbol: Premium Glassmorphism Card & Glowing Budget Growth Chart -->
+  <g transform="translate(0, 20)">
+    <!-- Back Glow -->
+    <path d="M 120 320 Q 220 180 320 220 T 400 120" stroke="url(#neonGradient)" stroke-width="24" fill="none" opacity="0.15" filter="url(#glowIntense)" stroke-linecap="round" />
+
+    <!-- Neon Chart Line -->
+    <path d="M 120 320 Q 220 180 320 220 T 400 120" stroke="url(#neonGradient)" stroke-width="12" fill="none" filter="url(#glow)" stroke-linecap="round" />
+
+    <!-- Chart Dots -->
+    <circle cx="120" cy="320" r="10" fill="#818cf8" filter="url(#glow)" />
+    <circle cx="240" cy="225" r="10" fill="#6366f1" filter="url(#glow)" />
+    <circle cx="320" cy="220" r="10" fill="#2dd4bf" filter="url(#glow)" />
+    <circle cx="400" cy="120" r="12" fill="#ec4899" filter="url(#glow)" />
+
+    <!-- Piggy bank / Shield / Vault abstract geometry overlay -->
+    <!-- Glass card container -->
+    <rect x="146" y="240" width="220" height="140" rx="24" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-width="2" stroke-opacity="0.2" filter="url(#glow)" />
+    
+    <!-- Diagonal glass reflection -->
+    <path d="M 146 320 L 320 240 L 366 240 L 146 340 Z" fill="#ffffff" fill-opacity="0.05" />
+
+    <!-- Golden Currency Symbol (Abstract HMR / Euro hybrid) inside the glass card -->
+    <g transform="translate(256, 310) scale(1.1)">
+      <!-- Circle background -->
+      <circle cx="0" cy="0" r="32" fill="#0f172a" stroke="url(#goldGradient)" stroke-width="3" />
+      <!-- Stylized '€' or HMR logo -->
+      <path d="M -10 -14 C 5 -14 14 -8 14 0 C 14 8 5 14 -10 14" fill="none" stroke="url(#goldGradient)" stroke-width="6" stroke-linecap="round" />
+      <path d="M -16 -3 L 6 -3 M -16 5 L 4 5" stroke="url(#goldGradient)" stroke-width="5" stroke-linecap="round" />
+    </g>
+  </g>
+  
+  <!-- Sleek text HMR at the bottom -->
+  <text x="256" y="450" font-family="'Outfit', 'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="32" fill="#ffffff" letter-spacing="4" text-anchor="middle" opacity="0.8">
+    BUDGET<tspan fill="#2dd4bf">HMR</tspan>
+  </text>
+</svg>

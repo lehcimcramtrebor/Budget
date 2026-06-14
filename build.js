@@ -1,6 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
+const srcDir = path.join(__dirname, 'src');
+const wwwDir = path.join(__dirname, 'www');
+const docsDir = path.join(__dirname, 'docs');
+
 const filesToCopy = [
     'index.html',
     'app.js',
@@ -9,32 +13,38 @@ const filesToCopy = [
     'sitemap.xml',
     'sw.js',
     'icon.svg',
-    'tailwind.config.js'
+    'tailwind.config.js',
+    'google8ff5eebdaef4d9d9.html'
 ];
 
 const dirsToCopy = [
     'assets'
 ];
 
-const destDir = path.join(__dirname, 'www');
-
-// Clean and create destDir
-if (fs.existsSync(destDir)) {
-    fs.rmSync(destDir, { recursive: true, force: true });
-}
-fs.mkdirSync(destDir);
-
-// Copy files
-filesToCopy.forEach(file => {
-    const src = path.join(__dirname, file);
-    const dest = path.join(destDir, file);
-    if (fs.existsSync(src)) {
-        fs.copyFileSync(src, dest);
-        console.log(`Copied ${file}`);
-    } else {
-        console.warn(`Warning: file ${file} not found!`);
+// Helper to clean and recreate directory
+function prepareDir(dir) {
+    if (fs.existsSync(dir)) {
+        fs.rmSync(dir, { recursive: true, force: true });
     }
-});
+    fs.mkdirSync(dir, { recursive: true });
+}
+
+prepareDir(wwwDir);
+prepareDir(docsDir);
+
+// Helper function to copy files
+function copyAppFiles(targetDir) {
+    filesToCopy.forEach(file => {
+        const src = path.join(srcDir, file);
+        const dest = path.join(targetDir, file);
+        if (fs.existsSync(src)) {
+            fs.copyFileSync(src, dest);
+            console.log(`Copied ${file} to ${path.basename(targetDir)}`);
+        } else {
+            console.warn(`Warning: file ${file} not found in src!`);
+        }
+    });
+}
 
 // Helper function to copy folder recursively
 function copyFolderRecursiveSync(source, target) {
@@ -58,14 +68,33 @@ function copyFolderRecursiveSync(source, target) {
 }
 
 // Copy directories
-dirsToCopy.forEach(dir => {
-    const src = path.join(__dirname, dir);
-    if (fs.existsSync(src)) {
-        copyFolderRecursiveSync(src, destDir);
-        console.log(`Copied directory ${dir}`);
-    } else {
-        console.warn(`Warning: directory ${dir} not found!`);
-    }
-});
+function copyAppDirs(targetDir) {
+    dirsToCopy.forEach(dir => {
+        const src = path.join(srcDir, dir);
+        if (fs.existsSync(src)) {
+            copyFolderRecursiveSync(src, targetDir);
+            console.log(`Copied directory ${dir} to ${path.basename(targetDir)}`);
+        } else {
+            console.warn(`Warning: directory ${dir} not found in src!`);
+        }
+    });
+}
+
+// Execute copies for both targets
+copyAppFiles(wwwDir);
+copyAppDirs(wwwDir);
+
+copyAppFiles(docsDir);
+copyAppDirs(docsDir);
+
+// Copy APK if it exists in src to docs (Web distribution)
+const srcApk = path.join(srcDir, 'BUDGET-HMR.APK');
+const destApk = path.join(docsDir, 'BUDGET-HMR.APK');
+if (fs.existsSync(srcApk)) {
+    fs.copyFileSync(srcApk, destApk);
+    console.log('Copied BUDGET-HMR.APK to docs for web distribution.');
+} else {
+    console.log('Notice: BUDGET-HMR.APK not found in src. Skipping APK web copy.');
+}
 
 console.log('Build completed successfully.');
