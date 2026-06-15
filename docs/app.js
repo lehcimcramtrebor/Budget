@@ -17,6 +17,7 @@ let state = {
 };
 
 let hasUnsavedChanges = false;
+let lastRemaining = null;
 
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -96,6 +97,12 @@ function updateUI() {
     document.getElementById("base_budget_disp").innerText = formatCurrency(totalRevenues);
     document.getElementById("fixed_charges_disp").innerText = formatCurrency(totalFixed);
     document.getElementById("expenses_disp").innerText = formatCurrency(totalExpenses);
+
+    // Play overdraft sound if transition from non-negative to negative occurs
+    if (lastRemaining !== null && lastRemaining >= 0 && remaining < 0) {
+        playOverdraftSound();
+    }
+    lastRemaining = remaining;
 
     // Apply color themes
     const htmlEl = document.documentElement;
@@ -241,7 +248,7 @@ function addExpense(event) {
     saveState();
     expensesCollapsed = false; // Auto-expand when adding new
     updateUI();
-    triggerHaptic('success');
+    showSuccessAnimation();
 
     // Clear Inputs
     titleInput.value = "";
@@ -307,7 +314,7 @@ function confirmAddRefund() {
             saveState();
             expensesCollapsed = false; // Auto-expand
             updateUI();
-            triggerHaptic('success');
+            showSuccessAnimation();
 
             // Clear inputs
             titleInput.value = "";
@@ -741,7 +748,7 @@ function saveEdit(event) {
     saveState();
     closeEditModal();
     updateUI();
-    triggerHaptic('success');
+    showSuccessAnimation();
 }
 
 
@@ -946,6 +953,49 @@ function clearDatabase() {
             closeSettingsModal();
         }
     );
+}
+
+// --- CONFIRMATION SOUND & SUCCESS ANIMATION ---
+function playConfirmationSound() {
+    try {
+        const audio = new Audio('assets/Mario Coin.mp3');
+        audio.play();
+    } catch (e) {
+        console.error("Failed to play confirmation sound", e);
+    }
+}
+
+function playOverdraftSound() {
+    try {
+        const audio = new Audio('assets/Mario death sound.mp3');
+        audio.play();
+    } catch (e) {
+        console.error("Failed to play overdraft sound", e);
+    }
+}
+
+function showSuccessAnimation() {
+    playConfirmationSound();
+    triggerHaptic('success');
+    
+    const overlay = document.getElementById('validation_success_overlay');
+    if (!overlay) return;
+    
+    overlay.classList.remove('hidden');
+    setTimeout(() => {
+        overlay.classList.remove('opacity-0');
+        const card = overlay.querySelector('.glass-card');
+        if (card) card.classList.remove('scale-95');
+    }, 10);
+    
+    setTimeout(() => {
+        overlay.classList.add('opacity-0');
+        const card = overlay.querySelector('.glass-card');
+        if (card) card.classList.add('scale-95');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 300);
+    }, 1000);
 }
 
 // --- HAPTIC FEEDBACK (VIBRATION) ENGINE ---
