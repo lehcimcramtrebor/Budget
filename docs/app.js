@@ -12,7 +12,8 @@ let state = {
     darkMode: true,
     settings: {
         username: "",
-        genderTheme: "masculin"
+        genderTheme: "masculin",
+        warningThreshold: 150
     }
 };
 
@@ -48,6 +49,9 @@ function initDatabase() {
             }
             if (!state.settings.genderTheme) {
                 state.settings.genderTheme = "masculin";
+            }
+            if (typeof state.settings.warningThreshold !== 'number') {
+                state.settings.warningThreshold = 150;
             }
         } catch (e) {
             console.error("Erreur lors de la lecture du localStorage", e);
@@ -106,9 +110,10 @@ function updateUI() {
 
     // Apply color themes
     const htmlEl = document.documentElement;
+    const threshold = typeof state.settings.warningThreshold === 'number' ? state.settings.warningThreshold : 150;
     if (remaining < 0) {
         htmlEl.setAttribute("data-theme", "alerte");
-    } else if (remaining < 150) {
+    } else if (remaining < threshold) {
         htmlEl.setAttribute("data-theme", "warning");
     } else {
         htmlEl.setAttribute("data-theme", "sain");
@@ -163,7 +168,7 @@ function renderExpensesList() {
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <span class="font-black text-sm ${amountColor}">${amountSign} ${absAmount.toFixed(2).replace('.', ',')} €</span>
-                <button onclick="deleteExpense('${e.id}')" class="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-red-100 dark:hover:bg-red-950/20 text-stone-400 hover:text-red-500 dark:hover:text-red-450 transition-all flex items-center justify-center font-bold text-xs" title="Supprimer">
+                <button onclick="deleteExpense('${e.id}')" class="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-red-100 dark:hover:bg-red-950/20 text-red-300 dark:text-red-400/30 hover:text-red-500 dark:hover:text-red-450 transition-all flex items-center justify-center font-bold text-xs" title="Supprimer">
                     ✕
                 </button>
             </div>
@@ -185,7 +190,7 @@ function renderFixedChargesList() {
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <span class="font-bold text-xs text-stone-600 dark:text-stone-400">${c.amount.toFixed(2)} €</span>
-                <button onclick="deleteFixedCharge('${c.id}')" class="w-6 h-6 rounded-full bg-stone-200/50 hover:bg-red-100 dark:bg-stone-800 dark:hover:bg-red-950/20 text-stone-400 hover:text-red-500 transition-all flex items-center justify-center font-bold text-[9px]" title="Supprimer">
+                <button onclick="deleteFixedCharge('${c.id}')" class="w-6 h-6 rounded-full bg-stone-200/50 hover:bg-red-100 dark:bg-stone-800 dark:hover:bg-red-950/20 text-red-300 dark:text-red-400/30 hover:text-red-500 transition-all flex items-center justify-center font-bold text-[9px]" title="Supprimer">
                     ✕
                 </button>
             </div>
@@ -208,7 +213,7 @@ function renderRevenuesList() {
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <span class="font-bold text-xs text-stone-600 dark:text-stone-400">${r.amount.toFixed(2)} €</span>
-                <button onclick="deleteRevenue('${r.id}')" class="w-6 h-6 rounded-full bg-stone-200/50 hover:bg-red-100 dark:bg-stone-800 dark:hover:bg-red-950/20 text-stone-400 hover:text-red-500 transition-all flex items-center justify-center font-bold text-[9px]" title="Supprimer">
+                <button onclick="deleteRevenue('${r.id}')" class="w-6 h-6 rounded-full bg-stone-200/50 hover:bg-red-100 dark:bg-stone-800 dark:hover:bg-red-950/20 text-red-300 dark:text-red-400/30 hover:text-red-500 transition-all flex items-center justify-center font-bold text-[9px]" title="Supprimer">
                     ✕
                 </button>
             </div>
@@ -758,6 +763,12 @@ function openSettingsModal() {
     // Populate username input
     document.getElementById("settings_username").value = state.settings.username || "";
     
+    // Populate warning threshold input
+    const thresholdInput = document.getElementById("settings_warning_threshold");
+    if (thresholdInput) {
+        thresholdInput.value = state.settings.warningThreshold !== undefined ? state.settings.warningThreshold.toString().replace(".", ",") : "150";
+    }
+    
     // Apply theme selection styling to settings buttons
     applyVisualTheme();
 
@@ -812,6 +823,13 @@ function shareApp() {
 function saveUserSettings() {
     const nameVal = document.getElementById("settings_username").value.trim();
     state.settings.username = toTitleCase(nameVal);
+    
+    const thresholdInput = document.getElementById("settings_warning_threshold");
+    if (thresholdInput) {
+        const thresholdVal = parseFloat(thresholdInput.value.trim().replace(",", "."));
+        state.settings.warningThreshold = !isNaN(thresholdVal) ? thresholdVal : 150;
+    }
+    
     saveState();
     updateUI();
     triggerHaptic('success');
