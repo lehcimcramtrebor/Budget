@@ -105,6 +105,11 @@
             .glass-card {
                 @apply bg-white dark:bg-stone-900 p-6 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10;
             }
+            .sticky-gpu {
+                transform: translate3d(0, 0, 0);
+                will-change: transform, background-color;
+                backface-visibility: hidden;
+            }
         }
 
         html {
@@ -218,7 +223,7 @@
     </div>
 
     <!-- MAIN BANNER: RESTE A VIVRE -->
-    <div class="sticky top-0 z-30 bg-stone-100/90 dark:bg-stone-950/90 backdrop-blur-md pt-2 pb-3 -mx-4 px-4 transition-all duration-300">
+    <div class="sticky top-0 z-30 bg-stone-100/90 dark:bg-stone-950/90 backdrop-blur-md pt-2 pb-3 -mx-4 px-4 transition-colors duration-300 sticky-gpu">
         <div class="glass-card overflow-hidden bg-gradient-to-br from-brand-500 to-brand-600 dark:from-brand-600 dark:to-brand-800 border-brand-500/40 shadow-[0_4px_20px] shadow-brand-500/25 text-white transition-none">
             <div class="flex justify-between items-center">
                 <div>
@@ -226,7 +231,7 @@
                     <h2 class="text-4xl font-black text-white mt-1 drop-shadow-sm" id="remaining_balance_disp">0.00 €</h2>
                 </div>
                 <div class="text-right">
-                    <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm text-white font-black text-xs rounded-full border border-white/10" id="current_date_label">Budget</span>
+                    <span class="inline-block px-3 py-1 bg-white/20 text-white font-black text-xs rounded-full border border-white/10" id="current_date_label">Budget</span>
                 </div>
             </div>
             
