@@ -70,6 +70,7 @@ function initUI() {
     }
     updateThemeToggleIcon();
     updateThemeColorMeta();
+    updateSystemBars();
 
     // Apply visual theme
     applyVisualTheme();
@@ -458,6 +459,7 @@ function toggleTheme() {
     }
     updateThemeToggleIcon();
     updateThemeColorMeta();
+    updateSystemBars();
     saveState();
 }
 
@@ -1709,6 +1711,38 @@ function showApkDownloadPrompt() {
             document.body.removeChild(dlLink);
         }
     );
+}
+
+// --- DYNAMIC SYSTEM BARS CONTROL (STATUS & NAVIGATION) ---
+async function updateSystemBars() {
+    if (window.Capacitor && window.Capacitor.Plugins) {
+        const isDark = state.darkMode;
+        const color = isDark ? '#0c0a09' : '#f5f5f4';
+        
+        // 1. Status Bar
+        if (window.Capacitor.Plugins.StatusBar) {
+            try {
+                const StatusBar = window.Capacitor.Plugins.StatusBar;
+                await StatusBar.setBackgroundColor({ color: color });
+                await StatusBar.setStyle({ style: isDark ? 'DARK' : 'LIGHT' });
+            } catch (e) {
+                console.error("StatusBar plugin error:", e);
+            }
+        }
+        
+        // 2. Navigation Bar
+        if (window.Capacitor.Plugins.NavigationBar) {
+            try {
+                const NavigationBar = window.Capacitor.Plugins.NavigationBar;
+                await NavigationBar.setNavigationBarColor({
+                    color: color,
+                    darkButtons: !isDark
+                });
+            } catch (e) {
+                console.error("NavigationBar plugin error:", e);
+            }
+        }
+    }
 }
 
 
