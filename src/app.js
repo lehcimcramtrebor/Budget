@@ -3415,13 +3415,13 @@ function generateBudgetPDF() {
         const userName = state.settings.username ? state.settings.username.toUpperCase() : "HMR";
         const monthLabel = formatYearMonthFrench(state.budgetMonth);
         
-        // Calculate totals
+        // Calcul des totaux
         const totalRevenues = state.revenues.reduce((sum, r) => sum + r.amount, 0);
         const totalFixed = state.fixedCharges.reduce((sum, c) => sum + c.amount, 0);
         const totalExpenses = state.expenses.reduce((sum, e) => sum + e.amount, 0);
         const remaining = totalRevenues - totalFixed - totalExpenses;
         
-        // Group expenses by date key
+        // Groupement des dépenses
         const groups = {};
         state.expenses.forEach(e => {
             const key = e.date || "Sans date";
@@ -3440,7 +3440,7 @@ function generateBudgetPDF() {
         };
         const sortedKeys = Object.keys(groups).sort((a, b) => getTimestamp(a) - getTimestamp(b));
         
-        // Create wrapper to hide element offscreen
+        // Conteneur temporaire
         const wrapper = document.createElement("div");
         wrapper.id = "pdf_wrapper";
         wrapper.style.position = "absolute";
@@ -3449,89 +3449,81 @@ function generateBudgetPDF() {
         wrapper.style.width = "794px";
         wrapper.style.zIndex = "-9999";
         
-        // Temporarily remove overflow-x-hidden from body to prevent clipping
         document.body.classList.remove("overflow-x-hidden");
         
-        // Create dynamic target container
         const exportTarget = document.createElement("div");
         exportTarget.id = "pdf_export_view";
-        exportTarget.className = "block bg-white text-stone-900 p-12 mx-auto space-y-6 font-sans";
-        
-        // Apply critical inline styles to guarantee rendering even if Tailwind CDN is delayed
+        // Style global forcé pour le PDF A4
         exportTarget.style.width = "794px";
-        exportTarget.style.minWidth = "794px";
-        exportTarget.style.maxWidth = "794px";
         exportTarget.style.backgroundColor = "#ffffff";
         exportTarget.style.color = "#1c1917";
-        exportTarget.style.padding = "48px";
+        exportTarget.style.padding = "40px";
+        exportTarget.style.fontFamily = "Arial, sans-serif";
         
         const threshold = typeof state.settings.warningThreshold === 'number' ? state.settings.warningThreshold : 150;
         let gradientStyle = "";
         if (remaining < 0) {
-            gradientStyle = "background: linear-gradient(135deg, #dc2626, #7f1d1d); border-color: #dc2626; color: white;";
+            gradientStyle = "background: #dc2626; color: white;";
         } else if (remaining < threshold) {
-            gradientStyle = "background: linear-gradient(135deg, #d97706, #78350f); border-color: #d97706; color: white;";
+            gradientStyle = "background: #d97706; color: white;";
         } else {
-            gradientStyle = "background: linear-gradient(135deg, #0d9488, #115e59); border-color: #0d9488; color: white;";
+            gradientStyle = "background: #0d9488; color: white;";
         }
         
         const isFem = state.settings.genderTheme === "feminin";
-        const textBrandStyle = isFem ? "color: #db2777;" : "color: #4f46e5;";
+        const textBrandColor = isFem ? "#db2777" : "#4f46e5";
         
-        // 1. Logo Header
+        // 1. En-tête
         let html = `
-            <div class="flex justify-between items-end border-b-2 border-stone-200 pb-4 mb-6">
-                <div>
-                    <h1 class="text-3xl font-black italic tracking-tight" style="font-family: 'Outfit', sans-serif;">
-                        <span class="text-stone-800">BUDGET</span><span style="${textBrandStyle}">${userName}</span>
+            <div style="border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 25px; display: table; width: 100%;">
+                <div style="display: table-cell; vertical-align: bottom;">
+                    <h1 style="font-size: 28px; font-weight: 900; margin: 0;">
+                        BUDGET<span style="color: ${textBrandColor};">${userName}</span>
                     </h1>
-                    <p class="text-[9px] font-black text-stone-400 uppercase tracking-[0.25em] mt-0.5">Gestion Mensuelle</p>
+                    <p style="font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Gestion Mensuelle</p>
                 </div>
-                <div class="text-right">
-                    <h2 class="text-xs font-black text-stone-400 uppercase tracking-widest">Bilan Comptable Personnel</h2>
-                    <p class="text-base font-black" style="${textBrandStyle}">${monthLabel}</p>
+                <div style="display: table-cell; vertical-align: bottom; text-align: right;">
+                    <h2 style="font-size: 11px; color: #9ca3af; text-transform: uppercase; margin: 0 0 5px 0;">Bilan Comptable Personnel</h2>
+                    <p style="font-size: 16px; font-weight: bold; color: ${textBrandColor}; margin: 0;">${monthLabel}</p>
                 </div>
             </div>
         `;
         
-        // 2. Summary stats
+        // 2. Résumé
         html += `
-            <div class="grid grid-cols-3 gap-4 mb-6">
-                <div class="bg-stone-50 p-4 rounded-2xl border border-stone-200/60">
-                    <span class="block text-stone-400 font-bold uppercase tracking-wider text-[8px]">Revenus (+)</span>
-                    <span class="text-base font-black text-stone-800">${formatCurrency(totalRevenues)}</span>
+            <div style="display: table; width: 100%; margin-bottom: 20px; table-layout: fixed;">
+                <div style="display: table-cell; padding: 15px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <span style="display: block; font-size: 9px; color: #9ca3af; text-transform: uppercase; font-weight: bold;">Revenus (+)</span>
+                    <span style="font-size: 16px; font-weight: 900; color: #1f2937;">${formatCurrency(totalRevenues)}</span>
                 </div>
-                <div class="bg-stone-50 p-4 rounded-2xl border border-stone-200/60">
-                    <span class="block text-stone-400 font-bold uppercase tracking-wider text-[8px]">Frais Fixes (-)</span>
-                    <span class="text-base font-black text-stone-800">${formatCurrency(totalFixed)}</span>
+                <div style="display: table-cell; width: 15px;"></div>
+                <div style="display: table-cell; padding: 15px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <span style="display: block; font-size: 9px; color: #9ca3af; text-transform: uppercase; font-weight: bold;">Frais Fixes (-)</span>
+                    <span style="font-size: 16px; font-weight: 900; color: #1f2937;">${formatCurrency(totalFixed)}</span>
                 </div>
-                <div class="bg-stone-50 p-4 rounded-2xl border border-stone-200/60">
-                    <span class="block text-stone-400 font-bold uppercase tracking-wider text-[8px]">Dépenses (-)</span>
-                    <span class="text-base font-black text-stone-800">${formatCurrency(totalExpenses)}</span>
+                <div style="display: table-cell; width: 15px;"></div>
+                <div style="display: table-cell; padding: 15px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <span style="display: block; font-size: 9px; color: #9ca3af; text-transform: uppercase; font-weight: bold;">Dépenses (-)</span>
+                    <span style="font-size: 16px; font-weight: 900; color: #1f2937;">${formatCurrency(totalExpenses)}</span>
                 </div>
             </div>
             
-            <div class="p-6 rounded-3xl text-white mb-8 shadow-sm" style="${gradientStyle}">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <span class="text-xs font-bold opacity-80 uppercase tracking-wider">Bilan au ${new Date().toLocaleDateString("fr-FR")}</span>
-                        <h2 class="text-3xl font-black mt-1">${formatCurrency(remaining)}</h2>
-                    </div>
-                    <div class="text-right">
-                        <span class="px-3 py-1 bg-white/20 text-white font-black text-xs rounded-full border border-white/10">Clôturé</span>
-                    </div>
+            <div style="${gradientStyle} padding: 20px; border-radius: 12px; margin-bottom: 30px; display: table; width: 100%; box-sizing: border-box;">
+                <div style="display: table-cell; vertical-align: middle;">
+                    <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; opacity: 0.9;">Bilan au ${new Date().toLocaleDateString("fr-FR")}</span>
+                    <h2 style="font-size: 28px; font-weight: 900; margin: 5px 0 0 0;">${formatCurrency(remaining)}</h2>
                 </div>
             </div>
         `;
         
-        // 3. Expenses chronologically list
+        // 3. Dépenses (Historique)
         html += `
-            <div class="space-y-4">
-                <h3 class="text-base font-black text-stone-800 border-b border-stone-200 pb-2 mb-4">Détail des Dépenses</h3>
+            <div style="margin-bottom: 30px;">
+                <h3 style="font-size: 16px; font-weight: 900; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 15px;">Détail des Dépenses</h3>
         `;
         
         if (sortedKeys.length === 0) {
-            html += `<p class="text-center py-6 text-sm text-stone-400 font-bold">Aucune dépense enregistrée ce mois-ci.</p>`;
+            html += `<p style="text-align: center; color: #9ca3af; font-size: 12px; padding: 20px 0;">Aucune dépense enregistrée ce mois-ci.</p>`;
         } else {
             sortedKeys.forEach(key => {
                 const exps = groups[key];
@@ -3543,14 +3535,11 @@ function generateBudgetPDF() {
                 if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
                     const [year, month, day] = key.split("-").map(Number);
                     const dateObj = new Date(year, month - 1, day);
-                    
                     const [bYear, bMonth] = state.budgetMonth.split("-").map(Number);
-                    const budgetFirstDay = new Date(bYear, bMonth - 1, 1);
                     
                     const utcBudget = Date.UTC(bYear, bMonth - 1, 1);
                     const utcExpense = Date.UTC(year, month - 1, day);
-                    const diffTime = utcExpense - utcBudget;
-                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                    const diffDays = Math.round((utcExpense - utcBudget) / (1000 * 60 * 60 * 24));
                     
                     if (diffDays < 0) {
                         dayText = `${diffDays}`;
@@ -3570,27 +3559,25 @@ function generateBudgetPDF() {
                 }
                 
                 html += `
-                    <div style="page-break-inside: avoid;" class="mb-4 space-y-2">
-                        <div class="flex items-center gap-3 border-b border-stone-200 pb-1.5 mt-2">
-                            <div class="w-10 h-10 border border-stone-200 rounded-xl overflow-hidden flex flex-col text-center shadow-xs shrink-0 bg-white">
-                                <div style="${isNegative ? 'background: #f59e0b;' : isFem ? 'background: #db2777;' : 'background: #4f46e5;'}" class="text-[7px] font-black py-0.5 uppercase tracking-wider text-white">${monthText}</div>
-                                <div class="text-stone-800 text-xs font-black flex-1 flex items-center justify-center bg-stone-50">${dayText}</div>
-                            </div>
-                            <div class="text-xs font-bold text-stone-600 capitalize-first">${dateLong}</div>
+                    <div style="page-break-inside: avoid; margin-bottom: 15px;">
+                        <div style="border-bottom: 1px solid #f3f4f6; padding-bottom: 5px; margin-bottom: 5px;">
+                            <span style="font-weight: bold; font-size: 13px; color: #4b5563;">${dateLong}</span>
                         </div>
-                        <div class="divide-y divide-stone-100 pl-12">
+                        <div style="padding-left: 10px;">
                 `;
                 
                 exps.forEach(e => {
                     const isRefund = e.amount < 0;
                     const absAmt = Math.abs(e.amount);
-                    const amtColor = isRefund ? "color: #059669;" : "color: #dc2626;";
+                    const amtColor = isRefund ? "#059669" : "#dc2626";
                     const amtSign = isRefund ? "+" : "-";
                     
                     html += `
-                        <div class="flex justify-between items-center py-2 text-xs">
-                            <span class="text-stone-800 font-medium">${e.title}</span>
-                            <span class="font-black" style="${amtColor}">${amtSign} ${formatCurrency(absAmt)}</span>
+                        <div style="display: table; width: 100%; padding: 4px 0; font-size: 12px;">
+                            <div style="display: table-cell; color: #1f2937;">${e.title}</div>
+                            <div style="display: table-cell; text-align: right; font-weight: bold; color: ${amtColor}; width: 100px;">
+                                ${amtSign} ${formatCurrency(absAmt)}
+                            </div>
                         </div>
                     `;
                 });
@@ -3601,174 +3588,102 @@ function generateBudgetPDF() {
                 `;
             });
         }
+        html += `</div>`;
         
-        // 4. Budgets section (if any)
+        // 4. Enveloppes
         if (state.budgets && state.budgets.length > 0) {
             html += `
-                <div style="page-break-before: always;" class="pt-6">
-                    <h3 class="text-base font-black text-stone-800 border-b border-stone-200 pb-2 mb-6" style="font-family: 'Outfit', sans-serif;">Détail des Enveloppes Dédiées</h3>
+                <div style="page-break-before: always; padding-top: 20px;">
+                    <h3 style="font-size: 16px; font-weight: 900; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 20px;">Détail des Enveloppes</h3>
             `;
             
             state.budgets.forEach(budget => {
                 const isFriends = budget.subType === "friends";
                 
-                // Sum up active operations (new month)
                 const activeSpent = budget.expenses.filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
-                const activeRefunds = budget.expenses.filter(e => e.amount < 0 && !e.isCashDeposit).reduce((sum, e) => sum + Math.abs(e.amount), 0);
-                const activeExpenses = budget.expenses.filter(e => e.amount > 0 && !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
-                
-                // Sum up archived operations (from previous months)
                 const archivedSpent = (budget.archivedExpenses || []).filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
-                const archivedRefunds = (budget.archivedExpenses || []).filter(e => e.amount < 0 && !e.isCashDeposit).reduce((sum, e) => sum + Math.abs(e.amount), 0);
-                const archivedExpenses = (budget.archivedExpenses || []).filter(e => e.amount > 0 && !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
-                
-                // Total sums across all months
                 const totalSpent = activeSpent + archivedSpent;
-                const totalRefunds = activeRefunds + archivedRefunds;
-                const totalExpenses = activeExpenses + archivedExpenses;
-                
                 const origAlloc = budget.originalAllocated || budget.allocated;
                 
                 let displayAmount = 0;
-                let isOverdrawn = false;
                 let labelDisplay = "Disponible";
-                let labelAllocated = "Montant Alloué";
-                let labelSpent = "Total Dépensé";
+                let labelAllocated = "Alloué";
                 let allocatedVal = origAlloc;
                 let spentVal = totalSpent;
                 
                 if (isFriends) {
-                    const partUtilisateur = origAlloc + totalSpent;
-                    const totalAdvanced = origAlloc + totalExpenses;
-                    
-                    displayAmount = partUtilisateur;
-                    isOverdrawn = partUtilisateur > 0.009;
+                    const totalExpenses = budget.expenses.filter(e => e.amount > 0 && !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0) + 
+                                          (budget.archivedExpenses || []).filter(e => e.amount > 0 && !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
+                    displayAmount = origAlloc + totalSpent;
                     labelDisplay = "Part utilisateur";
-                    labelAllocated = "Montant Avancé";
-                    labelSpent = "Total Remboursé";
-                    allocatedVal = totalAdvanced;
-                    spentVal = totalRefunds;
+                    labelAllocated = "Avancé";
+                    allocatedVal = origAlloc + totalExpenses;
+                    spentVal = (budget.expenses.filter(e => e.amount < 0 && !e.isCashDeposit).reduce((sum, e) => sum + Math.abs(e.amount), 0)) + 
+                               ((budget.archivedExpenses || []).filter(e => e.amount < 0 && !e.isCashDeposit).reduce((sum, e) => sum + Math.abs(e.amount), 0));
                 } else {
-                    const remaining = origAlloc - totalSpent;
-                    displayAmount = remaining;
-                    isOverdrawn = remaining < 0;
-                    labelDisplay = "Disponible";
-                    labelAllocated = "Montant Alloué";
-                    labelSpent = "Total Dépensé";
-                    allocatedVal = origAlloc;
-                    spentVal = totalSpent;
+                    displayAmount = origAlloc - totalSpent;
                 }
                 
-                const fundingLabel = budget.type === "deducted" ? "Déduit du Reste à Vivre" : (isFriends ? "Espèces" : "Source Indépendante");
-                const statusLabel = budget.closed ? "🔒 Clôturée" : "🔓 Active";
-                const statusColor = budget.closed 
-                    ? "color: #dc2626; border-color: #fca5a5; background-color: #fef2f2;" 
-                    : "color: #059669; border-color: #a7f3d0; background-color: #ecfdf5;";
+                const fundingLabel = budget.type === "deducted" ? "Déduit" : (isFriends ? "Espèces" : "Indépendant");
+                const statusLabel = budget.closed ? "Clôturée" : "Active";
                 
                 html += `
-                    <div style="page-break-inside: avoid;" class="border border-stone-200 p-5 rounded-2xl bg-stone-50/40 mb-6 space-y-4">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h4 class="text-sm font-black text-stone-800 uppercase">${budget.title}</h4>
-                                <div class="flex gap-2 mt-1.5">
-                                    <span class="inline-block text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border border-stone-300 text-stone-600 bg-white">
-                                        ${fundingLabel}
-                                    </span>
-                                    <span class="inline-block text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${statusColor}">
-                                        ${statusLabel}
-                                    </span>
-                                </div>
+                    <div style="page-break-inside: avoid; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f9fafb;">
+                        <div style="display: table; width: 100%; margin-bottom: 10px;">
+                            <div style="display: table-cell;">
+                                <h4 style="font-size: 14px; font-weight: bold; margin: 0 0 5px 0; text-transform: uppercase;">${budget.title}</h4>
+                                <span style="font-size: 9px; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; color: #4b5563;">${fundingLabel} - ${statusLabel}</span>
                             </div>
-                            <div class="text-right">
-                                <span class="block text-[8px] font-bold uppercase tracking-wider text-stone-400 mb-1">${labelDisplay}</span>
-                                <span class="font-mono text-xs font-black px-2 py-0.5 rounded ${isOverdrawn ? 'text-red-600 bg-red-50' : 'text-emerald-700 bg-emerald-50'}">
-                                    ${formatCurrency(displayAmount)}
-                                </span>
+                            <div style="display: table-cell; text-align: right; vertical-align: top;">
+                                <span style="font-size: 9px; color: #9ca3af; text-transform: uppercase; display: block; margin-bottom: 2px;">${labelDisplay}</span>
+                                <span style="font-size: 14px; font-weight: bold; color: ${displayAmount < 0 ? '#dc2626' : '#059669'};">${formatCurrency(displayAmount)}</span>
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-4 text-xs border-t border-b border-stone-200/60 py-2">
-                            <div>
-                                <span class="block text-[8px] font-bold uppercase tracking-wider text-stone-400">${labelAllocated}</span>
-                                <span class="font-bold text-stone-800">${formatCurrency(allocatedVal)}</span>
+                        <div style="display: table; width: 100%; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 8px 0; margin-bottom: 10px; font-size: 11px;">
+                            <div style="display: table-cell; width: 50%;">
+                                <span style="color: #9ca3af;">${labelAllocated}:</span> <strong>${formatCurrency(allocatedVal)}</strong>
                             </div>
-                            <div>
-                                <span class="block text-[8px] font-bold uppercase tracking-wider text-stone-400">${labelSpent}</span>
-                                <span class="font-bold text-stone-800">${formatCurrency(spentVal)}</span>
+                            <div style="display: table-cell; width: 50%;">
+                                <span style="color: #9ca3af;">Dépensé:</span> <strong>${formatCurrency(spentVal)}</strong>
                             </div>
                         </div>
-                        
-                        <div class="space-y-1.5">
-                            <span class="block text-[9px] font-black uppercase tracking-wider text-stone-500">Opérations de l'Enveloppe</span>
                 `;
                 
                 let allOps = [];
                 if (isFriends) {
-                    allOps.push({
-                        id: "op_init_" + budget.id,
-                        title: "Dépense de départ",
-                        amount: origAlloc,
-                        date: budget.createdDate || (state.budgetMonth + "-01"),
-                        isCash: false,
-                        isInitialAdvance: true
-                    });
+                    allOps.push({ id: "op_init", title: "Dépense de départ", amount: origAlloc, date: budget.createdDate || "Initial", isCash: false });
                 }
-                allOps = [
-                    ...allOps,
-                    ...(budget.archivedExpenses || []),
-                    ...budget.expenses
-                ];
+                allOps = [...allOps, ...(budget.archivedExpenses || []), ...budget.expenses];
                 
-                if (allOps.length === 0) {
-                    html += `<div class="text-[10px] text-stone-400 font-bold italic py-1">Aucune opération enregistrée</div>`;
-                } else {
-                    html += `<div class="divide-y divide-stone-200/80 bg-white border border-stone-200 rounded-xl px-3 py-1">`;
+                if (allOps.length > 0) {
+                    html += `<div style="background: white; border: 1px solid #e5e7eb; padding: 5px 10px; border-radius: 4px;">`;
                     allOps.forEach(op => {
                         const isOpRefund = op.amount < 0;
-                        const absOpAmt = Math.abs(op.amount);
-                        const opAmtColor = isOpRefund ? "color: #059669;" : "color: #dc2626;";
-                        const opAmtSign = isOpRefund ? "+" : "-";
-                        
-                        let opDateDisplay = op.date || "";
-                        if (/^\d{4}-\d{2}-\d{2}$/.test(opDateDisplay)) {
-                            const [, m, d] = opDateDisplay.split("-");
-                            opDateDisplay = `${d}/${m}`;
-                        }
-                        
-                        const opArchivedBadge = op.isArchived 
-                            ? `<span style="font-size: 7px; font-weight: 800; background-color: #f5f5f4; color: #78716c; border: 1px solid #d6d3d1; padding: 1px 4px; border-radius: 4px; margin-right: 4px; text-transform: uppercase;">Mois préc.</span>`
-                            : '';
-                        
+                        const opAmtColor = isOpRefund ? "#059669" : "#dc2626";
                         html += `
-                            <div class="flex justify-between items-center py-2 text-[10px] ${op.isArchived ? 'opacity: 0.7;' : ''}">
-                                <div class="min-w-0 pr-2">
-                                    <span class="text-stone-700 font-semibold truncate block">${op.isCash ? '💵 ' : ''}${opArchivedBadge}${op.title}</span>
-                                    ${opDateDisplay ? `<span class="text-[8px] text-stone-400 font-bold block">${opDateDisplay}</span>` : ""}
+                            <div style="display: table; width: 100%; padding: 4px 0; font-size: 10px; border-bottom: 1px solid #f3f4f6;">
+                                <div style="display: table-cell; color: #4b5563;">${op.isCash ? '💵 ' : ''}${op.title}</div>
+                                <div style="display: table-cell; text-align: right; font-weight: bold; color: ${opAmtColor}; width: 80px;">
+                                    ${isOpRefund ? "+" : "-"} ${formatCurrency(Math.abs(op.amount))}
                                 </div>
-                                <span class="font-black shrink-0" style="${opAmtColor}">${opAmtSign} ${formatCurrency(absOpAmt)}</span>
                             </div>
                         `;
                     });
                     html += `</div>`;
+                } else {
+                    html += `<div style="font-size: 10px; color: #9ca3af; font-style: italic;">Aucune opération</div>`;
                 }
                 
-                html += `
-                        </div>
-                    </div>
-                `;
+                html += `</div>`;
             });
-            
-            html += `
-                </div>
-            `;
+            html += `</div>`;
         }
         
-        // 5. Footer info
+        // 5. Pied de page
         html += `
-            </div>
-            
-            <div class="pt-8 border-t border-stone-200 mt-12 text-center text-[10px] text-stone-400 font-bold uppercase tracking-widest">
-                BUDGET${userName} — Gestion Mensuelle — Généré le ${new Date().toLocaleDateString("fr-FR")}
+            <div style="margin-top: 40px; padding-top: 15px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 9px; color: #9ca3af; text-transform: uppercase;">
+                BUDGET${userName} — Généré le ${new Date().toLocaleDateString("fr-FR")}
             </div>
         `;
         
@@ -3777,30 +3692,21 @@ function generateBudgetPDF() {
         document.body.appendChild(wrapper);
         
         const opt = {
-            margin:       10,
-            filename:     `Bilan_Budget_${state.budgetMonth}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { 
+            margin: 10,
+            filename: `Bilan_Budget_${state.budgetMonth}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
                 scale: 2, 
                 useCORS: true, 
-                letterRendering: true,
-                scrollY: 0,
-                scrollX: 0,
-                width: 794,
-                windowWidth: 794,
-                onclone: (clonedDoc) => {
-                    const el = clonedDoc.getElementById("pdf_export_view");
-                    if (el && el.parentElement) {
-                        el.parentElement.style.left = "0px";
-                    }
-                }
+                logging: false,
+                width: 794 // Fixe la zone de capture
             },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak:    { mode: ['css', 'legacy'] }
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'] }
         };
         
         setTimeout(() => {
-            html2pdf().set(opt).from(exportTarget).toPdf().get('pdf').then(async (pdf) => {
+            html2pdf().set(opt).from(exportTarget).toPdf().get('pdf').then((pdf) => {
                 const totalPages = pdf.internal.getNumberOfPages();
                 for (let i = 1; i <= totalPages; i++) {
                     pdf.setPage(i);
@@ -3808,7 +3714,7 @@ function generateBudgetPDF() {
                     pdf.setTextColor(150);
                     const pageWidth = pdf.internal.pageSize.getWidth ? pdf.internal.pageSize.getWidth() : pdf.internal.pageSize.width;
                     const pageHeight = pdf.internal.pageSize.getHeight ? pdf.internal.pageSize.getHeight() : pdf.internal.pageSize.height;
-                    pdf.text(`Bilan Budget - Page ${i}/${totalPages}`, pageWidth - 15, pageHeight - 8, { align: 'right' });
+                    pdf.text(`Page ${i}/${totalPages}`, pageWidth - 15, pageHeight - 8, { align: 'right' });
                 }
             }).outputPdf('blob').then(async (blob) => {
                 const fileName = `Bilan_Budget_${state.budgetMonth}.pdf`;
