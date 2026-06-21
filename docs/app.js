@@ -3699,11 +3699,16 @@ function generateBudgetPDF() {
                 scale: 2, 
                 useCORS: true, 
                 logging: false,
-                width: 794 // Fixe la zone de capture
+                width: 794,
+                windowHeight: exportTarget.scrollHeight // <-- Force la capture sur toute la hauteur réelle
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'] }
         };
+        
+        // 2. Coupe temporairement le verrouillage du scroll pour libérer la capture
+        document.body.classList.remove("overflow-hidden");
+        document.documentElement.classList.remove("overflow-hidden");
         
         setTimeout(() => {
             html2pdf().set(opt).from(exportTarget).toPdf().get('pdf').then((pdf) => {
@@ -3716,6 +3721,7 @@ function generateBudgetPDF() {
                     const pageHeight = pdf.internal.pageSize.getHeight ? pdf.internal.pageSize.getHeight() : pdf.internal.pageSize.height;
                     pdf.text(`Page ${i}/${totalPages}`, pageWidth - 15, pageHeight - 8, { align: 'right' });
                 }
+                return pdf; // <-- INDISPENSABLE : Renvoie le PDF pour continuer la chaîne sans planter
             }).outputPdf('blob').then(async (blob) => {
                 const fileName = `Bilan_Budget_${state.budgetMonth}.pdf`;
                 await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
