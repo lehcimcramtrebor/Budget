@@ -6497,25 +6497,58 @@ function reexportArchiveToPDF(archive) {
     const measuredHeightMm = Math.ceil(tempDiv.offsetHeight * 0.264583) + 8;
     document.body.removeChild(tempDiv);
 
+    // Formatage propre du nom de fichier pour éviter les caractères spéciaux
+    const cleanTitle = archive.title.replace(/[^a-zA-Z0-9_\u00C0-\u017F\s-]/g, '').replace(/\s+/g, '_');
+    const safeFileName = `Ticket_${cleanTitle}.pdf`;
+
     const opt = {
         margin: [2, 2, 2, 2],
-        filename: `Reexport_${archive.id}.pdf`,
+        filename: safeFileName,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: [80, measuredHeightMm], orientation: 'portrait' }
     };
 
     html2pdf().set(opt).from(htmlString).toPdf().outputPdf('blob').then(async (blob) => {
-        const fileName = `Reexport_${archive.id}.pdf`;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const isNativeAPK = window.Capacitor && window.Capacitor.isNativePlatform();
+        const isMobileWebView = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.chrome;
+
+        // Branchement natif APK / Mobile
+        if (isNativeAPK || isMobileWebView) {
+            const fs = window.Capacitor?.Plugins?.Filesystem;
+            if (fs) {
+                try {
+                    const base64Data = await new Promise((res, rej) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => res(reader.result.split(',')[1]);
+                        reader.onerror = rej;
+                        reader.readAsDataURL(blob);
+                    });
+                    await fs.writeFile({ path: safeFileName, data: base64Data, directory: 'DOWNLOAD' });
+                    showGenericAlert("Succès", "Ticket PDF enregistré dans tes Téléchargements.", "✅");
+                } catch (err) {
+                    // Fallback sur le partage si l'écriture directe échoue
+                    await shareBlob(blob, safeFileName, `Ticket ${archive.title}`, `Ticket d'archive`);
+                }
+            } else {
+                await shareBlob(blob, safeFileName, `Ticket ${archive.title}`, `Ticket d'archive`);
+            }
+        } else {
+            // Branchement Navigateur Web Classique
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = safeFileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
         triggerHaptic('success');
+    }).catch(err => {
+        console.error("Erreur génération PDF:", err);
+        showGenericAlert("Erreur PDF", "Impossible de générer le document.", "❌");
+        triggerHaptic('error');
     });
 }
 
