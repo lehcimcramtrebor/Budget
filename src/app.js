@@ -3418,7 +3418,7 @@ function generateBudgetPDF() {
         // Calculs officiels directs depuis le state de l'application
         const { totalRevenues, totalFixed, totalExpenses, remaining } = calculateTotals();
         
-        // Groupement des dépenses de l'historique principal par date
+        // Groupement des denses de l'historique principal par date
         const groups = {};
         state.expenses.forEach(e => {
             const key = e.date || "Sans date";
@@ -3593,7 +3593,7 @@ function generateBudgetPDF() {
                 scale: 2, 
                 useCORS: true, 
                 logging: false,
-                scrollY: 0, // Force le rendu au repère 0 du conteneur virtuel (indépendant du scroll écran)
+                scrollY: 0,
                 scrollX: 0
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
@@ -3614,9 +3614,21 @@ function generateBudgetPDF() {
                 pdf.text(`Page ${i}/${totalPages}`, pageWidth - 15, pageHeight - 10, { align: 'right' });
             }
             return pdf;
-        }).outputPdf('blob').then(async (blob) => {
+        }).outputPdf('blob').then((blob) => {
             const fileName = `Bilan_Budget_${state.budgetMonth}.pdf`;
-            await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
+            
+            // MÉTHODE DE TÉLÉCHARGEMENT DIRECT SANS PERTE DE FOCUS
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Nettoyage immédiat de la mémoire et du DOM
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
             document.body.classList.add("overflow-x-hidden");
             resolve();
         }).catch(err => {
