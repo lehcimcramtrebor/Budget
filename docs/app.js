@@ -3418,7 +3418,7 @@ function generateBudgetPDF() {
         // Calculs officiels directs depuis le state de l'application
         const { totalRevenues, totalFixed, totalExpenses, remaining } = calculateTotals();
         
-        // Groupement des denses de l'historique principal par date
+        // Groupement des dépenses de l'historique principal par date
         const groups = {};
         state.expenses.forEach(e => {
             const key = e.date || "Sans date";
@@ -3614,20 +3614,46 @@ function generateBudgetPDF() {
                 pdf.text(`Page ${i}/${totalPages}`, pageWidth - 15, pageHeight - 10, { align: 'right' });
             }
             return pdf;
-        }).outputPdf('blob').then((blob) => {
+        }).outputPdf('blob').then(async (blob) => {
             const fileName = `Bilan_Budget_${state.budgetMonth}.pdf`;
             
-            // MÉTHODE DE TÉLÉCHARGEMENT DIRECT SANS PERTE DE FOCUS
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            
-            // Nettoyage immédiat de la mémoire et du DOM
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // Détection si l'environnement est une APK / WebView Mobile
+            const isNativeAPK = window.Capacitor && window.Capacitor.isNativePlatform();
+            const isMobileWebView = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.chrome;
+
+            if (isNativeAPK || isMobileWebView) {
+                // Tenter une sauvegarde en tâche de fond si le plugin Filesystem de Capacitor est là
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
+                    try {
+                        const reader = new FileReader();
+                        reader.onloadend = async () => {
+                            const base64Data = reader.result.split(',')[1];
+                            await window.Capacitor.Plugins.Filesystem.writeFile({
+                                path: fileName,
+                                data: base64Data,
+                                directory: 'DOWNLOAD'
+                            });
+                        };
+                        reader.readAsDataURL(blob);
+                    } catch (err) {
+                        // Repli de secours sur l'API Share si le stockage plante
+                        await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
+                    }
+                } else {
+                    // Si pas de plugin natif installé dans ton APK, le partage reste obligatoire pour éviter le clic dans le vide
+                    await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
+                }
+            } else {
+                // Comportement standard et propre pour le navigateur PC
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
             
             document.body.classList.add("overflow-x-hidden");
             resolve();
