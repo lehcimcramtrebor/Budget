@@ -3584,7 +3584,6 @@ function generateBudgetPDF() {
         
         htmlString += `</div>`;
         
-        // Options html2pdf avec blocage strict des coordonnées de scroll
         const opt = {
             margin: 15,
             filename: `Bilan_Budget_${state.budgetMonth}.pdf`,
@@ -3623,8 +3622,8 @@ function generateBudgetPDF() {
             if (isNativeAPK || isMobileWebView) {
                 const fs = window.Capacitor?.Plugins?.Filesystem;
                 if (fs) {
+                    // Première tentative : écriture directe
                     try {
-                        // Promisification propre de la conversion de fichier pour intercepter l'erreur
                         const base64Data = await new Promise((res, rej) => {
                             const reader = new FileReader();
                             reader.onloadend = () => res(reader.result.split(',')[1]);
@@ -3637,16 +3636,42 @@ function generateBudgetPDF() {
                             data: base64Data,
                             directory: 'DOWNLOAD'
                         });
-                    } catch (err) {
-                        // Secours immédiat sur l'API Share si l'écriture plante (droits d'accès ou répertoire absent)
-                        await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
+
+                        alert("PDF enregistré dans tes Téléchargements.");
+                        document.body.classList.add("overflow-x-hidden");
+                        resolve();
+                        return;
+                    } catch (writeErr) {
+                        // Deuxième tentative : Si échec, on demande les permissions et on réessaie
+                        try {
+                            await fs.requestPermissions();
+                            const base64Data = await new Promise((res, rej) => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => res(reader.result.split(',')[1]);
+                                reader.onerror = rej;
+                                reader.readAsDataURL(blob);
+                            });
+
+                            await fs.writeFile({
+                                path: fileName,
+                                data: base64Data,
+                                directory: 'DOWNLOAD'
+                            });
+
+                            alert("PDF enregistré dans tes Téléchargements.");
+                            document.body.classList.add("overflow-x-hidden");
+                            resolve();
+                            return;
+                        } catch (permErr) {
+                            // Si tout échoue (permissions refusées), sécurité absolue : on bascule sur le partage natif
+                            await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
+                        }
                     }
                 } else {
-                    // Fallback direct si le plugin n'est pas encore détecté
                     await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
                 }
             } else {
-                // PC Navigateur classique
+                // Mode PC Navigateur classique
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
