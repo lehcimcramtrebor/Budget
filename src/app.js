@@ -3415,13 +3415,10 @@ function generateBudgetPDF() {
         const userName = state.settings.username ? state.settings.username.toUpperCase() : "HMR";
         const monthLabel = formatYearMonthFrench(state.budgetMonth);
         
-        // Calcul des totaux
-        const totalRevenues = state.revenues.reduce((sum, r) => sum + r.amount, 0);
-        const totalFixed = state.fixedCharges.reduce((sum, c) => sum + c.amount, 0);
-        const totalExpenses = state.expenses.reduce((sum, e) => sum + e.amount, 0);
-        const remaining = totalRevenues - totalFixed - totalExpenses;
+        // Calculs officiels directs depuis le state de l'application
+        const { totalRevenues, totalFixed, totalExpenses, remaining } = calculateTotals();
         
-        // Groupement des dépenses
+        // Groupement des dépenses de l'historique principal par date
         const groups = {};
         state.expenses.forEach(e => {
             const key = e.date || "Sans date";
@@ -3440,300 +3437,192 @@ function generateBudgetPDF() {
         };
         const sortedKeys = Object.keys(groups).sort((a, b) => getTimestamp(a) - getTimestamp(b));
         
-        // Conteneur temporaire
-        const wrapper = document.createElement("div");
-        wrapper.id = "pdf_wrapper";
-        wrapper.style.position = "absolute";
-        wrapper.style.top = "0px";
-        wrapper.style.left = "0px";
-        wrapper.style.width = "794px";
-        wrapper.style.zIndex = "-9999";
+        // Configuration de la largeur fixe du ticket (56 caractères)
+        const maxLen = 56;
+        const padLine = (left, right) => {
+            let lStr = String(left);
+            const rStr = String(right);
+            if (lStr.length + rStr.length + 1 > maxLen) {
+                lStr = lStr.substring(0, maxLen - rStr.length - 2) + "…";
+            }
+            const dots = maxLen - lStr.length - rStr.length;
+            return lStr + ".".repeat(dots > 0 ? dots : 1) + rStr;
+        };
         
-        document.body.classList.remove("overflow-x-hidden");
+        const makeSep = (char = "=") => char.repeat(maxLen);
         
-        const exportTarget = document.createElement("div");
-        exportTarget.id = "pdf_export_view";
-        // Style global forcé pour le PDF A4
-        exportTarget.style.width = "794px";
-        exportTarget.style.backgroundColor = "#ffffff";
-        exportTarget.style.color = "#1c1917";
-        exportTarget.style.padding = "40px";
-        exportTarget.style.fontFamily = "Arial, sans-serif";
+        let htmlString = `<div style="width: 640px; font-family: monospace; font-size: 11pt; color: #000000; background: #ffffff; padding: 20px; box-sizing: border-box; margin: 0 auto;">`;
         
-        const threshold = typeof state.settings.warningThreshold === 'number' ? state.settings.warningThreshold : 150;
-        let gradientStyle = "";
-        if (remaining < 0) {
-            gradientStyle = "background: #dc2626; color: white;";
-        } else if (remaining < threshold) {
-            gradientStyle = "background: #d97706; color: white;";
+        // --- 1. EN-TÊTE & RÉSUMÉ COMPTABLE ---
+        let mainTx = "";
+        mainTx += `BUDGET ${userName}\n`;
+        mainTx += `PERIODE : ${monthLabel.toUpperCase()}\n`;
+        mainTx += `DATE    : ${new Date().toLocaleDateString("fr-FR")} - ${new Date().toLocaleTimeString("fr-FR", {hour: '2-digit', minute:'2-digit'})}\n`;
+        mainTx += makeSep("=") + "\n";
+        mainTx += `RESUME COMPTABLE\n`;
+        mainTx += makeSep("=") + "\n";
+        mainTx += padLine("TOTAL REVENUS (+)", formatCurrency(totalRevenues)) + "\n";
+        mainTx += padLine("TOTAL FRAIS FIXES (-)", formatCurrency(totalFixed)) + "\n";
+        mainTx += padLine("TOTAL DEPENSES (-)", formatCurrency(totalExpenses)) + "\n";
+        mainTx += makeSep("-") + "\n";
+        mainTx += padLine("RESTE A VIVRE NET", formatCurrency(remaining)) + "\n";
+        mainTx += makeSep("=") + "\n\n";
+        
+        // --- 2. DÉTAIL DES REVENUS ---
+        mainTx += `DETAIL DES REVENUS\n`;
+        mainTx += makeSep("-") + "\n";
+        if (!state.revenues || state.revenues.length === 0) {
+            mainTx += `[Aucun revenu enregistré]\n`;
         } else {
-            gradientStyle = "background: #0d9488; color: white;";
+            state.revenues.forEach(r => {
+                mainTx += padLine(` • ${r.title}`, formatCurrency(r.amount)) + "\n";
+            });
         }
+        mainTx += "\n";
         
-        const isFem = state.settings.genderTheme === "feminin";
-        const textBrandColor = isFem ? "#db2777" : "#4f46e5";
+        // --- 3. DÉTAIL DES FRAIS FIXES ---
+        mainTx += `DETAIL DES FRAIS FIXES\n`;
+        mainTx += makeSep("-") + "\n";
+        if (!state.fixedCharges || state.fixedCharges.length === 0) {
+            mainTx += `[Aucun frais fixe enregistré]\n`;
+        } else {
+            state.fixedCharges.forEach(c => {
+                mainTx += padLine(` • ${c.title}`, formatCurrency(c.amount)) + "\n";
+            });
+        }
+        mainTx += "\n";
         
-        // 1. En-tête
-        let html = `
-            <div style="border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 25px; display: table; width: 100%;">
-                <div style="display: table-cell; vertical-align: bottom;">
-                    <h1 style="font-size: 28px; font-weight: 900; margin: 0;">
-                        BUDGET<span style="color: ${textBrandColor};">${userName}</span>
-                    </h1>
-                    <p style="font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Gestion Mensuelle</p>
-                </div>
-                <div style="display: table-cell; vertical-align: bottom; text-align: right;">
-                    <h2 style="font-size: 11px; color: #9ca3af; text-transform: uppercase; margin: 0 0 5px 0;">Bilan Comptable Personnel</h2>
-                    <p style="font-size: 16px; font-weight: bold; color: ${textBrandColor}; margin: 0;">${monthLabel}</p>
-                </div>
-            </div>
-        `;
+        // --- 4. HISTORIQUE DES OPÉRATIONS PRINCIPALES ---
+        mainTx += `DETAIL DES OPERATIONS\n`;
+        mainTx += makeSep("=") + "\n";
         
-        // 2. Résumé
-        html += `
-            <div style="display: table; width: 100%; margin-bottom: 20px; table-layout: fixed;">
-                <div style="display: table-cell; padding: 15px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
-                    <span style="display: block; font-size: 9px; color: #9ca3af; text-transform: uppercase; font-weight: bold;">Revenus (+)</span>
-                    <span style="font-size: 16px; font-weight: 900; color: #1f2937;">${formatCurrency(totalRevenues)}</span>
-                </div>
-                <div style="display: table-cell; width: 15px;"></div>
-                <div style="display: table-cell; padding: 15px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
-                    <span style="display: block; font-size: 9px; color: #9ca3af; text-transform: uppercase; font-weight: bold;">Frais Fixes (-)</span>
-                    <span style="font-size: 16px; font-weight: 900; color: #1f2937;">${formatCurrency(totalFixed)}</span>
-                </div>
-                <div style="display: table-cell; width: 15px;"></div>
-                <div style="display: table-cell; padding: 15px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
-                    <span style="display: block; font-size: 9px; color: #9ca3af; text-transform: uppercase; font-weight: bold;">Dépenses (-)</span>
-                    <span style="font-size: 16px; font-weight: 900; color: #1f2937;">${formatCurrency(totalExpenses)}</span>
-                </div>
-            </div>
-            
-            <div style="${gradientStyle} padding: 20px; border-radius: 12px; margin-bottom: 30px; display: table; width: 100%; box-sizing: border-box;">
-                <div style="display: table-cell; vertical-align: middle;">
-                    <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; opacity: 0.9;">Bilan au ${new Date().toLocaleDateString("fr-FR")}</span>
-                    <h2 style="font-size: 28px; font-weight: 900; margin: 5px 0 0 0;">${formatCurrency(remaining)}</h2>
-                </div>
-            </div>
-        `;
-        
-        // 3. Dépenses (Historique)
-        html += `
-            <div style="margin-bottom: 30px;">
-                <h3 style="font-size: 16px; font-weight: 900; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 15px;">Détail des Dépenses</h3>
-        `;
+        htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000;">${mainTx}</pre>`;
         
         if (sortedKeys.length === 0) {
-            html += `<p style="text-align: center; color: #9ca3af; font-size: 12px; padding: 20px 0;">Aucune dépense enregistrée ce mois-ci.</p>`;
+            htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; color: #000000;">[Aucune opération enregistrée]\n</pre>`;
         } else {
             sortedKeys.forEach(key => {
-                const exps = groups[key];
-                let dayText = "";
-                let monthText = "";
                 let dateLong = key;
-                let isNegative = false;
-                
                 if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
                     const [year, month, day] = key.split("-").map(Number);
                     const dateObj = new Date(year, month - 1, day);
-                    const [bYear, bMonth] = state.budgetMonth.split("-").map(Number);
-                    
-                    const utcBudget = Date.UTC(bYear, bMonth - 1, 1);
-                    const utcExpense = Date.UTC(year, month - 1, day);
-                    const diffDays = Math.round((utcExpense - utcBudget) / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays < 0) {
-                        dayText = `${diffDays}`;
-                        monthText = "Ant.";
-                        dateLong = `Dépense anticipée (${dateObj.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })})`;
-                        isNegative = true;
-                    } else {
-                        dayText = `${day}`;
-                        monthText = dateObj.toLocaleDateString("fr-FR", { month: "short" }).replace('.', '');
-                        dateLong = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-                        dateLong = dateLong.charAt(0).toUpperCase() + dateLong.slice(1);
-                    }
-                } else {
-                    dayText = key.split(" ")[0] || "?";
-                    monthText = key.split(" ")[1] || "Mois";
-                    dateLong = key;
+                    dateLong = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+                    dateLong = dateLong.charAt(0).toUpperCase() + dateLong.slice(1);
                 }
                 
-                html += `
-                    <div style="page-break-inside: avoid; margin-bottom: 15px;">
-                        <div style="border-bottom: 1px solid #f3f4f6; padding-bottom: 5px; margin-bottom: 5px;">
-                            <span style="font-weight: bold; font-size: 13px; color: #4b5563;">${dateLong}</span>
-                        </div>
-                        <div style="padding-left: 10px;">
-                `;
-                
-                exps.forEach(e => {
-                    const isRefund = e.amount < 0;
-                    const absAmt = Math.abs(e.amount);
-                    const amtColor = isRefund ? "#059669" : "#dc2626";
-                    const amtSign = isRefund ? "+" : "-";
+                let dayText = `${dateLong.toUpperCase()}\n` + makeSep("-") + "\n";
+                groups[key].forEach(e => {
+                    const isRefund = e.amount < 0 || e.isCashDepositPending;
+                    const absAmt = e.isCashDepositPending ? (e.originalCashAmount || Math.abs(e.amount)) : Math.abs(e.amount);
+                    const sign = isRefund ? "+" : "-";
+                    const formattedAmt = `${sign} ${absAmt.toFixed(2).replace('.', ',')} €`;
+                    const titleStr = e.isBudgetReference ? (e.isCashDepositPending ? `[CASH] ${e.title}` : `[ENV] ${e.title}`) : e.title;
                     
-                    html += `
-                        <div style="display: table; width: 100%; padding: 4px 0; font-size: 12px;">
-                            <div style="display: table-cell; color: #1f2937;">${e.title}</div>
-                            <div style="display: table-cell; text-align: right; font-weight: bold; color: ${amtColor}; width: 100px;">
-                                ${amtSign} ${formatCurrency(absAmt)}
-                            </div>
-                        </div>
-                    `;
+                    dayText += padLine(` • ${titleStr}`, formattedAmt) + "\n";
                 });
+                dayText += "\n";
                 
-                html += `
-                        </div>
-                    </div>
-                `;
+                htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000; page-break-inside: avoid; break-inside: avoid;">${dayText}</pre>`;
             });
         }
-        html += `</div>`;
         
-        // 4. Enveloppes
+        // --- 5. SUIVI DE TOUTES LES ENVELOPPES (ACTIVES + CLÔTURÉES) ---
         if (state.budgets && state.budgets.length > 0) {
-            html += `
-                <div style="page-break-before: always; padding-top: 20px;">
-                    <h3 style="font-size: 16px; font-weight: 900; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 20px;">Détail des Enveloppes</h3>
-            `;
+            let envHeader = makeSep("=") + "\n";
+            envHeader += `SUIVI DES ENVELOPPES DEDIEES\n`;
+            envHeader += makeSep("=") + "\n";
+            
+            htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000; page-break-before: always; break-before: page;">${envHeader}</pre>`;
             
             state.budgets.forEach(budget => {
                 const isFriends = budget.subType === "friends";
-                
                 const activeSpent = budget.expenses.filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
                 const archivedSpent = (budget.archivedExpenses || []).filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
                 const totalSpent = activeSpent + archivedSpent;
                 const origAlloc = budget.originalAllocated || budget.allocated;
                 
-                let displayAmount = 0;
-                let labelDisplay = "Disponible";
-                let labelAllocated = "Alloué";
-                let allocatedVal = origAlloc;
-                let spentVal = totalSpent;
+                let displayAmount = isFriends ? (origAlloc + totalSpent) : (origAlloc - totalSpent);
+                let labelDisplay = isFriends ? "PART UTILISATEUR" : "SOLDE DISPONIBLE";
+                const statusLabel = budget.closed ? "CLOTUREE" : "ACTIVE";
                 
-                if (isFriends) {
-                    const totalExpenses = budget.expenses.filter(e => e.amount > 0 && !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0) + 
-                                          (budget.archivedExpenses || []).filter(e => e.amount > 0 && !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
-                    displayAmount = origAlloc + totalSpent;
-                    labelDisplay = "Part utilisateur";
-                    labelAllocated = "Avancé";
-                    allocatedVal = origAlloc + totalExpenses;
-                    spentVal = (budget.expenses.filter(e => e.amount < 0 && !e.isCashDeposit).reduce((sum, e) => sum + Math.abs(e.amount), 0)) + 
-                               ((budget.archivedExpenses || []).filter(e => e.amount < 0 && !e.isCashDeposit).reduce((sum, e) => sum + Math.abs(e.amount), 0));
-                } else {
-                    displayAmount = origAlloc - totalSpent;
-                }
-                
-                const fundingLabel = budget.type === "deducted" ? "Déduit" : (isFriends ? "Espèces" : "Indépendant");
-                const statusLabel = budget.closed ? "Clôturée" : "Active";
-                
-                html += `
-                    <div style="page-break-inside: avoid; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f9fafb;">
-                        <div style="display: table; width: 100%; margin-bottom: 10px;">
-                            <div style="display: table-cell;">
-                                <h4 style="font-size: 14px; font-weight: bold; margin: 0 0 5px 0; text-transform: uppercase;">${budget.title}</h4>
-                                <span style="font-size: 9px; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; color: #4b5563;">${fundingLabel} - ${statusLabel}</span>
-                            </div>
-                            <div style="display: table-cell; text-align: right; vertical-align: top;">
-                                <span style="font-size: 9px; color: #9ca3af; text-transform: uppercase; display: block; margin-bottom: 2px;">${labelDisplay}</span>
-                                <span style="font-size: 14px; font-weight: bold; color: ${displayAmount < 0 ? '#dc2626' : '#059669'};">${formatCurrency(displayAmount)}</span>
-                            </div>
-                        </div>
-                        
-                        <div style="display: table; width: 100%; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 8px 0; margin-bottom: 10px; font-size: 11px;">
-                            <div style="display: table-cell; width: 50%;">
-                                <span style="color: #9ca3af;">${labelAllocated}:</span> <strong>${formatCurrency(allocatedVal)}</strong>
-                            </div>
-                            <div style="display: table-cell; width: 50%;">
-                                <span style="color: #9ca3af;">Dépensé:</span> <strong>${formatCurrency(spentVal)}</strong>
-                            </div>
-                        </div>
-                `;
+                let envText = `>>> ENVELOPPE : ${budget.title.toUpperCase()} [${statusLabel}]\n`;
+                envText += padLine("  Montant alloué initial", formatCurrency(origAlloc)) + "\n";
+                envText += padLine(`  ${labelDisplay}`, formatCurrency(displayAmount)) + "\n";
+                envText += `  Détail des mouvements :\n`;
                 
                 let allOps = [];
                 if (isFriends) {
-                    allOps.push({ id: "op_init", title: "Dépense de départ", amount: origAlloc, date: budget.createdDate || "Initial", isCash: false });
+                    allOps.push({ title: "Dépense de départ", amount: origAlloc, isCash: false, isArchived: false });
                 }
                 allOps = [...allOps, ...(budget.archivedExpenses || []), ...budget.expenses];
                 
                 if (allOps.length > 0) {
-                    html += `<div style="background: white; border: 1px solid #e5e7eb; padding: 5px 10px; border-radius: 4px;">`;
                     allOps.forEach(op => {
                         const isOpRefund = op.amount < 0;
-                        const opAmtColor = isOpRefund ? "#059669" : "#dc2626";
-                        html += `
-                            <div style="display: table; width: 100%; padding: 4px 0; font-size: 10px; border-bottom: 1px solid #f3f4f6;">
-                                <div style="display: table-cell; color: #4b5563;">${op.isCash ? '💵 ' : ''}${op.title}</div>
-                                <div style="display: table-cell; text-align: right; font-weight: bold; color: ${opAmtColor}; width: 80px;">
-                                    ${isOpRefund ? "+" : "-"} ${formatCurrency(Math.abs(op.amount))}
-                                </div>
-                            </div>
-                        `;
+                        const opSign = isOpRefund ? "+" : "-";
+                        const formattedOpAmt = `${opSign} ${Math.abs(op.amount).toFixed(2).replace('.', ',')} €`;
+                        const prefix = op.isCash ? "   [CASH] " : "   • ";
+                        const archLabel = op.isArchived ? " (PREC)" : "";
+                        
+                        envText += padLine(`${prefix}${op.title}${archLabel}`, formattedOpAmt) + "\n";
                     });
-                    html += `</div>`;
                 } else {
-                    html += `<div style="font-size: 10px; color: #9ca3af; font-style: italic;">Aucune opération</div>`;
+                    envText += `   [Aucun mouvement enregistré]\n`;
                 }
+                envText += makeSep("-") + "\n\n";
                 
-                html += `</div>`;
+                htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000; page-break-inside: avoid; break-inside: avoid;">${envText}</pre>`;
             });
-            html += `</div>`;
         }
         
-        // 5. Pied de page
-        html += `
-            <div style="margin-top: 40px; padding-top: 15px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 9px; color: #9ca3af; text-transform: uppercase;">
-                BUDGET${userName} — Généré le ${new Date().toLocaleDateString("fr-FR")}
-            </div>
-        `;
+        // --- 6. PIED DE TICKET ---
+        let footerText = makeSep("=") + "\n";
+        footerText += `FIN DE TICKET — MERCI\n`;
+        footerText += makeSep("=") + "\n";
         
-        exportTarget.innerHTML = html;
-        wrapper.appendChild(exportTarget);
-        document.body.appendChild(wrapper);
+        htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000; page-break-inside: avoid; break-inside: avoid;">${footerText}</pre>`;
         
+        htmlString += `</div>`;
+        
+        // Options html2pdf avec blocage strict des coordonnées de scroll
         const opt = {
-            margin: 10,
+            margin: 15,
             filename: `Bilan_Budget_${state.budgetMonth}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
                 scale: 2, 
                 useCORS: true, 
                 logging: false,
-                width: 794,
-                windowHeight: exportTarget.scrollHeight // <-- Force la capture sur toute la hauteur réelle
+                scrollY: 0, // Force le rendu au repère 0 du conteneur virtuel (indépendant du scroll écran)
+                scrollX: 0
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'] }
         };
         
-        // 2. Coupe temporairement le verrouillage du scroll pour libérer la capture
         document.body.classList.remove("overflow-hidden");
         document.documentElement.classList.remove("overflow-hidden");
         
-        setTimeout(() => {
-            html2pdf().set(opt).from(exportTarget).toPdf().get('pdf').then((pdf) => {
-                const totalPages = pdf.internal.getNumberOfPages();
-                for (let i = 1; i <= totalPages; i++) {
-                    pdf.setPage(i);
-                    pdf.setFontSize(7);
-                    pdf.setTextColor(150);
-                    const pageWidth = pdf.internal.pageSize.getWidth ? pdf.internal.pageSize.getWidth() : pdf.internal.pageSize.width;
-                    const pageHeight = pdf.internal.pageSize.getHeight ? pdf.internal.pageSize.getHeight() : pdf.internal.pageSize.height;
-                    pdf.text(`Page ${i}/${totalPages}`, pageWidth - 15, pageHeight - 8, { align: 'right' });
-                }
-                return pdf; // <-- INDISPENSABLE : Renvoie le PDF pour continuer la chaîne sans planter
-            }).outputPdf('blob').then(async (blob) => {
-                const fileName = `Bilan_Budget_${state.budgetMonth}.pdf`;
-                await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
-                wrapper.remove();
-                document.body.classList.add("overflow-x-hidden");
-                resolve();
-            }).catch(err => {
-                wrapper.remove();
-                document.body.classList.add("overflow-x-hidden");
-                reject(err);
-            });
-        }, 500);
+        html2pdf().set(opt).from(htmlString).toPdf().get('pdf').then((pdf) => {
+            const totalPages = pdf.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(8);
+                pdf.setTextColor(120);
+                const pageWidth = pdf.internal.pageSize.getWidth ? pdf.internal.pageSize.getWidth() : pdf.internal.pageSize.width;
+                const pageHeight = pdf.internal.pageSize.getHeight ? pdf.internal.pageSize.getHeight() : pdf.internal.pageSize.height;
+                pdf.text(`Page ${i}/${totalPages}`, pageWidth - 15, pageHeight - 10, { align: 'right' });
+            }
+            return pdf;
+        }).outputPdf('blob').then(async (blob) => {
+            const fileName = `Bilan_Budget_${state.budgetMonth}.pdf`;
+            await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
+            document.body.classList.add("overflow-x-hidden");
+            resolve();
+        }).catch(err => {
+            document.body.classList.add("overflow-x-hidden");
+            reject(err);
+        });
     });
 }
 
