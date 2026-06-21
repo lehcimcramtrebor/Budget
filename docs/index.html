@@ -879,19 +879,7 @@
         </div>
 
         <!-- STEP 1: PDF Export Proposal -->
-        <div id="renewal_step_1" class="space-y-4 text-center">
-            <div class="text-3xl">📊</div>
-            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display">Exporter votre bilan ?</h3>
-            <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">Souhaitez-vous générer et enregistrer un bilan PDF complet de vos dépenses pour le mois de <strong id="renewal_pdf_month_name">...</strong> avant de renouveler la période ?</p>
-            <div class="grid grid-cols-1 gap-2 pt-2">
-                <button onclick="renewalExportPDF()" class="py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md">
-                    <span>📥</span> Oui, générer le bilan PDF
-                </button>
-                <button onclick="goToRenewalStep2()" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95 transition-all">
-                    Non, continuer sans PDF
-                </button>
-            </div>
-        </div>
+		<div id="renewal_step_1" class="hidden"></div>
         
         <!-- STEP 2: Option Selection -->
         <div id="renewal_step_2" class="space-y-4 hidden text-center">
@@ -1139,7 +1127,6 @@
         </div>
         
         <div class="space-y-6 overflow-y-auto px-1 -mx-1 hide-scrollbar">
-            <!-- Username settings -->
             <div class="space-y-3">
                 <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Préférences</h4>
                 <div>
@@ -1175,7 +1162,6 @@
 
             <hr class="border-stone-200 dark:border-stone-800" />
 
-            <!-- Sécurité & Protection -->
             <div class="space-y-3">
                 <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Sécurité des Données</h4>
                 <div id="storage_status_card" class="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200/40 dark:border-stone-800/40 flex flex-col gap-2">
@@ -1194,11 +1180,9 @@
 
             <hr class="border-stone-200 dark:border-stone-800" />
 
-            <!-- Certification & Guide -->
             <div class="space-y-3">
                 <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Certification & Aide</h4>
                 
-                <!-- Certified Badge Display -->
                 <div id="settings_certification_badge_container" class="hidden p-3 bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/20 rounded-xl flex items-center gap-3 select-none">
                     <span class="text-2xl animate-bounce">🛡️</span>
                     <div>
@@ -1219,7 +1203,14 @@
 
             <hr class="border-stone-200 dark:border-stone-800" />
 
-            <!-- Backup & Restore -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Archives des Tickets</h4>
+                <div id="settings_archives_container" class="space-y-2 max-h-36 overflow-y-auto pr-1 hide-scrollbar font-semibold text-xs text-stone-500">
+                    </div>
+            </div>
+
+            <hr class="border-stone-200 dark:border-stone-800" />
+
             <div class="space-y-3">
                 <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Sauvegarde & Restauration</h4>
                 <button onclick="quickExportJSON()" class="w-full py-2.5 px-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-sm">
@@ -1237,7 +1228,6 @@
 
             <hr class="border-stone-200 dark:border-stone-800" />
 
-            <!-- Version & Dev Contact Footer -->
             <div class="flex flex-col items-center justify-center text-center space-y-2 pt-2 pb-1 text-[10px] font-semibold text-stone-400 dark:text-stone-500">
                 <div id="footer_links_row" class="flex items-center gap-3">
                     <a href="mailto:lehcimcramtrebor.ztriw@gmail.com?subject=BUDGET%20PWA" class="hover:text-brand-500 transition-colors flex items-center gap-1 select-none">
@@ -1332,13 +1322,13 @@
 <!-- VALIDATION SUCCESS OVERLAY -->
 <div id="validation_success_overlay" class="fixed inset-0 flex flex-col items-center justify-center bg-stone-950/40 backdrop-blur-sm z-[200] hidden opacity-0 transition-opacity duration-300 pointer-events-none">
     <div class="glass-card flex flex-col items-center justify-center p-8 space-y-4 transform scale-95 transition-transform duration-300">
-        <!-- Big green checkmark circle -->
         <div class="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg animate-bounce">
             <svg class="w-12 h-12 stroke-[4] stroke-white fill-none" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
             </svg>
         </div>
         <span class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest font-display">Enregistré !</span>
+        <p id="success_overlay_desc" class="text-[11px] text-stone-500 dark:text-stone-400 font-bold text-center mt-1 max-w-[220px] hidden leading-normal"></p>
     </div>
 </div>
 
@@ -1734,6 +1724,22 @@
             <button onclick="closeVersionUpdateModal()" class="w-full py-3 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-2xl font-bold text-xs active:scale-95 transition-all border border-stone-200 dark:border-stone-700 shadow-sm">
                 Fermer
             </button>
+        </div>
+    </div>
+</div>
+
+<div id="view_archive_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col space-y-4 max-h-[85vh]">
+        <div class="flex justify-between items-center pb-2 border-b border-stone-200 dark:border-stone-800">
+            <h3 class="text-xs font-black text-stone-800 dark:text-stone-100 uppercase tracking-wider">Consulter l'archive</h3>
+            <button onclick="closeArchiveModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center text-xs shadow-sm">✕</button>
+        </div>
+        <div class="overflow-y-auto bg-white p-3 rounded-xl border border-stone-200 text-left flex-1 hide-scrollbar">
+            <pre id="archive_modal_text" style="font-family: monospace; font-size: 8.5pt; line-height: 1.3; color: #000000; white-space: pre-wrap; margin: 0;"></pre>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <button id="btn_reexport_archive" class="py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95">📥 PDF</button>
+            <button onclick="closeArchiveModal()" class="py-2 bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-xl font-bold text-xs">Fermer</button>
         </div>
     </div>
 </div>

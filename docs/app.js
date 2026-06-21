@@ -16,7 +16,8 @@ let state = {
         username: "",
         genderTheme: "masculin",
         warningThreshold: 150
-    }
+    },
+    ticketArchives: [] // Stockage local des tickets bruts
 };
 
 let hasUnsavedChanges = false;
@@ -729,7 +730,7 @@ function deleteRevenue(id) {
 
 // --- RENEW MONTHLY BUDGET (MULTI-STEP WIZARD) ---
 function confirmReset() {
-    // Reset multi-step views
+    // On cache toutes les étapes par sécurité
     document.getElementById("renewal_step_budgets").classList.add("hidden");
     document.getElementById("renewal_step_1").classList.add("hidden");
     document.getElementById("renewal_step_2").classList.add("hidden");
@@ -737,17 +738,19 @@ function confirmReset() {
     if (document.getElementById("renewal_step_revenues")) document.getElementById("renewal_step_revenues").classList.add("hidden");
     document.getElementById("renewal_step_3").classList.add("hidden");
     
-    // Set current month label for PDF proposal
-    document.getElementById("renewal_pdf_month_name").innerText = formatYearMonthFrench(state.budgetMonth);
-    
-    // Check if there are active budgets
+    // Si des enveloppes sont actives, on demande d'abord quoi en faire
     const activeBudgets = state.budgets ? state.budgets.filter(b => !b.closed) : [];
     if (activeBudgets.length > 0) {
-        budgetRenewalActions = {}; // reset choices
+        budgetRenewalActions = {}; 
         renderRenewalBudgetsList();
         document.getElementById("renewal_step_budgets").classList.remove("hidden");
     } else {
-        document.getElementById("renewal_step_1").classList.remove("hidden");
+        // SINON : On saute l'étape 1 et on va DIRECT à l'étape 2 (Saisie du Reste à vivre)
+        if (isImportRenewalFlow) {
+            proceedToImportRenewalCarryover();
+        } else {
+            document.getElementById("renewal_step_2").classList.remove("hidden");
+        }
     }
     
     const modal = document.getElementById("renewal_modal");
@@ -829,7 +832,7 @@ function confirmBudgetsRenewalSelection() {
             }));
             budgetsToCarryForward.push({
                 title: budget.title,
-                allocated: carryAmount, // Carry forward remaining out-of-pocket / balance
+                allocated: carryAmount,
                 originalAllocated: budget.originalAllocated || budget.allocated,
                 type: budget.type,
                 subType: budget.subType || "classic",
@@ -845,7 +848,13 @@ function confirmBudgetsRenewalSelection() {
     });
     
     document.getElementById("renewal_step_budgets").classList.add("hidden");
-    document.getElementById("renewal_step_1").classList.remove("hidden");
+    
+    // ICI AUSSI : On saute l'étape 1 pour aller directement à l'étape 2
+    if (isImportRenewalFlow) {
+        proceedToImportRenewalCarryover();
+    } else {
+        document.getElementById("renewal_step_2").classList.remove("hidden");
+    }
     triggerHaptic(10);
 }
 
@@ -1063,13 +1072,169 @@ async function renewalExportPDF() {
 }
 
 function executeRenewal() {
-    autoCloseAllBudgets(); // Make sure budgets are closed when renewing without PDF
+    // 1. Clôture forcée des enveloppes pour figer les calculs du mois qui s'achève
+    autoCloseAllBudgets(); 
     
-    // Carry over pending cash deposits
+    const userName = state.settings.username ? state.settings.username.toUpperCase() : "HMR";
+    const monthLabel = formatYearMonthFrench(state.budgetMonth);
+    const { totalRevenues, totalFixed, totalExpenses, remaining } = calculateTotals();
+    
+    const groups = {};
+    state.expenses.forEach(e => {
+        const key = e.date || "Sans date";
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(e);
+    });
+    
+    const getTimestamp = (str) => {
+        if (!str || str === "Sans date") return 0;
+        const match = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (match) {
+            return new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10)).getTime();
+        }
+        const t = Date.parse(str);
+        return isNaN(t) ? 0 : t;
+    };
+    const sortedKeys = Object.keys(groups).sort((a, b) => getTimestamp(a) - getTimestamp(b));
+    
+    const maxLen = 38;
+    const padLine = (left, right) => {
+        let lStr = String(left);
+        const rStr = String(right);
+        if (lStr.length + rStr.length + 1 > maxLen) {
+            lStr = lStr.substring(0, maxLen - rStr.length - 2) + "…";
+        }
+        const dots = maxLen - lStr.length - rStr.length;
+        return lStr + ".".repeat(dots > 0 ? dots : 1) + rStr;
+    };
+    const makeSep = (char = "=") => char.repeat(maxLen);
+    
+    // --- CONSTRUCTION DU TEXTE BRUT DU TICKET ---
+    let pdfTx = "";
+    pdfTx += `BUDGET ${userName}\n`;
+    pdfTx += `PERIODE : ${monthLabel.toUpperCase()}\n`;
+    pdfTx += `DATE    : ${new Date().toLocaleDateString("fr-FR")} - ${new Date().toLocaleTimeString("fr-FR", {hour: '2-digit', minute:'2-digit'})}\n`;
+    pdfTx += makeSep("=") + "\n";
+    pdfTx += `RESUME COMPTABLE\n`;
+    pdfTx += makeSep("=") + "\n";
+    pdfTx += padLine("TOTAL REVENUS (+)", formatCurrency(totalRevenues)) + "\n";
+    pdfTx += padLine("TOTAL FRAIS FIXES (-)", formatCurrency(totalFixed)) + "\n";
+    pdfTx += padLine("TOTAL DEPENSES (-)", formatCurrency(totalExpenses)) + "\n";
+    pdfTx += makeSep("-") + "\n";
+    pdfTx += padLine("RESTE A VIVRE NET", formatCurrency(remaining)) + "\n";
+    pdfTx += makeSep("=") + "\n\n";
+    
+    pdfTx += `DETAIL DES REVENUS\n`;
+    pdfTx += makeSep("-") + "\n";
+    if (!state.revenues || state.revenues.length === 0) {
+        pdfTx += `[Aucun revenu enregistré]\n`;
+    } else {
+        state.revenues.forEach(r => {
+            pdfTx += padLine(` • ${r.title}`, formatCurrency(r.amount)) + "\n";
+        });
+    }
+    pdfTx += "\n";
+    
+    pdfTx += `DETAIL DES FRAIS FIXES\n`;
+    pdfTx += makeSep("-") + "\n";
+    if (!state.fixedCharges || state.fixedCharges.length === 0) {
+        pdfTx += `[Aucun frais fixe enregistré]\n`;
+    } else {
+        state.fixedCharges.forEach(c => {
+            pdfTx += padLine(` • ${c.title}`, formatCurrency(c.amount)) + "\n";
+        });
+    }
+    pdfTx += "\n";
+    
+    pdfTx += `DETAIL DES OPERATIONS\n`;
+    pdfTx += makeSep("=") + "\n";
+    
+    if (sortedKeys.length === 0) {
+        pdfTx += `[Aucune opération enregistrée]\n\n`;
+    } else {
+        sortedKeys.forEach(key => {
+            let dateLong = key;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+                const [year, month, day] = key.split("-").map(Number);
+                const dateObj = new Date(year, month - 1, day);
+                dateLong = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+                dateLong = dateLong.charAt(0).toUpperCase() + dateLong.slice(1);
+            }
+            pdfTx += `${dateLong.toUpperCase()}\n` + makeSep("-") + "\n";
+            groups[key].forEach(e => {
+                const isRefund = e.amount < 0 || e.isCashDepositPending;
+                const absAmt = e.isCashDepositPending ? (e.originalCashAmount || Math.abs(e.amount)) : Math.abs(e.amount);
+                const sign = isRefund ? "+" : "-";
+                const formattedAmt = `${sign} ${absAmt.toFixed(2).replace('.', ',')} €`;
+                const titleStr = e.isBudgetReference ? (e.isCashDepositPending ? `[CASH] ${e.title}` : `[ENV] ${e.title}`) : e.title;
+                pdfTx += padLine(` • ${titleStr}`, formattedAmt) + "\n";
+            });
+            pdfTx += "\n";
+        });
+    }
+    
+    if (state.budgets && state.budgets.length > 0) {
+        pdfTx += makeSep("=") + "\n";
+        pdfTx += `SUIVI DES ENVELOPPES DEDIEES\n`;
+        pdfTx += makeSep("=") + "\n";
+        state.budgets.forEach(budget => {
+            const isFriends = budget.subType === "friends";
+            const activeSpent = budget.expenses.filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
+            const archivedSpent = (budget.archivedExpenses || []).filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
+            const totalSpent = activeSpent + archivedSpent;
+            const origAlloc = budget.originalAllocated || budget.allocated;
+            let displayAmount = isFriends ? (origAlloc + totalSpent) : (origAlloc - totalSpent);
+            let labelDisplay = isFriends ? `PART ${userName}` : "SOLDE DISPONIBLE";
+            
+            let statusLabel = budget.closed ? "CLOTUREE" : "ACTIVE";
+            if (typeof budgetRenewalActions !== "undefined" && budgetRenewalActions[budget.id]) {
+                statusLabel = budgetRenewalActions[budget.id] === "carry" ? "REPORTEE" : "CLOTUREE";
+            }
+            
+            pdfTx += `>>> ENVELOPPE : ${budget.title.toUpperCase()} [${statusLabel}]\n`;
+            pdfTx += padLine("  Montant alloué initial", formatCurrency(origAlloc)) + "\n";
+            pdfTx += padLine("  " + labelDisplay, formatCurrency(displayAmount)) + "\n";
+            pdfTx += `  Détail des mouvements :\n`;
+            let allOps = [];
+            if (isFriends) {
+                allOps.push({ title: "Dépense de départ", amount: origAlloc, isCash: false, isArchived: false });
+            }
+            allOps = [...allOps, ...(budget.archivedExpenses || []), ...budget.expenses];
+            if (allOps.length > 0) {
+                allOps.forEach(op => {
+                    const isOpRefund = op.amount < 0;
+                    const opSign = isOpRefund ? "+" : "-";
+                    const formattedOpAmt = `${opSign} ${Math.abs(op.amount).toFixed(2).replace('.', ',')} €`;
+                    const prefix = op.isCash ? "   [CASH] " : "   • ";
+                    const archLabel = op.isArchived ? " (PREC)" : "";
+                    pdfTx += padLine(`${prefix}${op.title}${archLabel}`, formattedOpAmt) + "\n";
+                });
+            } else {
+                pdfTx += `   [Aucun mouvement enregistré]\n`;
+            }
+            pdfTx += makeSep("-") + "\n\n";
+        });
+    }
+    pdfTx += makeSep("=") + "\n";
+    pdfTx += `FIN DE TICKET — MERCI\n`;
+    pdfTx += makeSep("=") + "\n";
+    
+    // 2. ENREGISTREMENT AUTOMATIQUE DU TICKET DANS LES ARCHIVES
+    const archiveId = `arch_${state.budgetMonth}_main`;
+    if (!state.ticketArchives) state.ticketArchives = [];
+    state.ticketArchives = state.ticketArchives.filter(a => a.id !== archiveId);
+    state.ticketArchives.push({
+        id: archiveId,
+        date: state.budgetMonth,
+        type: "Mensuel",
+        title: `Bilan ${monthLabel}`,
+        rawText: pdfTx
+    });
+    
+    // 3. Bascule des données vers le mois suivant
     const pendingDeposits = state.expenses ? state.expenses.filter(e => e.isCashDepositPending && !e.isDeposited) : [];
-    
     state.expenses = [];
-    state.budgets = []; // Wipe budgets for the new month
+    state.budgets = []; 
     state.budgetMonth = selectedRenewalMonth;
     
     pendingDeposits.forEach(d => {
@@ -1077,12 +1242,10 @@ function executeRenewal() {
         state.expenses.push(d);
     });
     
-    // Recreate carried forward budgets in the new month
     if (budgetsToCarryForward && budgetsToCarryForward.length > 0) {
         budgetsToCarryForward.forEach(b => {
             const budgetId = "b_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
             const mainTransactionId = "exp_budget_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-            
             const newBudget = {
                 id: budgetId,
                 title: b.title,
@@ -1095,9 +1258,7 @@ function executeRenewal() {
                 mainTransactionId: mainTransactionId,
                 createdDate: b.createdDate || getTodayDateString()
             };
-            
             state.budgets.push(newBudget);
-            
             if (b.type === "deducted") {
                 const titlePrefix = b.subType === "friends" ? "Avance" : "Enveloppe";
                 const budgetExpense = {
@@ -1112,14 +1273,13 @@ function executeRenewal() {
             }
         });
     }
-    budgetsToCarryForward = []; // Reset after recreation
-    
+    budgetsToCarryForward = []; 
     
     if (willCarryOver && Math.abs(carryOverAmount) > 0.009) {
         const newExpense = {
             id: 'exp_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
             title: "Bilan précédent",
-            amount: -carryOverAmount, // Negative amount is a refund (adds to remaining), positive is debit
+            amount: -carryOverAmount,
             date: `${selectedRenewalMonth}-01`
         };
         state.expenses.push(newExpense);
@@ -1127,15 +1287,15 @@ function executeRenewal() {
     
     saveState();
     
-    // Update dashboard label month
     const currentMonthLabel = formatYearMonthFrench(state.budgetMonth);
     document.getElementById("current_date_label").innerText = currentMonthLabel;
     
     updateUI();
     closeRenewalModal();
-    triggerHaptic('success');
-    showSuccessAnimation();
-}
+    
+	// Appel direct avec injection du texte dans l'overlay HTML
+		showSuccessAnimation(`Bilan de ${monthLabel} archivé automatiquement dans les réglages !`);
+	}
 
 // --- THEME & UTILS ---
 function toggleTheme() {
@@ -1602,6 +1762,9 @@ function saveEdit(event) {
         }
     }
 
+	if (type === "budgetOperation" && parentId) {
+    updateEnvelopeTicket(parentId);
+	}
     saveState();
     closeEditModal();
     renderBudgetsList();
@@ -1620,29 +1783,38 @@ function saveEdit(event) {
 
 // --- SETTINGS MODAL CONTROL ---
 function openSettingsModal() {
-    // Populate username input
-    document.getElementById("settings_username").value = state.settings.username || "";
-    
-    // Populate warning threshold input
-    const thresholdInput = document.getElementById("settings_warning_threshold");
-    if (thresholdInput) {
-        thresholdInput.value = state.settings.warningThreshold !== undefined ? state.settings.warningThreshold.toString().replace(".", ",") : "150";
-    }
-    
-    // Apply theme selection styling to settings buttons
-    applyVisualTheme();
+    const modal = document.getElementById("settings_modal");
+    if (!modal) return;
 
-    // Toggle certification badge
-    const badgeContainer = document.getElementById("settings_certification_badge_container");
-    if (badgeContainer) {
+    document.getElementById("settings_username").value = state.settings.username || "";
+    document.getElementById("settings_warning_threshold").value = state.settings.warningThreshold || 150;
+
+    const currentTheme = state.settings.genderTheme || "masculin";
+    const optMasculin = document.getElementById("theme_opt_masculin");
+    const optFeminin = document.getElementById("theme_opt_feminin");
+
+    if (currentTheme === "feminin") {
+        optFeminin.className = "py-2 px-3 rounded-xl font-bold text-xs border bg-pink-500 text-white border-pink-500 active:scale-95 transition-all flex items-center justify-center gap-1.5";
+        optMasculin.className = "py-2 px-3 rounded-xl font-bold text-xs border bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 active:scale-95 transition-all flex items-center justify-center gap-1.5";
+    } else {
+        optMasculin.className = "py-2 px-3 rounded-xl font-bold text-xs border bg-brand-500 text-white border-brand-500 active:scale-95 transition-all flex items-center justify-center gap-1.5";
+        optFeminin.className = "py-2 px-3 rounded-xl font-bold text-xs border bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 active:scale-95 transition-all flex items-center justify-center gap-1.5";
+    }
+
+	checkStoragePersistence();
+
+    const certBadge = document.getElementById("settings_certification_badge_container");
+    if (certBadge) {
         if (state.isCertified) {
-            badgeContainer.classList.remove("hidden");
+            certBadge.classList.remove("hidden");
         } else {
-            badgeContainer.classList.add("hidden");
+            certBadge.classList.add("hidden");
         }
     }
 
-    const modal = document.getElementById("settings_modal");
+    // Chargement dynamique de la liste des archives
+    renderTicketArchives();
+
     modal.classList.remove("hidden");
     setTimeout(() => {
         modal.classList.remove("opacity-0");
@@ -2227,12 +2399,23 @@ function playOverdraftSound() {
     }
 }
 
-function showSuccessAnimation() {
+function showSuccessAnimation(customDesc = "") {
     playConfirmationSound();
     triggerHaptic('success');
     
     const overlay = document.getElementById('validation_success_overlay');
     if (!overlay) return;
+    
+    // Gestion du message HTML personnalisé
+    const descEl = document.getElementById('success_overlay_desc');
+    if (descEl) {
+        if (customDesc) {
+            descEl.textContent = customDesc;
+            descEl.classList.remove('hidden');
+        } else {
+            descEl.classList.add('hidden');
+        }
+    }
     
     overlay.classList.remove('hidden');
     setTimeout(() => {
@@ -2241,14 +2424,18 @@ function showSuccessAnimation() {
         if (card) card.classList.remove('scale-95');
     }, 10);
     
+    // Si on a un texte, on laisse 2.5 secondes pour lire, sinon 1 seconde standard
+    const displayDuration = customDesc ? 2500 : 1000;
+    
     setTimeout(() => {
         overlay.classList.add('opacity-0');
         const card = overlay.querySelector('.glass-card');
         if (card) card.classList.add('scale-95');
         setTimeout(() => {
             overlay.classList.add('hidden');
+            if (descEl) descEl.classList.add('hidden'); // Reset pour les prochains affichages
         }, 300);
-    }, 1000);
+    }, displayDuration);
 }
 
 // --- HAPTIC FEEDBACK (VIBRATION) ENGINE ---
@@ -3409,7 +3596,7 @@ function getRenewalMonthOptions() {
     return options;
 }
 
-// A4 PDF Generation and Capacitor Native Share
+// --- GENERATION DU BILAN MENSUEL FORMAT TICKET ---
 function generateBudgetPDF() {
     return new Promise((resolve, reject) => {
         const userName = state.settings.username ? state.settings.username.toUpperCase() : "HMR";
@@ -3435,7 +3622,7 @@ function generateBudgetPDF() {
         };
         const sortedKeys = Object.keys(groups).sort((a, b) => getTimestamp(a) - getTimestamp(b));
         
-        const maxLen = 38; // Format ticket étroit standard
+        const maxLen = 38;
         const padLine = (left, right) => {
             let lStr = String(left);
             const rStr = String(right);
@@ -3445,12 +3632,10 @@ function generateBudgetPDF() {
             const dots = maxLen - lStr.length - rStr.length;
             return lStr + ".".repeat(dots > 0 ? dots : 1) + rStr;
         };
-        
         const makeSep = (char = "=") => char.repeat(maxLen);
         
         let pdfTx = "";
         
-        // --- 1. EN-TÊTE & RÉSUMÉ COMPTABLE ---
         pdfTx += `BUDGET ${userName}\n`;
         pdfTx += `PERIODE : ${monthLabel.toUpperCase()}\n`;
         pdfTx += `DATE    : ${new Date().toLocaleDateString("fr-FR")} - ${new Date().toLocaleTimeString("fr-FR", {hour: '2-digit', minute:'2-digit'})}\n`;
@@ -3464,7 +3649,6 @@ function generateBudgetPDF() {
         pdfTx += padLine("RESTE A VIVRE NET", formatCurrency(remaining)) + "\n";
         pdfTx += makeSep("=") + "\n\n";
         
-        // --- 2. DÉTAIL DES REVENUS ---
         pdfTx += `DETAIL DES REVENUS\n`;
         pdfTx += makeSep("-") + "\n";
         if (!state.revenues || state.revenues.length === 0) {
@@ -3476,7 +3660,6 @@ function generateBudgetPDF() {
         }
         pdfTx += "\n";
         
-        // --- 3. DÉTAIL DES FRAIS FIXES ---
         pdfTx += `DETAIL DES FRAIS FIXES\n`;
         pdfTx += makeSep("-") + "\n";
         if (!state.fixedCharges || state.fixedCharges.length === 0) {
@@ -3488,7 +3671,6 @@ function generateBudgetPDF() {
         }
         pdfTx += "\n";
         
-        // --- 4. HISTORIQUE DES OPÉRATIONS PRINCIPALES ---
         pdfTx += `DETAIL DES OPERATIONS\n`;
         pdfTx += makeSep("=") + "\n";
         
@@ -3518,7 +3700,6 @@ function generateBudgetPDF() {
             });
         }
         
-        // --- 5. SUIVI DE TOUTES LES ENVELOPPES ---
         if (state.budgets && state.budgets.length > 0) {
             pdfTx += makeSep("=") + "\n";
             pdfTx += `SUIVI DES ENVELOPPES DEDIEES\n`;
@@ -3533,10 +3714,12 @@ function generateBudgetPDF() {
                 
                 let displayAmount = isFriends ? (origAlloc + totalSpent) : (origAlloc - totalSpent);
                 let labelDisplay = isFriends ? `PART ${userName}` : "SOLDE DISPONIBLE";
-				let statusLabel = budget.closed ? "CLOTUREE" : "ACTIVE";
-				if (typeof budgetRenewalActions !== "undefined" && budgetRenewalActions[budget.id]) {
-					statusLabel = budgetRenewalActions[budget.id] === "carry" ? "REPORTEE" : "CLOTUREE";
-				}                
+                
+                let statusLabel = budget.closed ? "CLOTUREE" : "ACTIVE";
+                if (typeof budgetRenewalActions !== "undefined" && budgetRenewalActions[budget.id]) {
+                    statusLabel = budgetRenewalActions[budget.id] === "carry" ? "REPORTEE" : "CLOTUREE";
+                }
+                
                 pdfTx += `>>> ENVELOPPE : ${budget.title.toUpperCase()} [${statusLabel}]\n`;
                 pdfTx += padLine("  Montant alloué initial", formatCurrency(origAlloc)) + "\n";
                 pdfTx += padLine(`  ${labelDisplay}`, formatCurrency(displayAmount)) + "\n";
@@ -3565,23 +3748,30 @@ function generateBudgetPDF() {
             });
         }
         
-        // --- 6. PIED DE TICKET ---
         pdfTx += makeSep("=") + "\n";
         pdfTx += `FIN DE TICKET — MERCI\n`;
         pdfTx += makeSep("=") + "\n";
+        
+        // Enregistrement automatique dans l'archive locale
+        const archiveId = `arch_${state.budgetMonth}_main`;
+        if (!state.ticketArchives) state.ticketArchives = [];
+        state.ticketArchives = state.ticketArchives.filter(a => a.id !== archiveId);
+        state.ticketArchives.push({
+            id: archiveId,
+            date: state.budgetMonth,
+            type: "Mensuel",
+            title: `Bilan ${formatYearMonthFrench(state.budgetMonth)}`,
+            rawText: pdfTx
+        });
+        saveState();
         
         let htmlString = `<div style="width: 302px; font-family: monospace; font-size: 9pt; line-height: 1.3; color: #000000; background: #ffffff; padding: 10px; box-sizing: border-box; margin: 0 auto;">`;
         htmlString += `<pre style="font-family: monospace; font-size: 9pt; line-height: 1.3; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000;">${pdfTx}</pre>`;
         htmlString += `</div>`;
         
-        // Câblage du mesureur sur le DOM
         const tempDiv = document.createElement("div");
-        tempDiv.style.position = "absolute";
-        tempDiv.style.top = "-9999px";
-        tempDiv.style.left = "-9999px";
-        tempDiv.innerHTML = htmlString;
+        tempDiv.style.position = "absolute"; tempDiv.style.top = "-9999px"; tempDiv.innerHTML = htmlString;
         document.body.appendChild(tempDiv);
-        
         const measuredHeightMm = Math.ceil(tempDiv.offsetHeight * 0.264583) + 8;
         document.body.removeChild(tempDiv);
 
@@ -3590,8 +3780,7 @@ function generateBudgetPDF() {
             filename: `Bilan_Budget_${state.budgetMonth}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
-            jsPDF: { unit: 'mm', format: [80, measuredHeightMm], orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'legacy'] }
+            jsPDF: { unit: 'mm', format: [80, measuredHeightMm], orientation: 'portrait' }
         };
         
         document.body.classList.remove("overflow-hidden");
@@ -3641,145 +3830,100 @@ function generateBudgetPDF() {
     });
 }
 
-// --- GENERATION DU TICKET DE CAISSE DE L'ENVELOPPE PDF ---
-function generateEnvelopeReceiptPDF(budgetId) {
-    return new Promise((resolve, reject) => {
-        const budget = state.budgets.find(b => b.id === budgetId);
-        if (!budget) return reject("Enveloppe introuvable");
+// --- AUTOMATISATION DES TICKETS D'ENVELOPPE ---
+function updateEnvelopeTicket(budgetId) {
+    const budget = state.budgets.find(b => b.id === budgetId);
+    if (!budget) return;
 
-        const userName = state.settings.username ? state.settings.username.toUpperCase() : "HMR";
-        const isFriends = budget.subType === "friends";
-        
-        const activeSpent = budget.expenses.filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
-        const archivedSpent = (budget.archivedExpenses || []).filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
-        const totalSpent = activeSpent + archivedSpent;
-        const origAlloc = budget.originalAllocated || budget.allocated;
-        
-        let displayAmount = isFriends ? (origAlloc + totalSpent) : (origAlloc - totalSpent);
-        let labelDisplay = isFriends ? `PART ${userName}` : "SOLDE DISPONIBLE";
-        const statusLabel = budget.closed ? "CLOTUREE" : "ACTIVE";
+    const userName = state.settings.username ? state.settings.username.toUpperCase() : "HMR";
+    const isFriends = budget.subType === "friends";
+    
+    const activeSpent = budget.expenses.filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
+    const archivedSpent = (budget.archivedExpenses || []).filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
+    const totalSpent = activeSpent + archivedSpent;
+    const origAlloc = budget.originalAllocated || budget.allocated;
+    
+    let displayAmount = isFriends ? (origAlloc + totalSpent) : (origAlloc - totalSpent);
+    let labelDisplay = isFriends ? `PART ${userName}` : "SOLDE DISPONIBLE";
+    const statusLabel = budget.closed ? "CLOTUREE" : "ACTIVE";
 
-        const maxLen = 38; // Format ticket étroit standard
-        const padLine = (left, right) => {
-            let lStr = String(left);
-            const rStr = String(right);
-            if (lStr.length + rStr.length + 1 > maxLen) {
-                lStr = lStr.substring(0, maxLen - rStr.length - 2) + "…";
-            }
-            const dots = maxLen - lStr.length - rStr.length;
-            return lStr + ".".repeat(dots > 0 ? dots : 1) + rStr;
-        };
-        const makeSep = (char = "=") => char.repeat(maxLen);
-
-        // --- STRUCTURE DU TICKET BRUT ---
-        let receiptTx = "";
-        receiptTx += `TICKET ENVELOPPE : ${budget.title.toUpperCase()}\n`;
-        receiptTx += `PROPRIETAIRE     : ${userName}\n`;
-        receiptTx += `STATUT           : ${statusLabel}\n`;
-        receiptTx += `DATE EXPORT      : ${new Date().toLocaleDateString("fr-FR")} - ${new Date().toLocaleTimeString("fr-FR", {hour: '2-digit', minute:'2-digit'})}\n`;
-        receiptTx += makeSep("=") + "\n";
-        receiptTx += padLine("MONTANT ALLOUE INITIAL", formatCurrency(origAlloc)) + "\n";
-        receiptTx += padLine(labelDisplay, formatCurrency(displayAmount)) + "\n";
-        receiptTx += makeSep("-") + "\n";
-        receiptTx += `JOURNAL DES MOUVEMENTS\n`;
-        receiptTx += makeSep("=") + "\n";
-
-        let allOps = [];
-        if (isFriends) {
-            allOps.push({ title: "Dépense de départ", amount: origAlloc, isCash: false, isArchived: false, date: budget.createdDate });
+    const maxLen = 38;
+    const padLine = (left, right) => {
+        let lStr = String(left);
+        const rStr = String(right);
+        if (lStr.length + rStr.length + 1 > maxLen) {
+            lStr = lStr.substring(0, maxLen - rStr.length - 2) + "…";
         }
-        allOps = [...allOps, ...(budget.archivedExpenses || []).map(o => ({...o, isArchived: true})), ...budget.expenses];
+        const dots = maxLen - lStr.length - rStr.length;
+        return lStr + ".".repeat(dots > 0 ? dots : 1) + rStr;
+    };
+    const makeSep = (char = "=") => char.repeat(maxLen);
 
-        if (allOps.length > 0) {
-            allOps.forEach(op => {
-                const isOpRefund = op.amount < 0;
-                const opSign = isOpRefund ? "+" : "-";
-                const formattedOpAmt = `${opSign} ${Math.abs(op.amount).toFixed(2).replace('.', ',')} €`;
-                const prefix = op.isCash ? "[CASH] " : "";
-                const archLabel = op.isArchived ? " (PREC)" : "";
-                const dateLabel = (op.date && op.date.includes('-')) ? `[${op.date.split('-').slice(1).reverse().join('/')}] ` : "";
-                receiptTx += padLine(` • ${dateLabel}${prefix}${op.title}${archLabel}`, formattedOpAmt) + "\n";
-            });
-        } else {
-            receiptTx += `[Aucun mouvement enregistré]\n`;
-        }
+    let receiptTx = "";
+    receiptTx += `TICKET ENVELOPPE : ${budget.title.toUpperCase()}\n`;
+    receiptTx += `PROPRIETAIRE     : ${userName}\n`;
+    receiptTx += `STATUT           : ${statusLabel}\n`;
+    
+    // Formatage de la date d'ouverture
+    let createdStr = budget.createdDate || getTodayDateString();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(createdStr)) {
+        const [y, m, d] = createdStr.split("-");
+        createdStr = `${d}/${m}/${y}`;
+    }
+    
+    receiptTx += `OUVERTURE        : ${createdStr}\n`;
+    receiptTx += `DERNIERE MAJ     : ${new Date().toLocaleDateString("fr-FR")} - ${new Date().toLocaleTimeString("fr-FR", {hour: '2-digit', minute:'2-digit'})}\n`;
+    receiptTx += makeSep("=") + "\n";
+    receiptTx += padLine("MONTANT ALLOUE INITIAL", formatCurrency(origAlloc)) + "\n";
+    receiptTx += padLine(labelDisplay, formatCurrency(displayAmount)) + "\n";
+    receiptTx += makeSep("-") + "\n";
+    receiptTx += `JOURNAL DES MOUVEMENTS\n`;
+    receiptTx += makeSep("=") + "\n";
 
-        receiptTx += makeSep("=") + "\n";
-        receiptTx += `BUDGETHMR — FIN DE TICKET\n`;
-        receiptTx += makeSep("=") + "\n";
+    let allOps = [];
+    if (isFriends) {
+        allOps.push({ title: "Dépense de départ", amount: origAlloc, isCash: false, isArchived: false, date: budget.createdDate });
+    }
+    allOps = [...allOps, ...(budget.archivedExpenses || []).map(o => ({...o, isArchived: true})), ...budget.expenses];
 
-        // Largeur calée à 302px pour correspondre pile à 80mm de large à 96 DPI sans distorsion
-        let htmlString = `<div id="temp_ticket_measurer" style="width: 302px; font-family: monospace; font-size: 9pt; line-height: 1.3; color: #000000; background: #ffffff; padding: 10px; box-sizing: border-box;">`;
-        htmlString += `<pre style="font-family: monospace; font-size: 9pt; line-height: 1.3; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000;">${receiptTx}</pre>`;
-        htmlString += `</div>`;
-
-        // --- CALCUL DE HAUTEUR REELLE SUR LE DOM ---
-        const tempDiv = document.createElement("div");
-        tempDiv.style.position = "absolute";
-        tempDiv.style.top = "-9999px";
-        tempDiv.style.left = "-9999px";
-        tempDiv.innerHTML = htmlString;
-        document.body.appendChild(tempDiv);
-        
-        // Calcul de la hauteur en mm (1px = 0.264583mm) + marge de sécurité de 8mm au fond
-        const measuredHeightMm = Math.ceil(tempDiv.offsetHeight * 0.264583) + 8;
-        document.body.removeChild(tempDiv);
-
-        const opt = {
-            margin: [2, 2, 2, 2],
-            filename: `Ticket_${budget.title.replace(/\s+/g, '_')}_${state.budgetMonth}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
-            jsPDF: { unit: 'mm', format: [80, measuredHeightMm], orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'legacy'] }
-        };
-
-        document.body.classList.remove("overflow-hidden");
-        document.documentElement.classList.remove("overflow-hidden");
-
-        html2pdf().set(opt).from(htmlString).toPdf().outputPdf('blob').then(async (blob) => {
-            const fileName = `Ticket_${budget.title.replace(/\s+/g, '_')}_${state.budgetMonth}.pdf`;
-            const isNativeAPK = window.Capacitor && window.Capacitor.isNativePlatform();
-            const isMobileWebView = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.chrome;
-
-            if (isNativeAPK || isMobileWebView) {
-                const fs = window.Capacitor?.Plugins?.Filesystem;
-                if (fs) {
-                    try {
-                        const base64Data = await new Promise((res, rej) => {
-                            const reader = new FileReader();
-                            reader.onloadend = () => res(reader.result.split(',')[1]);
-                            reader.onerror = rej;
-                            reader.readAsDataURL(blob);
-                        });
-                        await fs.writeFile({ path: fileName, data: base64Data, directory: 'DOWNLOAD' });
-                        alert("Ticket PDF enregistré dans tes Téléchargements.");
-                        resolve();
-                        return;
-                    } catch (err) {
-                        await shareBlob(blob, fileName, `Ticket ${budget.title}`, `Ticket de l'enveloppe ${budget.title}`);
-                    }
-                } else {
-                    await shareBlob(blob, fileName, `Ticket ${budget.title}`, `Ticket de l'enveloppe ${budget.title}`);
-                }
-            } else {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-            document.body.classList.add("overflow-x-hidden");
-            triggerHaptic('success');
-            resolve();
-        }).catch(err => {
-            document.body.classList.add("overflow-x-hidden");
-            reject(err);
+    if (allOps.length > 0) {
+        allOps.forEach(op => {
+            const isOpRefund = op.amount < 0;
+            const opSign = isOpRefund ? "+" : "-";
+            const formattedOpAmt = `${opSign} ${Math.abs(op.amount).toFixed(2).replace('.', ',')} €`;
+            const prefix = op.isCash ? "[CASH] " : "";
+            const archLabel = op.isArchived ? " (PREC)" : "";
+            const dateLabel = (op.date && op.date.includes('-')) ? `[${op.date.split('-').slice(1).reverse().join('/')}] ` : "";
+            receiptTx += padLine(` • ${dateLabel}${prefix}${op.title}${archLabel}`, formattedOpAmt) + "\n";
         });
+    } else {
+        receiptTx += `[Aucun mouvement enregistré]\n`;
+    }
+
+    receiptTx += makeSep("=") + "\n";
+    receiptTx += `BUDGETHMR — FIN DE TICKET\n`;
+    receiptTx += makeSep("=") + "\n";
+
+    // Mise à jour de l'archive (écrase l'ancienne version si elle existe)
+    const archiveId = `arch_env_${budget.id}`;
+    if (!state.ticketArchives) state.ticketArchives = [];
+    state.ticketArchives = state.ticketArchives.filter(a => a.id !== archiveId);
+    
+    state.ticketArchives.push({
+        id: archiveId,
+        date: state.budgetMonth,
+        type: "Enveloppe",
+        title: `Ticket ${budget.title} (${createdStr})`,
+        rawText: receiptTx,
+        budgetId: budget.id
     });
+}
+
+function viewEnvelopeTicket(budgetId) {
+    // Force la mise à jour avant ouverture pour être certain d'avoir la dernière version
+    updateEnvelopeTicket(budgetId);
+    saveState();
+    openArchiveModal(`arch_env_${budgetId}`);
 }
 
 // Capacitor and web-compatible sharing
@@ -3976,6 +4120,7 @@ function handleBudgetFundingChoice(type) {
         state.expenses.push(budgetExpense);
     }
     
+	updateEnvelopeTicket(budgetId);
     saveState();
     
     // Clear inputs
@@ -4300,7 +4445,7 @@ function renderBudgetsList() {
             </div>
 
             <div class="pt-2 border-t border-stone-200 dark:border-stone-800 select-none grid grid-cols-3 gap-2">
-				<button onclick="generateEnvelopeReceiptPDF('${budget.id}')" class="w-full py-3.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold rounded-xl border border-stone-300 dark:border-stone-700 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
+				<button onclick="viewEnvelopeTicket('${budget.id}')" class="w-full py-3.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold rounded-xl border border-stone-300 dark:border-stone-700 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
 					📋 Ticket
 				</button>
 				<button onclick="confirmCloseBudget('${budget.id}')" class="w-full py-3.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold rounded-xl border border-stone-300 dark:border-stone-700 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
@@ -4389,6 +4534,7 @@ function addBudgetOperation(budgetId, type, isCash = false) {
     
     syncMainBudgetReference(budget);
     
+	updateEnvelopeTicket(budget.id);
     saveState();
     renderBudgetsList();
     updateUI();
@@ -4455,6 +4601,7 @@ function depositBudgetCash(budgetId) {
             if (budget.archivedExpenses) budget.archivedExpenses.forEach(markDeposited);
             
             syncMainBudgetReference(budget);
+			updateEnvelopeTicket(budget.id);
             saveState();
             renderBudgetsList();
             updateUI();
@@ -4494,6 +4641,7 @@ function deleteBudgetOperation(budgetId, opId) {
             }
             budget.expenses = budget.expenses.filter(op => op.id !== opId);
             syncMainBudgetReference(budget);
+			updateEnvelopeTicket(budget.id);
             saveState();
             renderBudgetsList();
             updateUI();
@@ -4685,6 +4833,7 @@ function executeCloseBudgetLogic(budget) {
             }
         }
     }
+	updateEnvelopeTicket(budget.id);
 }
 
 function closeBudget(budgetId) {
@@ -4724,6 +4873,7 @@ function confirmDeleteBudget(budgetId) {
                         state.expenses = state.expenses.filter(e => e.budgetId !== budgetId && e.id !== budget.mainTransactionId);
                         state.budgets = state.budgets.filter(b => b.id !== budgetId);
                         
+						state.ticketArchives = state.ticketArchives.filter(a => a.id !== `arch_env_${budgetId}`);
                         saveState();
                         renderBudgetsList();
                         updateUI();
@@ -4763,6 +4913,7 @@ function confirmCashDeposit(event, txId) {
                 }
             }
             
+			if (tx.budgetId) updateEnvelopeTicket(tx.budgetId);
             saveState();
             updateUI();
             triggerHaptic('success');
@@ -4937,7 +5088,7 @@ function openViewBudgetModal(budgetId) {
         if (footerContainer) {
             if (budget.closed) {
 				footerContainer.innerHTML = `
-					<button onclick="generateEnvelopeReceiptPDF('${budget.id}')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm">
+					<button onclick="viewEnvelopeTicket('${budget.id}')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm">
 						📋 Ticket PDF
 					</button>
 					<button onclick="reopenBudget('${budget.id}')" class="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-sm">
@@ -4949,7 +5100,7 @@ function openViewBudgetModal(budgetId) {
 				`;
 			} else {
 				footerContainer.innerHTML = `
-					<button onclick="generateEnvelopeReceiptPDF('${budget.id}')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm">
+					<button onclick="viewEnvelopeTicket('${budget.id}')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm">
 						📋 Ticket PDF
 					</button>
 					<button onclick="closeViewBudgetModal()" class="flex-1 py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold rounded-xl text-xs active:scale-95 transition-all">
@@ -5081,6 +5232,7 @@ function executeReopenBudgetLogic(budget) {
     if (budget.type === "deducted") {
         syncMainBudgetReference(budget);
     }
+	updateEnvelopeTicket(budget.id);
 }
 
 function reopenBudget(budgetId) {
@@ -6161,6 +6313,210 @@ function initScrollEffects() {
     measureBannerHeights();
 }
 
+// --- LOGIQUE DES ARCHIVES DE TICKETS ---
+function renderTicketArchives() {
+    const container = document.getElementById("settings_archives_container");
+    if (!container) return;
 
+    if (!state.ticketArchives || state.ticketArchives.length === 0) {
+        container.innerHTML = `<p class="text-[11px] text-stone-400 italic text-center py-2">Aucun ticket archivé pour le moment.</p>`;
+        return;
+    }
+
+    // --- ETAPE 1 : AUTO-RÉPARATION & NETTOYAGE DES DOUBLONS ---
+    let archivesToKeep = [];
+    let envelopeTicketMap = new Map();
+
+    state.ticketArchives.forEach(arch => {
+        if (arch.type === "Mensuel") {
+            archivesToKeep.push(arch);
+        } else {
+            // Extraction sécurisée de l'ID (compatible anciens et nouveaux tickets)
+            let bId = arch.budgetId;
+            if (!bId && arch.id) {
+                const match = arch.id.match(/env_(b_.*)/);
+                if (match) bId = match[1];
+            }
+
+            let budget = state.budgets ? state.budgets.find(b => b.id === bId) : null;
+
+            // AUTO-RÉPARATION : Si l'ID a changé avec le report de mois, on la retrouve par son titre
+            if (!budget && state.budgets) {
+                budget = state.budgets.find(b => arch.title.includes(b.title));
+            }
+
+            if (budget) {
+                // On met à jour l'ID du ticket pour le lier à l'enveloppe actuelle
+                arch.budgetId = budget.id;
+                arch.id = `arch_env_${budget.id}`;
+                
+                // Le Map fusionne automatiquement les tickets en double (garde le plus récent)
+                envelopeTicketMap.set(arch.id, arch);
+            } else {
+                // L'enveloppe n'existe vraiment plus (suppression manuelle)
+                archivesToKeep.push(arch);
+            }
+        }
+    });
+
+    // Mise à jour silencieuse de la base si on a réparé ou nettoyé des tickets
+    const healedArchives = [...archivesToKeep, ...Array.from(envelopeTicketMap.values())];
+    if (JSON.stringify(state.ticketArchives) !== JSON.stringify(healedArchives)) {
+        state.ticketArchives = healedArchives;
+        localStorage.setItem("budget_hmr_simple", JSON.stringify(state));
+    }
+
+    // --- ETAPE 2 : TRI (En cours vs Supprimables) ---
+    const currentItems = [];
+    const deletableItems = [];
+
+    state.ticketArchives.forEach(arch => {
+        let isDeletable = false;
+
+        if (arch.type === "Mensuel") {
+            isDeletable = (arch.date !== state.budgetMonth);
+        } else {
+            const budget = state.budgets ? state.budgets.find(b => b.id === arch.budgetId) : null;
+            
+            if (!budget) {
+                isDeletable = true; // Orphelin
+            } else {
+                if (budget.closed && arch.date !== state.budgetMonth) {
+                    isDeletable = true;
+                } else {
+                    isDeletable = false;
+                }
+            }
+        }
+
+        if (isDeletable) {
+            deletableItems.push(arch);
+        } else {
+            currentItems.push(arch);
+        }
+    });
+
+    currentItems.sort((a, b) => b.id.localeCompare(a.id));
+    deletableItems.sort((a, b) => b.id.localeCompare(a.id));
+
+    // --- ETAPE 3 : AFFICHAGE HTML ---
+    let html = "";
+
+    if (currentItems.length > 0) {
+        html += `<div class="text-[9px] font-black text-stone-400 uppercase tracking-wider mb-1.5 select-none mt-1">En cours</div>`;
+        html += currentItems.map(arch => `
+            <div onclick="openArchiveModal('${arch.id}')" class="p-2.5 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex items-center justify-between cursor-pointer hover:border-brand-400 dark:hover:border-brand-500 transition-all active:scale-98 mb-2">
+                <div class="flex items-center gap-2">
+                    <span>${arch.type === 'Mensuel' ? '📊' : '🎯'}</span>
+                    <div>
+                        <span class="block font-bold text-stone-800 dark:text-stone-200 text-[11px]">${arch.title}</span>
+                        <span class="block text-[9px] text-stone-400 uppercase font-black">${arch.type}</span>
+                    </div>
+                </div>
+                <span class="text-stone-400 text-[10px] pr-1">👁️</span>
+            </div>
+        `).join("");
+    }
+
+    if (deletableItems.length > 0) {
+        html += `<div class="text-[9px] font-black text-stone-400 uppercase tracking-wider mb-1.5 select-none mt-3">Archives (Supprimables)</div>`;
+        html += deletableItems.map(arch => `
+            <div onclick="openArchiveModal('${arch.id}')" class="p-2.5 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex items-center justify-between cursor-pointer hover:border-brand-400 dark:hover:border-brand-500 transition-all active:scale-98 mb-2">
+                <div class="flex items-center gap-2">
+                    <span>${arch.type === 'Mensuel' ? '📊' : '🎯'}</span>
+                    <div>
+                        <span class="block font-bold text-stone-800 dark:text-stone-200 text-[11px]">${arch.title}</span>
+                        <span class="block text-[9px] text-stone-400 uppercase font-black">${arch.type}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-stone-400 text-[10px]">👁️</span>
+                    <button onclick="deleteArchiveTicket(event, '${arch.id}')" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all flex items-center justify-center font-bold text-[9px] shadow-sm active:scale-90" title="Supprimer le ticket">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        `).join("");
+    }
+
+    container.innerHTML = html;
+}
+
+function deleteArchiveTicket(event, archiveId) {
+    if (event) event.stopPropagation();
+    const arch = state.ticketArchives.find(a => a.id === archiveId);
+    if (!arch) return;
+
+    showGenericConfirm(
+        "Supprimer ce ticket ?",
+        `Voulez-vous définitivement supprimer le ticket <strong>"${arch.title}"</strong> de l'archive ? Cette action est irréversible.`,
+        "🗑️",
+        () => {
+            state.ticketArchives = state.ticketArchives.filter(a => a.id !== archiveId);
+            saveState();
+            renderTicketArchives();
+            triggerHaptic('confirm');
+        }
+    );
+}
+
+function openArchiveModal(archiveId) {
+    const arch = state.ticketArchives.find(a => a.id === archiveId);
+    if (!arch) return;
+
+    document.getElementById("archive_modal_text").textContent = arch.rawText;
+    
+    const pdfBtn = document.getElementById("btn_reexport_archive");
+    pdfBtn.onclick = () => {
+        reexportArchiveToPDF(arch);
+    };
+
+    const modal = document.getElementById("view_archive_modal");
+    modal.classList.remove("hidden");
+    setTimeout(() => {
+        modal.classList.remove("opacity-0");
+        modal.querySelector(".glass-card").classList.remove("scale-95");
+    }, 10);
+}
+
+function closeArchiveModal() {
+    const modal = document.getElementById("view_archive_modal");
+    modal.classList.add("opacity-0");
+    modal.querySelector(".glass-card").classList.add("scale-95");
+    setTimeout(() => modal.classList.add("hidden"), 300);
+}
+
+function reexportArchiveToPDF(archive) {
+    let htmlString = `<div style="width: 302px; font-family: monospace; font-size: 9pt; line-height: 1.3; color: #000000; background: #ffffff; padding: 10px; box-sizing: border-box; margin: 0 auto;">`;
+    htmlString += `<pre style="font-family: monospace; font-size: 9pt; line-height: 1.3; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000;">${archive.rawText}</pre>`;
+    htmlString += `</div>`;
+
+    const tempDiv = document.createElement("div");
+    tempDiv.style.position = "absolute"; tempDiv.style.top = "-9999px"; tempDiv.innerHTML = htmlString;
+    document.body.appendChild(tempDiv);
+    const measuredHeightMm = Math.ceil(tempDiv.offsetHeight * 0.264583) + 8;
+    document.body.removeChild(tempDiv);
+
+    const opt = {
+        margin: [2, 2, 2, 2],
+        filename: `Reexport_${archive.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: [80, measuredHeightMm], orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(htmlString).toPdf().outputPdf('blob').then(async (blob) => {
+        const fileName = `Reexport_${archive.id}.pdf`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        triggerHaptic('success');
+    });
+}
 
 
