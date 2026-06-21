@@ -3415,10 +3415,8 @@ function generateBudgetPDF() {
         const userName = state.settings.username ? state.settings.username.toUpperCase() : "HMR";
         const monthLabel = formatYearMonthFrench(state.budgetMonth);
         
-        // Calculs officiels directs depuis le state de l'application
         const { totalRevenues, totalFixed, totalExpenses, remaining } = calculateTotals();
         
-        // Groupement des dépenses de l'historique principal par date
         const groups = {};
         state.expenses.forEach(e => {
             const key = e.date || "Sans date";
@@ -3437,8 +3435,7 @@ function generateBudgetPDF() {
         };
         const sortedKeys = Object.keys(groups).sort((a, b) => getTimestamp(a) - getTimestamp(b));
         
-        // Configuration de la largeur fixe du ticket (56 caractères)
-        const maxLen = 56;
+        const maxLen = 38; // Format ticket étroit standard
         const padLine = (left, right) => {
             let lStr = String(left);
             const rStr = String(right);
@@ -3451,55 +3448,52 @@ function generateBudgetPDF() {
         
         const makeSep = (char = "=") => char.repeat(maxLen);
         
-        let htmlString = `<div style="width: 640px; font-family: monospace; font-size: 11pt; color: #000000; background: #ffffff; padding: 20px; box-sizing: border-box; margin: 0 auto;">`;
+        let pdfTx = "";
         
         // --- 1. EN-TÊTE & RÉSUMÉ COMPTABLE ---
-        let mainTx = "";
-        mainTx += `BUDGET ${userName}\n`;
-        mainTx += `PERIODE : ${monthLabel.toUpperCase()}\n`;
-        mainTx += `DATE    : ${new Date().toLocaleDateString("fr-FR")} - ${new Date().toLocaleTimeString("fr-FR", {hour: '2-digit', minute:'2-digit'})}\n`;
-        mainTx += makeSep("=") + "\n";
-        mainTx += `RESUME COMPTABLE\n`;
-        mainTx += makeSep("=") + "\n";
-        mainTx += padLine("TOTAL REVENUS (+)", formatCurrency(totalRevenues)) + "\n";
-        mainTx += padLine("TOTAL FRAIS FIXES (-)", formatCurrency(totalFixed)) + "\n";
-        mainTx += padLine("TOTAL DEPENSES (-)", formatCurrency(totalExpenses)) + "\n";
-        mainTx += makeSep("-") + "\n";
-        mainTx += padLine("RESTE A VIVRE NET", formatCurrency(remaining)) + "\n";
-        mainTx += makeSep("=") + "\n\n";
+        pdfTx += `BUDGET ${userName}\n`;
+        pdfTx += `PERIODE : ${monthLabel.toUpperCase()}\n`;
+        pdfTx += `DATE    : ${new Date().toLocaleDateString("fr-FR")} - ${new Date().toLocaleTimeString("fr-FR", {hour: '2-digit', minute:'2-digit'})}\n`;
+        pdfTx += makeSep("=") + "\n";
+        pdfTx += `RESUME COMPTABLE\n`;
+        pdfTx += makeSep("=") + "\n";
+        pdfTx += padLine("TOTAL REVENUS (+)", formatCurrency(totalRevenues)) + "\n";
+        pdfTx += padLine("TOTAL FRAIS FIXES (-)", formatCurrency(totalFixed)) + "\n";
+        pdfTx += padLine("TOTAL DEPENSES (-)", formatCurrency(totalExpenses)) + "\n";
+        pdfTx += makeSep("-") + "\n";
+        pdfTx += padLine("RESTE A VIVRE NET", formatCurrency(remaining)) + "\n";
+        pdfTx += makeSep("=") + "\n\n";
         
         // --- 2. DÉTAIL DES REVENUS ---
-        mainTx += `DETAIL DES REVENUS\n`;
-        mainTx += makeSep("-") + "\n";
+        pdfTx += `DETAIL DES REVENUS\n`;
+        pdfTx += makeSep("-") + "\n";
         if (!state.revenues || state.revenues.length === 0) {
-            mainTx += `[Aucun revenu enregistré]\n`;
+            pdfTx += `[Aucun revenu enregistré]\n`;
         } else {
             state.revenues.forEach(r => {
-                mainTx += padLine(` • ${r.title}`, formatCurrency(r.amount)) + "\n";
+                pdfTx += padLine(` • ${r.title}`, formatCurrency(r.amount)) + "\n";
             });
         }
-        mainTx += "\n";
+        pdfTx += "\n";
         
         // --- 3. DÉTAIL DES FRAIS FIXES ---
-        mainTx += `DETAIL DES FRAIS FIXES\n`;
-        mainTx += makeSep("-") + "\n";
+        pdfTx += `DETAIL DES FRAIS FIXES\n`;
+        pdfTx += makeSep("-") + "\n";
         if (!state.fixedCharges || state.fixedCharges.length === 0) {
-            mainTx += `[Aucun frais fixe enregistré]\n`;
+            pdfTx += `[Aucun frais fixe enregistré]\n`;
         } else {
             state.fixedCharges.forEach(c => {
-                mainTx += padLine(` • ${c.title}`, formatCurrency(c.amount)) + "\n";
+                pdfTx += padLine(` • ${c.title}`, formatCurrency(c.amount)) + "\n";
             });
         }
-        mainTx += "\n";
+        pdfTx += "\n";
         
         // --- 4. HISTORIQUE DES OPÉRATIONS PRINCIPALES ---
-        mainTx += `DETAIL DES OPERATIONS\n`;
-        mainTx += makeSep("=") + "\n";
-        
-        htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000;">${mainTx}</pre>`;
+        pdfTx += `DETAIL DES OPERATIONS\n`;
+        pdfTx += makeSep("=") + "\n";
         
         if (sortedKeys.length === 0) {
-            htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; color: #000000;">[Aucune opération enregistrée]\n</pre>`;
+            pdfTx += `[Aucune opération enregistrée]\n\n`;
         } else {
             sortedKeys.forEach(key => {
                 let dateLong = key;
@@ -3510,7 +3504,7 @@ function generateBudgetPDF() {
                     dateLong = dateLong.charAt(0).toUpperCase() + dateLong.slice(1);
                 }
                 
-                let dayText = `${dateLong.toUpperCase()}\n` + makeSep("-") + "\n";
+                pdfTx += `${dateLong.toUpperCase()}\n` + makeSep("-") + "\n";
                 groups[key].forEach(e => {
                     const isRefund = e.amount < 0 || e.isCashDepositPending;
                     const absAmt = e.isCashDepositPending ? (e.originalCashAmount || Math.abs(e.amount)) : Math.abs(e.amount);
@@ -3518,21 +3512,17 @@ function generateBudgetPDF() {
                     const formattedAmt = `${sign} ${absAmt.toFixed(2).replace('.', ',')} €`;
                     const titleStr = e.isBudgetReference ? (e.isCashDepositPending ? `[CASH] ${e.title}` : `[ENV] ${e.title}`) : e.title;
                     
-                    dayText += padLine(` • ${titleStr}`, formattedAmt) + "\n";
+                    pdfTx += padLine(` • ${titleStr}`, formattedAmt) + "\n";
                 });
-                dayText += "\n";
-                
-                htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000; page-break-inside: avoid; break-inside: avoid;">${dayText}</pre>`;
+                pdfTx += "\n";
             });
         }
         
-        // --- 5. SUIVI DE TOUTES LES ENVELOPPES (ACTIVES + CLÔTURÉES) ---
+        // --- 5. SUIVI DE TOUTES LES ENVELOPPES ---
         if (state.budgets && state.budgets.length > 0) {
-            let envHeader = makeSep("=") + "\n";
-            envHeader += `SUIVI DES ENVELOPPES DEDIEES\n`;
-            envHeader += makeSep("=") + "\n";
-            
-            htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000; page-break-before: always; break-before: page;">${envHeader}</pre>`;
+            pdfTx += makeSep("=") + "\n";
+            pdfTx += `SUIVI DES ENVELOPPES DEDIEES\n`;
+            pdfTx += makeSep("=") + "\n";
             
             state.budgets.forEach(budget => {
                 const isFriends = budget.subType === "friends";
@@ -3542,13 +3532,15 @@ function generateBudgetPDF() {
                 const origAlloc = budget.originalAllocated || budget.allocated;
                 
                 let displayAmount = isFriends ? (origAlloc + totalSpent) : (origAlloc - totalSpent);
-                let labelDisplay = isFriends ? "PART UTILISATEUR" : "SOLDE DISPONIBLE";
-                const statusLabel = budget.closed ? "CLOTUREE" : "ACTIVE";
-                
-                let envText = `>>> ENVELOPPE : ${budget.title.toUpperCase()} [${statusLabel}]\n`;
-                envText += padLine("  Montant alloué initial", formatCurrency(origAlloc)) + "\n";
-                envText += padLine(`  ${labelDisplay}`, formatCurrency(displayAmount)) + "\n";
-                envText += `  Détail des mouvements :\n`;
+                let labelDisplay = isFriends ? `PART ${userName}` : "SOLDE DISPONIBLE";
+				let statusLabel = budget.closed ? "CLOTUREE" : "ACTIVE";
+				if (typeof budgetRenewalActions !== "undefined" && budgetRenewalActions[budget.id]) {
+					statusLabel = budgetRenewalActions[budget.id] === "carry" ? "REPORTEE" : "CLOTUREE";
+				}                
+                pdfTx += `>>> ENVELOPPE : ${budget.title.toUpperCase()} [${statusLabel}]\n`;
+                pdfTx += padLine("  Montant alloué initial", formatCurrency(origAlloc)) + "\n";
+                pdfTx += padLine(`  ${labelDisplay}`, formatCurrency(displayAmount)) + "\n";
+                pdfTx += `  Détail des mouvements :\n`;
                 
                 let allOps = [];
                 if (isFriends) {
@@ -3564,65 +3556,55 @@ function generateBudgetPDF() {
                         const prefix = op.isCash ? "   [CASH] " : "   • ";
                         const archLabel = op.isArchived ? " (PREC)" : "";
                         
-                        envText += padLine(`${prefix}${op.title}${archLabel}`, formattedOpAmt) + "\n";
+                        pdfTx += padLine(`${prefix}${op.title}${archLabel}`, formattedOpAmt) + "\n";
                     });
                 } else {
-                    envText += `   [Aucun mouvement enregistré]\n`;
+                    pdfTx += `   [Aucun mouvement enregistré]\n`;
                 }
-                envText += makeSep("-") + "\n\n";
-                
-                htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000; page-break-inside: avoid; break-inside: avoid;">${envText}</pre>`;
+                pdfTx += makeSep("-") + "\n\n";
             });
         }
         
         // --- 6. PIED DE TICKET ---
-        let footerText = makeSep("=") + "\n";
-        footerText += `FIN DE TICKET — MERCI\n`;
-        footerText += makeSep("=") + "\n";
+        pdfTx += makeSep("=") + "\n";
+        pdfTx += `FIN DE TICKET — MERCI\n`;
+        pdfTx += makeSep("=") + "\n";
         
-        htmlString += `<pre style="font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000; page-break-inside: avoid; break-inside: avoid;">${footerText}</pre>`;
-        
+        let htmlString = `<div style="width: 302px; font-family: monospace; font-size: 9pt; line-height: 1.3; color: #000000; background: #ffffff; padding: 10px; box-sizing: border-box; margin: 0 auto;">`;
+        htmlString += `<pre style="font-family: monospace; font-size: 9pt; line-height: 1.3; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000;">${pdfTx}</pre>`;
         htmlString += `</div>`;
         
+        // Câblage du mesureur sur le DOM
+        const tempDiv = document.createElement("div");
+        tempDiv.style.position = "absolute";
+        tempDiv.style.top = "-9999px";
+        tempDiv.style.left = "-9999px";
+        tempDiv.innerHTML = htmlString;
+        document.body.appendChild(tempDiv);
+        
+        const measuredHeightMm = Math.ceil(tempDiv.offsetHeight * 0.264583) + 8;
+        document.body.removeChild(tempDiv);
+
         const opt = {
-            margin: 15,
+            margin: [2, 2, 2, 2],
             filename: `Bilan_Budget_${state.budgetMonth}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                logging: false,
-                scrollY: 0,
-                scrollX: 0
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
+            jsPDF: { unit: 'mm', format: [80, measuredHeightMm], orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'] }
         };
         
         document.body.classList.remove("overflow-hidden");
         document.documentElement.classList.remove("overflow-hidden");
         
-        html2pdf().set(opt).from(htmlString).toPdf().get('pdf').then((pdf) => {
-            const totalPages = pdf.internal.getNumberOfPages();
-            for (let i = 1; i <= totalPages; i++) {
-                pdf.setPage(i);
-                pdf.setFontSize(8);
-                pdf.setTextColor(120);
-                const pageWidth = pdf.internal.pageSize.getWidth ? pdf.internal.pageSize.getWidth() : pdf.internal.pageSize.width;
-                const pageHeight = pdf.internal.pageSize.getHeight ? pdf.internal.pageSize.getHeight() : pdf.internal.pageSize.height;
-                pdf.text(`Page ${i}/${totalPages}`, pageWidth - 15, pageHeight - 10, { align: 'right' });
-            }
-            return pdf;
-        }).outputPdf('blob').then(async (blob) => {
+        html2pdf().set(opt).from(htmlString).toPdf().outputPdf('blob').then(async (blob) => {
             const fileName = `Bilan_Budget_${state.budgetMonth}.pdf`;
-            
             const isNativeAPK = window.Capacitor && window.Capacitor.isNativePlatform();
             const isMobileWebView = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.chrome;
 
             if (isNativeAPK || isMobileWebView) {
                 const fs = window.Capacitor?.Plugins?.Filesystem;
                 if (fs) {
-                    // Première tentative : écriture directe
                     try {
                         const base64Data = await new Promise((res, rej) => {
                             const reader = new FileReader();
@@ -3630,48 +3612,17 @@ function generateBudgetPDF() {
                             reader.onerror = rej;
                             reader.readAsDataURL(blob);
                         });
-
-                        await fs.writeFile({
-                            path: fileName,
-                            data: base64Data,
-                            directory: 'DOWNLOAD'
-                        });
-
+                        await fs.writeFile({ path: fileName, data: base64Data, directory: 'DOWNLOAD' });
                         alert("PDF enregistré dans tes Téléchargements.");
-                        document.body.classList.add("overflow-x-hidden");
                         resolve();
                         return;
-                    } catch (writeErr) {
-                        // Deuxième tentative : Si échec, on demande les permissions et on réessaie
-                        try {
-                            await fs.requestPermissions();
-                            const base64Data = await new Promise((res, rej) => {
-                                const reader = new FileReader();
-                                reader.onloadend = () => res(reader.result.split(',')[1]);
-                                reader.onerror = rej;
-                                reader.readAsDataURL(blob);
-                            });
-
-                            await fs.writeFile({
-                                path: fileName,
-                                data: base64Data,
-                                directory: 'DOWNLOAD'
-                            });
-
-                            alert("PDF enregistré dans tes Téléchargements.");
-                            document.body.classList.add("overflow-x-hidden");
-                            resolve();
-                            return;
-                        } catch (permErr) {
-                            // Si tout échoue (permissions refusées), sécurité absolue : on bascule sur le partage natif
-                            await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
-                        }
+                    } catch (err) {
+                        await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget`);
                     }
                 } else {
-                    await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
+                    await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget`);
                 }
             } else {
-                // Mode PC Navigateur classique
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
@@ -3681,8 +3632,148 @@ function generateBudgetPDF() {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }
-            
             document.body.classList.add("overflow-x-hidden");
+            resolve();
+        }).catch(err => {
+            document.body.classList.add("overflow-x-hidden");
+            reject(err);
+        });
+    });
+}
+
+// --- GENERATION DU TICKET DE CAISSE DE L'ENVELOPPE PDF ---
+function generateEnvelopeReceiptPDF(budgetId) {
+    return new Promise((resolve, reject) => {
+        const budget = state.budgets.find(b => b.id === budgetId);
+        if (!budget) return reject("Enveloppe introuvable");
+
+        const userName = state.settings.username ? state.settings.username.toUpperCase() : "HMR";
+        const isFriends = budget.subType === "friends";
+        
+        const activeSpent = budget.expenses.filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
+        const archivedSpent = (budget.archivedExpenses || []).filter(e => !e.isCashDeposit).reduce((sum, e) => sum + e.amount, 0);
+        const totalSpent = activeSpent + archivedSpent;
+        const origAlloc = budget.originalAllocated || budget.allocated;
+        
+        let displayAmount = isFriends ? (origAlloc + totalSpent) : (origAlloc - totalSpent);
+        let labelDisplay = isFriends ? `PART ${userName}` : "SOLDE DISPONIBLE";
+        const statusLabel = budget.closed ? "CLOTUREE" : "ACTIVE";
+
+        const maxLen = 38; // Format ticket étroit standard
+        const padLine = (left, right) => {
+            let lStr = String(left);
+            const rStr = String(right);
+            if (lStr.length + rStr.length + 1 > maxLen) {
+                lStr = lStr.substring(0, maxLen - rStr.length - 2) + "…";
+            }
+            const dots = maxLen - lStr.length - rStr.length;
+            return lStr + ".".repeat(dots > 0 ? dots : 1) + rStr;
+        };
+        const makeSep = (char = "=") => char.repeat(maxLen);
+
+        // --- STRUCTURE DU TICKET BRUT ---
+        let receiptTx = "";
+        receiptTx += `TICKET ENVELOPPE : ${budget.title.toUpperCase()}\n`;
+        receiptTx += `PROPRIETAIRE     : ${userName}\n`;
+        receiptTx += `STATUT           : ${statusLabel}\n`;
+        receiptTx += `DATE EXPORT      : ${new Date().toLocaleDateString("fr-FR")} - ${new Date().toLocaleTimeString("fr-FR", {hour: '2-digit', minute:'2-digit'})}\n`;
+        receiptTx += makeSep("=") + "\n";
+        receiptTx += padLine("MONTANT ALLOUE INITIAL", formatCurrency(origAlloc)) + "\n";
+        receiptTx += padLine(labelDisplay, formatCurrency(displayAmount)) + "\n";
+        receiptTx += makeSep("-") + "\n";
+        receiptTx += `JOURNAL DES MOUVEMENTS\n`;
+        receiptTx += makeSep("=") + "\n";
+
+        let allOps = [];
+        if (isFriends) {
+            allOps.push({ title: "Dépense de départ", amount: origAlloc, isCash: false, isArchived: false, date: budget.createdDate });
+        }
+        allOps = [...allOps, ...(budget.archivedExpenses || []).map(o => ({...o, isArchived: true})), ...budget.expenses];
+
+        if (allOps.length > 0) {
+            allOps.forEach(op => {
+                const isOpRefund = op.amount < 0;
+                const opSign = isOpRefund ? "+" : "-";
+                const formattedOpAmt = `${opSign} ${Math.abs(op.amount).toFixed(2).replace('.', ',')} €`;
+                const prefix = op.isCash ? "[CASH] " : "";
+                const archLabel = op.isArchived ? " (PREC)" : "";
+                const dateLabel = (op.date && op.date.includes('-')) ? `[${op.date.split('-').slice(1).reverse().join('/')}] ` : "";
+                receiptTx += padLine(` • ${dateLabel}${prefix}${op.title}${archLabel}`, formattedOpAmt) + "\n";
+            });
+        } else {
+            receiptTx += `[Aucun mouvement enregistré]\n`;
+        }
+
+        receiptTx += makeSep("=") + "\n";
+        receiptTx += `BUDGETHMR — FIN DE TICKET\n`;
+        receiptTx += makeSep("=") + "\n";
+
+        // Largeur calée à 302px pour correspondre pile à 80mm de large à 96 DPI sans distorsion
+        let htmlString = `<div id="temp_ticket_measurer" style="width: 302px; font-family: monospace; font-size: 9pt; line-height: 1.3; color: #000000; background: #ffffff; padding: 10px; box-sizing: border-box;">`;
+        htmlString += `<pre style="font-family: monospace; font-size: 9pt; line-height: 1.3; white-space: pre-wrap; margin: 0; padding: 0; border: none; background: none; color: #000000;">${receiptTx}</pre>`;
+        htmlString += `</div>`;
+
+        // --- CALCUL DE HAUTEUR REELLE SUR LE DOM ---
+        const tempDiv = document.createElement("div");
+        tempDiv.style.position = "absolute";
+        tempDiv.style.top = "-9999px";
+        tempDiv.style.left = "-9999px";
+        tempDiv.innerHTML = htmlString;
+        document.body.appendChild(tempDiv);
+        
+        // Calcul de la hauteur en mm (1px = 0.264583mm) + marge de sécurité de 8mm au fond
+        const measuredHeightMm = Math.ceil(tempDiv.offsetHeight * 0.264583) + 8;
+        document.body.removeChild(tempDiv);
+
+        const opt = {
+            margin: [2, 2, 2, 2],
+            filename: `Ticket_${budget.title.replace(/\s+/g, '_')}_${state.budgetMonth}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
+            jsPDF: { unit: 'mm', format: [80, measuredHeightMm], orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'] }
+        };
+
+        document.body.classList.remove("overflow-hidden");
+        document.documentElement.classList.remove("overflow-hidden");
+
+        html2pdf().set(opt).from(htmlString).toPdf().outputPdf('blob').then(async (blob) => {
+            const fileName = `Ticket_${budget.title.replace(/\s+/g, '_')}_${state.budgetMonth}.pdf`;
+            const isNativeAPK = window.Capacitor && window.Capacitor.isNativePlatform();
+            const isMobileWebView = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.chrome;
+
+            if (isNativeAPK || isMobileWebView) {
+                const fs = window.Capacitor?.Plugins?.Filesystem;
+                if (fs) {
+                    try {
+                        const base64Data = await new Promise((res, rej) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => res(reader.result.split(',')[1]);
+                            reader.onerror = rej;
+                            reader.readAsDataURL(blob);
+                        });
+                        await fs.writeFile({ path: fileName, data: base64Data, directory: 'DOWNLOAD' });
+                        alert("Ticket PDF enregistré dans tes Téléchargements.");
+                        resolve();
+                        return;
+                    } catch (err) {
+                        await shareBlob(blob, fileName, `Ticket ${budget.title}`, `Ticket de l'enveloppe ${budget.title}`);
+                    }
+                } else {
+                    await shareBlob(blob, fileName, `Ticket ${budget.title}`, `Ticket de l'enveloppe ${budget.title}`);
+                }
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            document.body.classList.add("overflow-x-hidden");
+            triggerHaptic('success');
             resolve();
         }).catch(err => {
             document.body.classList.add("overflow-x-hidden");
@@ -4208,14 +4299,17 @@ function renderBudgetsList() {
                 </div>
             </div>
 
-            <div class="pt-2 border-t border-stone-200 dark:border-stone-800 select-none grid grid-cols-2 gap-2">
-                <button onclick="confirmCloseBudget('${budget.id}')" class="w-full py-3.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold rounded-xl border border-stone-300 dark:border-stone-700 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
-                    🔒 Clôturer
-                </button>
-                <button onclick="confirmDeleteBudget('${budget.id}')" class="w-full py-3.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-bold rounded-xl border border-red-100 dark:border-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
-                    🗑️ Supprimer
-                </button>
-            </div>
+            <div class="pt-2 border-t border-stone-200 dark:border-stone-800 select-none grid grid-cols-3 gap-2">
+				<button onclick="generateEnvelopeReceiptPDF('${budget.id}')" class="w-full py-3.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold rounded-xl border border-stone-300 dark:border-stone-700 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
+					📋 Ticket
+				</button>
+				<button onclick="confirmCloseBudget('${budget.id}')" class="w-full py-3.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold rounded-xl border border-stone-300 dark:border-stone-700 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
+					🔒 Clôturer
+				</button>
+				<button onclick="confirmDeleteBudget('${budget.id}')" class="w-full py-3.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-bold rounded-xl border border-red-100 dark:border-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
+					🗑️ Supprimer
+				</button>
+			</div>
         `;
         
         container.appendChild(card);
@@ -4842,21 +4936,27 @@ function openViewBudgetModal(budgetId) {
         const footerContainer = document.getElementById("view_budget_modal_footer");
         if (footerContainer) {
             if (budget.closed) {
-                footerContainer.innerHTML = `
-                    <button onclick="reopenBudget('${budget.id}')" class="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-sm">
-                        🔓 Réouvrir
-                    </button>
-                    <button onclick="closeViewBudgetModal()" class="flex-1 py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold rounded-xl text-xs active:scale-95 transition-all">
-                        Fermer
-                    </button>
-                `;
-            } else {
-                footerContainer.innerHTML = `
-                    <button onclick="closeViewBudgetModal()" class="w-full py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold rounded-xl text-xs active:scale-95 transition-all">
-                        Fermer
-                    </button>
-                `;
-            }
+				footerContainer.innerHTML = `
+					<button onclick="generateEnvelopeReceiptPDF('${budget.id}')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm">
+						📋 Ticket PDF
+					</button>
+					<button onclick="reopenBudget('${budget.id}')" class="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-sm">
+						🔓 Réouvrir
+					</button>
+					<button onclick="closeViewBudgetModal()" class="flex-1 py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold rounded-xl text-xs active:scale-95 transition-all">
+						Fermer
+					</button>
+				`;
+			} else {
+				footerContainer.innerHTML = `
+					<button onclick="generateEnvelopeReceiptPDF('${budget.id}')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm">
+						📋 Ticket PDF
+					</button>
+					<button onclick="closeViewBudgetModal()" class="flex-1 py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold rounded-xl text-xs active:scale-95 transition-all">
+						Fermer
+					</button>
+				`;
+			}
         }
 
         modal.classList.remove("hidden");
