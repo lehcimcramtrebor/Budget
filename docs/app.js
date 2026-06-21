@@ -1576,12 +1576,11 @@ function saveEdit(event) {
                     } else if (item.isDeposited && item.depositTxId) {
                         const mainTx = state.expenses.find(e => e.id === item.depositTxId);
                         if (mainTx) {
-                            const oldAmt = Math.abs(item.amount);
-                            const diff = amount - oldAmt;
-                            mainTx.originalCashAmount = (mainTx.originalCashAmount || 0) + diff;
-                            if (mainTx.amount < 0) {
-                                mainTx.amount = -mainTx.originalCashAmount;
-                            }
+                            const linkedOps = [...(budget.archivedExpenses || []), ...budget.expenses].filter(op => op.depositTxId === mainTx.id);
+                            const newOriginalCashAmount = linkedOps.reduce((sum, op) => sum + Math.abs(op.amount), 0);
+                            
+                            mainTx.originalCashAmount = newOriginalCashAmount;
+                            mainTx.amount = calculateCashDepositAmount(budget, newOriginalCashAmount, mainTx.id);
                         }
                     }
                 }
@@ -4384,7 +4383,18 @@ function addBudgetOperation(budgetId, type, isCash = false) {
     let amountStr = amountInput.value.trim().replace(",", ".");
     let amount = parseFloat(amountStr);
     
-    if (!title || isNaN(amount) || amount <= 0) {
+    if (!title) {
+        titleInput.setCustomValidity("Veuillez renseigner un libellé.");
+        titleInput.reportValidity();
+        titleInput.addEventListener('input', () => titleInput.setCustomValidity(''), { once: true });
+        triggerHaptic('error');
+        return;
+    }
+    
+    if (isNaN(amount) || amount <= 0) {
+        amountInput.setCustomValidity("Veuillez saisir un montant supérieur à 0.");
+        amountInput.reportValidity();
+        amountInput.addEventListener('input', () => amountInput.setCustomValidity(''), { once: true });
         triggerHaptic('error');
         return;
     }
@@ -4428,6 +4438,23 @@ function addBudgetOperation(budgetId, type, isCash = false) {
     amountInput.value = "";
 }
 
+function calculateCashDepositAmount(budget, cashAvailable, targetDepositTxId) {
+    if (budget.type !== "deducted") {
+        return -cashAvailable;
+    }
+    const spent = budget.expenses.filter(e => {
+        if (e.isCashDeposit) return false;
+        if (budget.subType === "friends" && e.amount < 0 && !e.isCash) return false;
+        if (e.isCash && e.amount < 0 && e.isDeposited && e.depositTxId && e.depositTxId !== targetDepositTxId) {
+            return false;
+        }
+        return true;
+    }).reduce((sum, ex) => sum + ex.amount, 0);
+    
+    const partUtilisateur = budget.allocated + spent;
+    return Math.max(0, partUtilisateur + cashAvailable) - cashAvailable - Math.max(0, partUtilisateur);
+}
+
 function depositBudgetCash(budgetId) {
     const budget = state.budgets.find(b => b.id === budgetId);
     if (!budget) return;
@@ -4443,11 +4470,11 @@ function depositBudgetCash(budgetId) {
         () => {
             // 2. Create pending cash deposit transaction in main history
             const txId = "tx_cash_" + Date.now() + "_" + Math.floor(Math.random() * 1005);
-            const isIndependent = budget.type !== "deducted";
+            const depositAmount = calculateCashDepositAmount(budget, cashAvailable, txId);
             const cashTx = {
                 id: txId,
                 title: `Dépôt espèces : ${budget.title}`,
-                amount: isIndependent ? -cashAvailable : 0,
+                amount: depositAmount,
                 date: getTodayDateString(),
                 isBudgetReference: true,
                 budgetId: budget.id,
@@ -4494,10 +4521,11 @@ function deleteBudgetOperation(budgetId, opId) {
                     // Adjust or remove corresponding main cash deposit transaction
                     const cashTx = state.expenses.find(e => e.id === op.depositTxId);
                     if (cashTx) {
+                        // Filter the expense first so the helper sees the updated list
+                        budget.expenses = budget.expenses.filter(o => o.id !== opId);
                         cashTx.originalCashAmount = (cashTx.originalCashAmount || 0) - Math.abs(op.amount);
-                        if (cashTx.amount < 0) {
-                            cashTx.amount += Math.abs(op.amount);
-                        }
+                        cashTx.amount = calculateCashDepositAmount(budget, cashTx.originalCashAmount, cashTx.id);
+                        
                         if (cashTx.originalCashAmount <= 0.009) {
                             state.expenses = state.expenses.filter(e => e.id !== op.depositTxId);
                         }
@@ -4587,10 +4615,10 @@ function executeCloseBudgetLogic(budget) {
     budget.closed = true;
     budget.closedDate = getTodayDateString();
     
+    const isFriends = budget.subType === "friends";
+    const spent = budget.expenses.filter(e => !e.isCashDeposit).reduce((sum, ex) => sum + ex.amount, 0);
+    
     if (budget.type === "deducted") {
-        const spent = budget.expenses.filter(e => !e.isCashDeposit).reduce((sum, ex) => sum + ex.amount, 0);
-        const isFriends = budget.subType === "friends";
-        
         // Remove the original main transaction
         if (budget.mainTransactionId) {
             state.expenses = state.expenses.filter(e => e.id !== budget.mainTransactionId);
@@ -4609,16 +4637,16 @@ function executeCloseBudgetLogic(budget) {
                 state.expenses.forEach(e => {
                     if (e.isCashDepositPending && e.budgetId === budget.id && !e.isDeposited) {
                         e.isDeposited = true;
-                        e.amount = 0;
+                        e.amount = e.amount < 0 ? e.amount : 0;
                     }
                 });
             }
             
-            // 1. Create final share transaction
+            // 1. Create final share transaction (includes cashAvailable so it remains debited from bank until deposited)
             const shareTx = {
                 id: "tx_share_" + Date.now() + "_" + Math.floor(Math.random() * 1005),
                 title: `Part finale : ${budget.title}`,
-                amount: Math.max(0, partUtilisateur),
+                amount: Math.max(0, partUtilisateur + cashAvailable),
                 date: getTodayDateString(),
                 isBudgetReference: true,
                 budgetId: budget.id,
@@ -4628,12 +4656,11 @@ function executeCloseBudgetLogic(budget) {
             
             // 2. Create cash deposit transaction if cashAvailable > 0
             if (cashAvailable > 0.009) {
-                const isIndependent = budget.type !== "deducted";
                 const txId = "tx_cash_" + Date.now() + "_" + Math.floor(Math.random() * 1005);
                 const cashTx = {
                     id: txId,
                     title: `Espèces à déposer : ${budget.title}`,
-                    amount: isIndependent ? -cashAvailable : 0,
+                    amount: -cashAvailable, // Always -cashAvailable so confirming the deposit credits Reste à Vivre
                     date: getTodayDateString(),
                     isBudgetReference: true,
                     budgetId: budget.id,
@@ -4661,9 +4688,41 @@ function executeCloseBudgetLogic(budget) {
                 amount: Math.max(0, spent),
                 date: getTodayDateString(),
                 isBudgetReference: true,
-                budgetId: budget.id
+                budgetId: budget.id,
+                isClassicFinal: true
             };
             state.expenses.push(finalTx);
+        }
+    } else {
+        // Independent envelope
+        if (isFriends) {
+            const allCashOps = [...(budget.archivedExpenses || []), ...budget.expenses].filter(e => e.isCash && !e.isDeposited);
+            const cashAvailable = Math.max(0, - allCashOps.reduce((sum, e) => sum + e.amount, 0));
+            
+            if (cashAvailable > 0.009) {
+                const txId = "tx_cash_" + Date.now() + "_" + Math.floor(Math.random() * 1005);
+                const cashTx = {
+                    id: txId,
+                    title: `Espèces à déposer : ${budget.title}`,
+                    amount: -cashAvailable,
+                    date: getTodayDateString(),
+                    isBudgetReference: true,
+                    budgetId: budget.id,
+                    isCashDepositPending: true,
+                    isDeposited: false,
+                    originalCashAmount: cashAvailable
+                };
+                state.expenses.push(cashTx);
+                
+                const markDep = (op) => {
+                    if (op.isCash && op.amount < 0 && !op.isDeposited) {
+                        op.isDeposited = true;
+                        op.depositTxId = txId;
+                    }
+                };
+                if (budget.expenses) budget.expenses.forEach(markDep);
+                if (budget.archivedExpenses) budget.archivedExpenses.forEach(markDep);
+            }
         }
     }
 }
@@ -4729,6 +4788,21 @@ function confirmCashDeposit(event, txId) {
         () => {
             tx.isDeposited = true;
             tx.amount = tx.amount < 0 ? tx.amount : 0;
+            
+            // Mettre à jour les opérations internes de l'enveloppe correspondante
+            if (tx.budgetId) {
+                const budget = state.budgets.find(b => b.id === tx.budgetId);
+                if (budget) {
+                    const markDeposited = (op) => {
+                        if (op.depositTxId === tx.id) {
+                            op.isDeposited = true;
+                        }
+                    };
+                    if (budget.expenses) budget.expenses.forEach(markDeposited);
+                    if (budget.archivedExpenses) budget.archivedExpenses.forEach(markDeposited);
+                }
+            }
+            
             saveState();
             updateUI();
             triggerHaptic('success');
@@ -4939,6 +5013,110 @@ function closeViewBudgetModal() {
     }
 }
 
+function executeReopenBudgetLogic(budget) {
+    const isFriends = budget.subType === "friends";
+    budget.closed = false;
+    delete budget.closedDate;
+    
+    // Récupérer l'ID de la transaction de dépôt d'espèces de clôture (créée spécifiquement à la clôture avec le préfixe "Espèces à déposer :")
+    const closureCashTx = state.expenses.find(e => e.budgetId === budget.id && e.title.startsWith("Espèces à déposer :"));
+    const closureCashTxId = closureCashTx ? closureCashTx.id : null;
+    const wasClosureCashTxDeposited = closureCashTx ? closureCashTx.isDeposited : false;
+
+    // Supprimer uniquement les transactions consolidées de clôture (Part finale, Enveloppe finale et Espèces à déposer de clôture) de l'historique principal.
+    // Les dépôts intermédiaires effectués pendant que l'enveloppe était active ("Dépôt espèces :") restent inchangés dans le grand livre.
+    state.expenses = state.expenses.filter(e => {
+        const isFinalShareTx = e.budgetId === budget.id && e.isFinalShare;
+        const isClosureCashTx = e.budgetId === budget.id && e.title.startsWith("Espèces à déposer :");
+        const isClassicFinalTx = e.budgetId === budget.id && (e.isClassicFinal || (e.id && e.id.startsWith("tx_final_")));
+        return !(isFinalShareTx || isClosureCashTx || isClassicFinalTx);
+    });
+    
+    // Si l'enveloppe est déduite du reste à vivre, recréer la transaction de référence principale et restaurer les remboursements numériques
+    if (budget.type === "deducted") {
+        // Restaurer les remboursements numériques individuels (CB/virements) dans l'historique principal
+        if (isFriends) {
+            budget.expenses.forEach(op => {
+                if (op.amount < 0 && !op.isCash) {
+                    const txId = "tx_ref_cb_" + op.id;
+                    const refCbTx = {
+                        id: txId,
+                        title: `Remb. numérique : ${budget.title} (${op.title})`,
+                        amount: op.amount,
+                        date: op.date || getTodayDateString(),
+                        isBudgetReference: true,
+                        budgetId: budget.id,
+                        isDigitalRefundTx: true,
+                        budgetOpId: op.id
+                    };
+                    state.expenses.push(refCbTx);
+                }
+            });
+        }
+
+        // Recréer la transaction de référence d'origine
+        const titlePrefix = isFriends ? "Avance" : "Enveloppe";
+        const refTx = {
+            id: budget.mainTransactionId,
+            title: `${titlePrefix} : ${budget.title}`,
+            amount: budget.allocated, // Sera resynchronisé ci-dessous
+            date: getTodayDateString(),
+            isBudgetReference: true,
+            budgetId: budget.id
+        };
+        state.expenses.push(refTx);
+    }
+
+    // Gérer la remise en état des opérations d'espèces de clôture
+    if (closureCashTxId) {
+        if (wasClosureCashTxDeposited) {
+            // Si le dépôt de clôture avait déjà été validé comme déposé en banque par l'utilisateur, 
+            // on le recrée sous forme de dépôt intermédiaire actif validé (amount = 0 ou -cash)
+            const newActiveTxId = "tx_cash_reopened_" + Date.now() + "_" + Math.floor(Math.random() * 1005);
+            const cashAvailable = closureCashTx.originalCashAmount || 0;
+            
+            const updateDepId = (op) => {
+                if (op.depositTxId === closureCashTxId) {
+                    op.depositTxId = newActiveTxId;
+                    op.isDeposited = true;
+                }
+            };
+            if (budget.expenses) budget.expenses.forEach(updateDepId);
+            if (budget.archivedExpenses) budget.archivedExpenses.forEach(updateDepId);
+
+            const depositAmount = calculateCashDepositAmount(budget, cashAvailable, newActiveTxId);
+
+            const activeCashTx = {
+                id: newActiveTxId,
+                title: `Dépôt espèces : ${budget.title}`,
+                amount: depositAmount,
+                date: getTodayDateString(),
+                isBudgetReference: true,
+                budgetId: budget.id,
+                isCashDepositPending: true,
+                isDeposited: true,
+                originalCashAmount: cashAvailable
+            };
+            state.expenses.push(activeCashTx);
+        } else {
+            // Si le dépôt était encore en attente de versement, on remet les opérations en espèces correspondantes 
+            // comme "non déposées" dans l'enveloppe
+            const resetDep = (op) => {
+                if (op.depositTxId === closureCashTxId) {
+                    op.isDeposited = false;
+                    delete op.depositTxId;
+                }
+            };
+            if (budget.expenses) budget.expenses.forEach(resetDep);
+            if (budget.archivedExpenses) budget.archivedExpenses.forEach(resetDep);
+        }
+    }
+
+    if (budget.type === "deducted") {
+        syncMainBudgetReference(budget);
+    }
+}
+
 function reopenBudget(budgetId) {
     const budget = state.budgets.find(b => b.id === budgetId);
     if (!budget) return;
@@ -4974,27 +5152,7 @@ function reopenBudget(budgetId) {
             msg,
             "🔓",
             () => {
-                budget.closed = false;
-                delete budget.closedDate;
-                
-                if (budget.type === "deducted") {
-                    // Remove any split transactions linked to this budget
-                    state.expenses = state.expenses.filter(e => e.budgetId !== budget.id);
-                    
-                    // Recreate the original main transaction
-                    const titlePrefix = isFriends ? "Avance" : "Enveloppe";
-                    const refTx = {
-                        id: budget.mainTransactionId,
-                        title: `${titlePrefix} : ${budget.title}`,
-                        amount: budget.allocated, // Will be synced below
-                        date: getTodayDateString(),
-                        isBudgetReference: true,
-                        budgetId: budget.id
-                    };
-                    state.expenses.push(refTx);
-                    
-                    syncMainBudgetReference(budget);
-                }
+                executeReopenBudgetLogic(budget);
                 
                 saveState();
                 renderBudgetsList();
@@ -5631,6 +5789,36 @@ function testClassicEnvelopes() {
     totals = calculateTotals();
     if (totals.remaining !== 1820) throw new Error("Calcul dépassement reste à vivre erroné: " + totals.remaining);
     
+    // Test CLOSE of classic envelope
+    executeCloseBudgetLogic(newBudget);
+    
+    if (!newBudget.closed) throw new Error("L'enveloppe classique ne s'est pas fermée");
+    
+    const finalTx = state.expenses.find(e => e.budgetId === budgetId && (e.isClassicFinal || e.id.startsWith("tx_final_")));
+    if (!finalTx) throw new Error("La transaction finale de l'enveloppe classique est manquante");
+    if (finalTx.amount !== 180) throw new Error("Montant de la transaction finale classique erroné: " + finalTx.amount);
+    
+    const originalRefExists = state.expenses.some(e => e.id === mainTransactionId);
+    if (originalRefExists) throw new Error("La transaction de référence d'origine est restée active après clôture classique");
+    
+    totals = calculateTotals();
+    if (totals.remaining !== 1820) throw new Error("Reste à vivre après clôture classique erroné: " + totals.remaining);
+    
+    // Test REOPEN of classic envelope
+    executeReopenBudgetLogic(newBudget);
+    
+    if (newBudget.closed) throw new Error("L'enveloppe classique ne s'est pas réouverte");
+    
+    const finalTxAfterReopen = state.expenses.some(e => e.budgetId === budgetId && (e.isClassicFinal || e.id.startsWith("tx_final_")));
+    if (finalTxAfterReopen) throw new Error("La transaction finale classique n'a pas été supprimée lors de la réouverture");
+    
+    const originalRefRestored = state.expenses.find(e => e.id === mainTransactionId);
+    if (!originalRefRestored) throw new Error("La transaction de référence d'origine n'a pas été restaurée après réouverture classique");
+    if (originalRefRestored.amount !== 180) throw new Error("Montant de la transaction de référence restaurée erroné: " + originalRefRestored.amount);
+    
+    totals = calculateTotals();
+    if (totals.remaining !== 1820) throw new Error("Reste à vivre après réouverture classique erroné: " + totals.remaining);
+    
     return true;
 }
 
@@ -5794,8 +5982,10 @@ function testCashManagement() {
     
     // Spent = -50 (digital) + -60 (cash) + -40 (cash) = -150
     // partUtilisateur = 200 - 150 = 50
+    // Avec la nouvelle logique, la part finale de Reste à Vivre initiale lors de la clôture
+    // doit inclure les espèces non déposées (40 €), soit 50 + 40 = 90 €
     const shareTx = state.expenses.find(e => e.isFinalShare);
-    if (!shareTx || shareTx.amount !== 50) throw new Error("Part finale erronée: attendu 50, obtenu " + (shareTx ? shareTx.amount : "null"));
+    if (!shareTx || shareTx.amount !== 90) throw new Error("Part finale erronée: attendu 90, obtenu " + (shareTx ? shareTx.amount : "null"));
     
     // Check that active cash deposit is still there and completed
     const activeTxAfterClose = state.expenses.find(e => e.id === activeTxId);
@@ -5803,18 +5993,55 @@ function testCashManagement() {
         throw new Error("Le dépôt d'espèces actif a été altéré ou supprimé lors de la clôture");
     }
     
-    // Check that remaining cash (40 €) generated a pending deposit
+    // Check that remaining cash (40 €) generated a pending deposit with amount = -40 (always negative)
     const pendingCashTx = state.expenses.find(e => e.isCashDepositPending && e.id !== activeTxId);
-    if (!pendingCashTx || pendingCashTx.amount !== 0 || pendingCashTx.isDeposited !== false || pendingCashTx.originalCashAmount !== 40) {
+    if (!pendingCashTx || pendingCashTx.amount !== -40 || pendingCashTx.isDeposited !== false || pendingCashTx.originalCashAmount !== 40) {
         throw new Error("Transaction d'espèces de clôture manquante ou erronée (attendu en attente de 40 €)");
+    }
+    
+    // Verify that before deposit confirmation, the balance is 2000 - 90 = 1910 € (40 € non-deposited are NOT reinjected yet)
+    let totals = calculateTotals();
+    if (totals.remaining !== 1910) {
+        throw new Error("Calcul avant dépôt espèces de clôture erroné: attendu 1910, obtenu " + totals.remaining);
     }
     
     // Confirm the pending closure deposit
     pendingCashTx.isDeposited = true;
-    pendingCashTx.amount = 0;
+    pendingCashTx.amount = -40;
     
-    const totals = calculateTotals();
+    totals = calculateTotals();
     if (totals.remaining !== 1950) throw new Error("Calcul final après dépôt espèces erroné: " + totals.remaining);
+    
+    // --- 3. Test REOPEN after cash deposit confirmed ---
+    executeReopenBudgetLogic(newBudget);
+    
+    if (newBudget.closed) throw new Error("L'enveloppe entre amis ne s'est pas réouverte");
+    
+    // The final share and closure cash transactions should be removed
+    const shareTxAfterReopen = state.expenses.some(e => e.id === shareTx.id);
+    if (shareTxAfterReopen) throw new Error("La part finale n'a pas été supprimée lors de la réouverture");
+    const closureCashTxAfterReopen = state.expenses.some(e => e.id === pendingCashTx.id);
+    if (closureCashTxAfterReopen) throw new Error("La transaction d'espèces de clôture n'a pas été supprimée lors de la réouverture");
+    
+    // The original main transaction must be restored
+    const restoredRef = state.expenses.find(e => e.id === mainTransactionId);
+    if (!restoredRef) throw new Error("La transaction d'avance d'origine n'a pas été restaurée");
+    
+    // Since all cash is deposited (60 € + 40 €), cashAvailable = 0, spent (excluding CB) = -100.
+    // refTx.amount = Math.max(0, partUtilisateur + cashAvailable) = Math.max(0, 100 + 0) = 100 €
+    if (restoredRef.amount !== 100) throw new Error("Montant de la transaction d'avance restaurée erroné: " + restoredRef.amount);
+    
+    // The reopened deposit for the 40 € cash should be created with amount = 0
+    const reopenedCashTx = state.expenses.find(e => e.isCashDepositPending && e.id !== activeTxId);
+    if (!reopenedCashTx) throw new Error("Dépôt d'espèces réouvert manquant");
+    if (reopenedCashTx.amount !== 0 || reopenedCashTx.isDeposited !== true || reopenedCashTx.originalCashAmount !== 40) {
+        throw new Error("Dépôt d'espèces réouvert non configuré comme validé ou montant erroné: " + reopenedCashTx.amount);
+    }
+    
+    totals = calculateTotals();
+    if (totals.remaining !== 1950) {
+        throw new Error("Reste à vivre après réouverture enveloppe amis erroné: attendu 1950, obtenu " + totals.remaining);
+    }
     
     return true;
 }
