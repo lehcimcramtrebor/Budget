@@ -3617,34 +3617,36 @@ function generateBudgetPDF() {
         }).outputPdf('blob').then(async (blob) => {
             const fileName = `Bilan_Budget_${state.budgetMonth}.pdf`;
             
-            // Détection si l'environnement est une APK / WebView Mobile
             const isNativeAPK = window.Capacitor && window.Capacitor.isNativePlatform();
             const isMobileWebView = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.chrome;
 
             if (isNativeAPK || isMobileWebView) {
-                // Tenter une sauvegarde en tâche de fond si le plugin Filesystem de Capacitor est là
-                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
+                const fs = window.Capacitor?.Plugins?.Filesystem;
+                if (fs) {
                     try {
-                        const reader = new FileReader();
-                        reader.onloadend = async () => {
-                            const base64Data = reader.result.split(',')[1];
-                            await window.Capacitor.Plugins.Filesystem.writeFile({
-                                path: fileName,
-                                data: base64Data,
-                                directory: 'DOWNLOAD'
-                            });
-                        };
-                        reader.readAsDataURL(blob);
+                        // Promisification propre de la conversion de fichier pour intercepter l'erreur
+                        const base64Data = await new Promise((res, rej) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => res(reader.result.split(',')[1]);
+                            reader.onerror = rej;
+                            reader.readAsDataURL(blob);
+                        });
+
+                        await fs.writeFile({
+                            path: fileName,
+                            data: base64Data,
+                            directory: 'DOWNLOAD'
+                        });
                     } catch (err) {
-                        // Repli de secours sur l'API Share si le stockage plante
+                        // Secours immédiat sur l'API Share si l'écriture plante (droits d'accès ou répertoire absent)
                         await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
                     }
                 } else {
-                    // Si pas de plugin natif installé dans ton APK, le partage reste obligatoire pour éviter le clic dans le vide
+                    // Fallback direct si le plugin n'est pas encore détecté
                     await shareBlob(blob, fileName, `Bilan Budget ${monthLabel}`, `Bilan de budget de ${userName}`);
                 }
             } else {
-                // Comportement standard et propre pour le navigateur PC
+                // PC Navigateur classique
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
