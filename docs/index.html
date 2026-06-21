@@ -1,11 +1,141 @@
 <!DOCTYPE html>
 <html lang="fr" class="dark transition-colors duration-300" data-theme="neutre">
 <head>
+    <script>
+        window.appStartTime = Date.now();
+        try {
+            // Tenter de récupérer l'état complet pour trouver le thème de genre et le dark mode
+            const savedStateStr = localStorage.getItem('budget_hmr_simple');
+            let isDark = true;
+            let genderTheme = 'masculin';
+            if (savedStateStr) {
+                const parsed = JSON.parse(savedStateStr);
+                if (parsed && typeof parsed.darkMode === 'boolean') {
+                    isDark = parsed.darkMode;
+                }
+                if (parsed && parsed.settings && parsed.settings.genderTheme) {
+                    genderTheme = parsed.settings.genderTheme;
+                }
+            }
+            // Appliquer immédiatement les classes à l'élément html pour éviter tout flash
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            if (genderTheme === 'feminin') {
+                document.documentElement.classList.add('theme-feminin');
+            } else {
+                document.documentElement.classList.remove('theme-feminin');
+            }
+        } catch (e) {}
+    </script>
+    <style>
+        /* CSS synchrone pour le Splash Screen (Évite les scintillements) */
+        #app_splash_screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, #f5f5f4 0%, #e7e5e4 100%);
+            transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        html.dark #app_splash_screen {
+            background: linear-gradient(135deg, #0c0a09 0%, #1c1917 100%) !important;
+        }
+        
+        .splash-logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: auto;
+            margin-bottom: auto;
+            transform: scale(0.95);
+            opacity: 0;
+            animation: splashEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards 0.1s;
+            position: relative;
+        }
+
+        @keyframes splashEnter {
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .splash-logo-main {
+            color: #1c1917;
+            transition: color 0.3s;
+        }
+        html.dark .splash-logo-main {
+            color: #f5f5f4 !important;
+        }
+        
+        .splash-logo-suffix {
+            color: #4f46e5;
+            transition: color 0.3s;
+        }
+        html.dark .splash-logo-suffix {
+            color: #818cf8 !important;
+        }
+        html.theme-feminin .splash-logo-suffix {
+            color: #db2777 !important;
+        }
+
+        .splash-loader {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            margin-top: 2rem;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.02);
+            border: 2.5px solid rgba(0, 0, 0, 0.05);
+            border-top-color: #4f46e5;
+            animation: splashSpin 1s infinite linear;
+        }
+        html.dark .splash-loader {
+            background: rgba(255, 255, 255, 0.02);
+            border: 2.5px solid rgba(255, 255, 255, 0.05);
+            border-top-color: #818cf8;
+        }
+        html.theme-feminin .splash-loader {
+            border-top-color: #db2777 !important;
+        }
+        
+        @keyframes splashSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        .splash-footer {
+            text-align: center;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: splashFooterEnter 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.3s;
+        }
+        
+        @keyframes splashFooterEnter {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        html.dark #splash_version_label {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: #a8a29e !important;
+            border-color: rgba(255, 255, 255, 0.05) !important;
+        }
+    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUDGETHMR — Suivi de budget mensuel simple, rapide et gratuit</title>
+    <title>BUDGETHMR — Gestion d'enveloppes et de comptes simple, rapide et gratuit</title>
 
-    <meta name="description" content="Gérez votre budget mensuel sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
+    <meta name="description" content="Gérez vos enveloppes et vos comptes sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
     <meta name="theme-color" content="#f5f5f4" id="meta-theme-color">
     <meta name="robots" content="index, follow">
     <meta name="google-site-verification" content="SkK3HBDsdeI-tBzHBTAycfL6WxyedDxN2t9WFh3DXU0" />
@@ -14,15 +144,15 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://lehcimcramtrebor.github.io/Budget/">
-    <meta property="og:title" content="BUDGETHMR — Suivi de budget mensuel simple, rapide et gratuit">
-    <meta property="og:description" content="Gérez votre budget mensuel sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
+    <meta property="og:title" content="BUDGETHMR — Gestion d'enveloppes et de comptes simple, rapide et gratuit">
+    <meta property="og:description" content="Gérez vos enveloppes et vos comptes sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
     <meta property="og:image" content="https://lehcimcramtrebor.github.io/Budget/icon.svg">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://lehcimcramtrebor.github.io/Budget/">
-    <meta property="twitter:title" content="BUDGETHMR — Suivi de budget mensuel simple, rapide et gratuit">
-    <meta property="twitter:description" content="Gérez votre budget mensuel sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
+    <meta property="twitter:title" content="BUDGETHMR — Gestion d'enveloppes et de comptes simple, rapide et gratuit">
+    <meta property="twitter:description" content="Gérez vos enveloppes et vos comptes sans prise de tête. Saisie rapide de dépenses, gestion des frais fixes et calcul automatique du reste à vivre en temps réel. PWA gratuite et installable.">
     <meta property="twitter:image" content="https://lehcimcramtrebor.github.io/Budget/icon.svg">
 
     <!-- Structured Data (JSON-LD) -->
@@ -33,7 +163,7 @@
       "name": "BUDGETHMR",
       "alternateName": "Budget HMR",
       "url": "https://lehcimcramtrebor.github.io/Budget/",
-      "description": "Suivi de budget mensuel ultra-simple. Configurez vos revenus, frais fixes et suivez vos dépenses quotidiennes en temps réel.",
+      "description": "Gestion d'enveloppes et de comptes ultra-simple. Configurez vos revenus, frais fixes et suivez vos dépenses quotidiennes en temps réel.",
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "All",
       "browserRequirements": "Requires JavaScript. Requires HTML5.",
@@ -52,6 +182,7 @@
     <link rel="manifest" href="manifest.json">
 
     <script src="assets/js/tailwind.js"></script>
+    <script src="assets/js/html2pdf.bundle.min.js"></script>
     <link href="assets/css/inter.css" rel="stylesheet">
     <link href="assets/css/premium-fonts.css" rel="stylesheet">
     
@@ -94,16 +225,88 @@
                 --brand-600: 190 24 93; --brand-700: 157 23 77; --brand-800: 131 24 67; --brand-900: 80 7 36;
             }
         }
-
         @layer components {
             .btn-adjust { 
-                @apply w-10 h-10 shrink-0 rounded-xl bg-white dark:bg-stone-800 hover:bg-brand-100 dark:hover:bg-stone-800 hover:border-brand-300 dark:hover:border-stone-700 font-black text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-all active:scale-95 shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40; 
+                @apply w-10 h-10 shrink-0 rounded-xl bg-white dark:bg-stone-800 hover:bg-brand-100 dark:hover:bg-stone-800 hover:border-brand-300 dark:hover:border-stone-700 font-black text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-all active:scale-95; 
+                box-shadow: 0 8px 16px -2px rgba(120, 113, 108, 0.12), 0 2px 6px -2px rgba(120, 113, 108, 0.06);
+                border: 1px solid rgba(228, 228, 231, 0.8);
+            }
+            .dark .btn-adjust {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+                border: 1px solid rgba(120, 113, 108, 0.3) !important;
+            }
+            .header-btn {
+                @apply w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full text-brand-600 dark:text-brand-400 transition-all;
+                box-shadow: 0 8px 16px -2px rgba(120, 113, 108, 0.12), 0 2px 6px -2px rgba(120, 113, 108, 0.06);
+                border: 1px solid rgba(228, 228, 231, 0.85);
+            }
+            .dark .header-btn {
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+                border: 1px solid rgba(120, 113, 108, 0.3) !important;
+            }
+            .app-logo-text {
+                filter: drop-shadow(0 4px 6px rgba(120, 113, 108, 0.15));
+            }
+            .dark .app-logo-text {
+                filter: drop-shadow(0 0 1.5px rgba(var(--brand-400) / 0.5)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
             }
             .form-input {
-                @apply w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-800 rounded-xl px-4 font-semibold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all shadow-inner;
+                @apply w-full h-12 border rounded-xl px-4 font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all;
+                background-color: #ffffff !important;
+                color: #1c1917 !important;
+                border-color: #e7e5e4 !important;
+                box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03);
+            }
+            input[type="text"],
+            input[type="number"],
+            input[type="tel"] {
+                background-color: #ffffff !important;
+                color: #1c1917 !important;
+                border-color: #e7e5e4 !important;
+                box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03);
+            }
+            .dark .form-input,
+            .dark input[type="text"],
+            .dark input[type="number"],
+            .dark input[type="tel"] {
+                background-color: #292524 !important;
+                color: #f5f5f4 !important;
+                border-color: #44403c !important;
+                box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+            }
+            .dark {
+                color-scheme: dark;
             }
             .glass-card {
-                @apply bg-white dark:bg-stone-900 p-6 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10;
+                @apply bg-white dark:bg-stone-900 p-6 rounded-3xl transition-all duration-300;
+                box-shadow: 0 16px 36px -4px rgba(120, 113, 108, 0.16), 0 4px 16px -4px rgba(120, 113, 108, 0.08);
+                border: 1px solid rgba(228, 228, 231, 0.8);
+            }
+            .dark .glass-card {
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+                border: 1px solid rgba(120, 113, 108, 0.25) !important;
+            }
+            .golden-card {
+                @apply p-6 rounded-3xl transition-all duration-300 relative overflow-hidden;
+                background: linear-gradient(135deg, rgb(var(--brand-500)) 0%, rgb(var(--brand-600)) 45%, rgb(var(--brand-700)) 100%) !important;
+                border: 1px solid rgba(255, 255, 255, 0.25) !important;
+                box-shadow: 0 20px 40px -12px rgba(var(--brand-500) / 0.35), 0 8px 16px -8px rgba(var(--brand-500) / 0.2) !important;
+            }
+            .golden-card::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.015) 0px, rgba(255, 255, 255, 0.015) 1px, transparent 1px, transparent 4px);
+                pointer-events: none;
+                z-index: 1;
+            }
+            .golden-card::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.15) 100%);
+                pointer-events: none;
+                z-index: 1;
             }
             .sticky-gpu {
                 transform: translate3d(0, 0, 0);
@@ -114,12 +317,14 @@
 
         html {
             overscroll-behavior-y: none;
-            overflow-x: hidden;
+            overflow-x: clip;
+            overflow-anchor: none !important;
         }
         body {
-            overflow-x: hidden;
+            overflow-x: clip;
             -webkit-text-size-adjust: 100%;
             text-size-adjust: 100%;
+            overflow-anchor: none !important;
         }
 
         /* Padding virtuel temporaire pour permettre de centrer les éléments du bas de l'écran */
@@ -163,69 +368,293 @@
             }
             50% {
                 transform: scale(1.08);
-                border-color: rgba(245, 158, 11, 0.5) !important;
-                box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
+                border-color: rgb(var(--brand-500) / 0.5) !important;
+                box-shadow: 0 0 10px rgb(var(--brand-500) / 0.3) !important;
             }
         }
         .animate-unsaved {
             animation: unsaved-pulse 1.6s infinite ease-in-out !important;
-            border-color: #f59e0b !important;
-            background-color: rgba(245, 158, 11, 0.1) !important;
-            color: #d97706 !important;
+            border-color: rgb(var(--brand-500)) !important;
+            background-color: rgb(var(--brand-500) / 0.1) !important;
+            color: rgb(var(--brand-600)) !important;
         }
         .dark .animate-unsaved {
-            border-color: #b45309 !important;
-            background-color: rgba(245, 158, 11, 0.15) !important;
-            color: #fbbf24 !important;
+            border-color: rgb(var(--brand-500)) !important;
+            background-color: rgb(var(--brand-500) / 0.15) !important;
+            color: rgb(var(--brand-400)) !important;
+        }
+
+        @keyframes slow-spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .animate-spin-slow {
+            animation: slow-spin 8s infinite linear !important;
+        }
+
+        /* Dynamic scroll compact layout for Golden Card (linked to --scroll-progress) */
+        #sticky_banner_container {
+            --scroll-progress: 0;
+            padding-top: calc(0.5rem - var(--scroll-progress) * 0.25rem) !important; /* pt-2 (8px) to pt-1 (4px) */
+            padding-bottom: calc(0.75rem - var(--scroll-progress) * 0.5rem) !important; /* pb-3 (12px) to pb-1 (4px) */
+        }
+        #sticky_banner_container .golden-card {
+            padding-top: calc(1.25rem - var(--scroll-progress) * 0.4rem) !important; /* 20px to 13.6px */
+            padding-bottom: calc(1.25rem - var(--scroll-progress) * 0.4rem) !important; /* 20px to 13.6px */
+            border-radius: calc(1.5rem - var(--scroll-progress) * 0.25rem) !important; /* rounded-3xl to rounded-2xl */
+            transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        #card_chip_block {
+            max-height: calc((1 - var(--scroll-progress)) * 40px) !important;
+            opacity: calc(1 - var(--scroll-progress)) !important;
+            margin-top: calc((1 - var(--scroll-progress)) * 0.75rem) !important;
+            margin-bottom: calc((1 - var(--scroll-progress)) * 0.75rem) !important;
+            transform: scaleY(calc(1 - var(--scroll-progress))) !important;
+            transform-origin: top;
+            overflow: hidden;
+        }
+        #card_bottom_grid {
+            max-height: calc((1 - var(--scroll-progress)) * 80px) !important;
+            opacity: calc(1 - var(--scroll-progress)) !important;
+            margin-top: calc((1 - var(--scroll-progress)) * 1.25rem) !important;
+            padding-top: calc((1 - var(--scroll-progress)) * 1rem) !important;
+            border-top-color: rgba(255, 255, 255, calc((1 - var(--scroll-progress)) * 0.15)) !important;
+            transform: scaleY(calc(1 - var(--scroll-progress))) !important;
+            transform-origin: bottom;
+            overflow: hidden;
+        }
+        #remaining_balance_disp {
+            font-size: calc(2.25rem - var(--scroll-progress) * 0.375rem) !important; /* text-4xl (36px) to text-3xl (30px) */
+            margin-top: calc((1 - var(--scroll-progress)) * 0.25rem) !important;
+        }
+        #current_date_label {
+            transform: scale(calc(1 - var(--scroll-progress) * 0.15)) !important;
+            transform-origin: right center;
+        }
+        #dashboard_tabs_container {
+            margin-bottom: calc(0.75rem - var(--scroll-progress) * 0.25rem) !important; /* mb-3 to mb-2 */
+        }
+        #sticky_banner_container .golden-card p {
+            font-size: calc(12px - var(--scroll-progress) * 2px) !important; /* text-xs (12px) to 10px */
+        }
+
+        /* --- VINTAGE TICKET DE CAISSE (RECEIPT PAPER) --- */
+        .receipt-card {
+            position: relative;
+            background-color: #faf6ee !important;
+            color: #2a2720 !important;
+            border-left: 1px solid #e5dcc5 !important;
+            border-right: 1px solid #e5dcc5 !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            border-radius: 0px !important;
+            box-shadow: 0 16px 36px -4px rgba(120, 113, 108, 0.16), 0 4px 16px -4px rgba(120, 113, 108, 0.08) !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            margin-top: 24px !important;
+            margin-bottom: 24px !important;
+        }
+        .receipt-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background-size: 10px 6px;
+            background-repeat: repeat-x;
+            top: -6px;
+            background-image: linear-gradient(135deg, #faf6ee 25%, transparent 25%), linear-gradient(225deg, #faf6ee 25%, transparent 25%);
+        }
+        .receipt-card::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background-size: 10px 6px;
+            background-repeat: repeat-x;
+            bottom: -6px;
+            background-image: linear-gradient(45deg, #faf6ee 25%, transparent 25%), linear-gradient(315deg, #faf6ee 25%, transparent 25%);
+        }
+
+        /* Dark mode variants for receipt card (mimics dark carbon copy thermal paper) */
+        .dark .receipt-card {
+            background-color: #1e1b15 !important;
+            color: #e2dbcd !important;
+            border-left: 1px solid #4d4433 !important;
+            border-right: 1px solid #4d4433 !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.45) !important;
+        }
+        .dark .receipt-card::before {
+            background-image: linear-gradient(135deg, #1e1b15 25%, transparent 25%), linear-gradient(225deg, #1e1b15 25%, transparent 25%);
+        }
+        .dark .receipt-card::after {
+            background-image: linear-gradient(45deg, #1e1b15 25%, transparent 25%), linear-gradient(315deg, #1e1b15 25%, transparent 25%);
+        }
+
+        /* --- TICKET DE CAISSE ENTRE AMIS (BLUE CARBON/SLATE PAPER) --- */
+        .receipt-card-friends {
+            position: relative;
+            background-color: #eef6fc !important;
+            color: #1a2836 !important;
+            border-left: 1px solid #c8d9e6 !important;
+            border-right: 1px solid #c8d9e6 !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            border-radius: 0px !important;
+            box-shadow: 0 16px 36px -4px rgba(120, 113, 108, 0.16), 0 4px 16px -4px rgba(120, 113, 108, 0.08) !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            margin-top: 24px !important;
+            margin-bottom: 24px !important;
+        }
+        .receipt-card-friends::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background-size: 10px 6px;
+            background-repeat: repeat-x;
+            top: -6px;
+            background-image: linear-gradient(135deg, #eef6fc 25%, transparent 25%), linear-gradient(225deg, #eef6fc 25%, transparent 25%);
+        }
+        .receipt-card-friends::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background-size: 10px 6px;
+            background-repeat: repeat-x;
+            bottom: -6px;
+            background-image: linear-gradient(45deg, #eef6fc 25%, transparent 25%), linear-gradient(315deg, #eef6fc 25%, transparent 25%);
+        }
+        .dark .receipt-card-friends {
+            background-color: #121921 !important;
+            color: #cedee8 !important;
+            border-left: 1px solid #3d4f64 !important;
+            border-right: 1px solid #3d4f64 !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.45) !important;
+        }
+        .dark .receipt-card-friends::before {
+            background-image: linear-gradient(135deg, #121921 25%, transparent 25%), linear-gradient(225deg, #121921 25%, transparent 25%);
+        }
+        .dark .receipt-card-friends::after {
+            background-image: linear-gradient(45deg, #121921 25%, transparent 25%), linear-gradient(315deg, #121921 25%, transparent 25%);
         }
     </style>
 </head>
 <body class="min-h-screen p-2 sm:p-4 md:p-8 bg-gradient-to-br from-stone-100 via-stone-50 to-stone-200 dark:from-stone-950 dark:via-stone-950 dark:to-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300">
 
+<!-- SYSTEM SPLASH SCREEN -->
+<div id="app_splash_screen">
+    <div></div>
+    
+    <!-- Logo Container -->
+    <div class="splash-logo-container">
+        <!-- Glowing Ambient Circle behind the logo -->
+        <div style="position: absolute; width: 180px; height: 180px; background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, transparent 70%); z-index: -1;" id="splash_glow"></div>
+        <h1 style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Outfit', sans-serif; font-style: italic; font-weight: 900; letter-spacing: -0.05em; font-size: 2.25rem;">
+            <span class="splash-logo-main">BUDGET</span>
+            <span class="splash-logo-suffix" style="filter: drop-shadow(0 2px 8px rgba(79, 70, 229, 0.25)); font-size: 2.5rem; margin-top: -0.25rem;">HMR</span>
+        </h1>
+        <p style="font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.3em; margin-top: 0.75rem; white-space: nowrap;">
+            Gestion Mensuelle
+        </p>
+        
+        <!-- Elegant Progress Ring -->
+        <div class="splash-loader"></div>
+    </div>
+    
+    <!-- Footer / Version -->
+    <div class="splash-footer" style="font-family: 'Outfit', sans-serif;">
+        <span style="font-size: 11px; font-weight: 800; color: #a8a29e; letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Simplifiez vos finances</span>
+        <span id="splash_version_label" style="font-size: 12px; font-weight: 900; background: rgba(0,0,0,0.05); color: #78716c; padding: 0.25rem 0.75rem; border-radius: 9999px; border: 1px solid rgba(0,0,0,0.05); display: inline-block;">v2.0.0</span>
+    </div>
+</div>
+
 <div id="main_app_container" class="max-w-md mx-auto w-full pb-8">
     
     <!-- TOP HEADER -->
-    <div class="grid grid-cols-3 items-center gap-2 mt-2 mb-4 px-1 select-none">
-        <!-- Left: Settings Button -->
-        <div class="flex justify-start items-center gap-2">
-            <button onclick="openSettingsModal()" id="btn_settings" class="group w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40" title="Réglages & Données">
+    <div class="flex items-center justify-between gap-2 mt-2 mb-4 px-1 select-none">
+                <div class="flex justify-start items-center gap-2 w-[88px] shrink-0">
+            <button onclick="openSettingsModal()" id="btn_settings" class="group header-btn" title="Réglages & Données">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-500 ease-out group-hover:rotate-45"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </button>
-            <button id="pwa_install_btn" class="group w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40 active:scale-95 hidden" title="Installer l'application">
+            <button id="pwa_install_btn" class="group header-btn hidden" title="Installer l'application">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-350 ease-out group-hover:translate-y-0.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             </button>
-            <button id="apk_download_btn" onclick="showApkDownloadPrompt()" class="group w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40 active:scale-95 hidden" title="Télécharger l'APK Android">
+            <button id="apk_download_btn" onclick="showApkDownloadPrompt()" class="group header-btn hidden" title="Télécharger l'APK Android">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-350 ease-out group-hover:scale-110"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line><path d="M12 6v6m-3-3 3 3 3-3"></path></svg>
             </button>
             <input type="file" id="import_file" accept="application/json, .json" class="hidden" onchange="importJSONData(event)">
         </div>
 
         <!-- Center: Logo -->
-        <h1 id="app_logo" class="flex flex-col items-center justify-center text-center cursor-pointer select-none">
-            <span class="text-xl sm:text-2xl font-black italic tracking-tight font-display select-none">
+        <h1 id="app_logo" class="flex-1 min-w-0 flex flex-col items-center justify-center text-center cursor-pointer select-none">
+            <span class="text-xl sm:text-2xl font-black italic tracking-tight font-display select-none app-logo-text">
                 <span class="text-stone-800 dark:text-stone-100">BUDGET</span>
                 <span id="logo_suffix" class="text-brand-500 dark:text-brand-400 drop-shadow-[0_2px_8px_rgba(var(--brand-500)/0.25)]">HMR</span>
             </span>
-            <span class="text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-[0.25em] mt-0.5 font-display select-none">
-                Reste à Vivre
+            <span class="text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-[0.25em] mt-0.5 font-display select-none whitespace-nowrap">
+                Gestion Mensuelle
             </span>
         </h1>
 
-        <!-- Right: Theme & Quick Save Buttons -->
-        <div class="flex justify-end items-center gap-2">
-            <button onclick="quickExportJSON()" id="btn_quick_save" class="group w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40 active:scale-95" title="Sauvegarder les données (JSON)">
-                <svg xmlns="http://www.w3.org/2500/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:scale-110"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-            </button>
-            <button onclick="toggleTheme()" id="theme_toggle_btn" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02)] border border-stone-200/50 dark:border-stone-800/40" title="Mode Sombre/Clair">
+        <!-- Right: Theme Button -->
+        <div class="flex justify-end items-center gap-2 w-[88px] shrink-0">
+            <button onclick="toggleTheme()" id="theme_toggle_btn" class="header-btn" title="Mode Sombre/Clair">
                 <!-- Dynamically populated -->
             </button>
         </div>
     </div>
 
+    <!-- Sentinel to measure absolute top offset of the sticky banner container -->
+    <div id="sticky_banner_sentinel" class="h-0 w-0 pointer-events-none" style="visibility: hidden;"></div>
+
     <!-- MAIN BANNER: RESTE A VIVRE -->
-    <div class="sticky top-0 z-30 bg-stone-100/90 dark:bg-stone-950/90 backdrop-blur-md pt-2 pb-3 -mx-4 px-4 transition-colors duration-300 sticky-gpu">
-        <div class="glass-card overflow-hidden bg-gradient-to-br from-brand-500 to-brand-600 dark:from-brand-600 dark:to-brand-800 border-brand-500/40 shadow-[0_4px_20px] shadow-brand-500/25 text-white transition-none">
-            <div class="flex justify-between items-center">
+    <div id="sticky_banner_container" class="sticky top-0 z-30 bg-stone-100/90 dark:bg-stone-950/90 backdrop-blur-md pt-2 pb-3 -mx-4 px-4 transition-colors duration-300 sticky-gpu">
+        <div class="golden-card text-white transition-none">
+            <!-- Card Vector Waves -->
+            <svg class="absolute right-0 bottom-0 w-2/3 h-full text-white/5 pointer-events-none select-none z-0" viewBox="0 0 100 100" preserveAspectRatio="none" fill="currentColor">
+                <path d="M0,100 C30,40 70,60 100,0 L100,100 Z"></path>
+            </svg>
+
+            <!-- View Tabs -->
+            <div id="dashboard_tabs_container" class="relative z-10 flex bg-black/20 rounded-xl p-1 mb-3 select-none hidden">
+                <button type="button" onclick="switchDashboardTab('main')" id="tab_btn_main" class="flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-center transition-all bg-white text-stone-900 shadow-sm">
+                    💼 Solde Principal
+                </button>
+                <button type="button" onclick="switchDashboardTab('budgets')" id="tab_btn_budgets" class="flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-center transition-all text-white/80 hover:text-white font-bold">
+                    🎯 Enveloppes Dédiées
+                </button>
+            </div>
+
+            <!-- Credit Card Chip & Contactless Sign -->
+            <div id="card_chip_block" class="relative z-10 flex justify-between items-center mb-3 mt-1 select-none pointer-events-none">
+                <!-- Chip CB -->
+                <div class="w-9 h-7 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 rounded-md border border-amber-600/40 relative overflow-hidden shadow-inner opacity-90 shrink-0">
+                    <div class="absolute inset-x-0 top-1/2 border-t border-amber-800/20"></div>
+                    <div class="absolute inset-y-0 left-1/3 border-r border-amber-800/20"></div>
+                    <div class="absolute inset-y-0 right-1/3 border-l border-amber-800/20"></div>
+                    <div class="absolute inset-1 rounded border border-amber-200/50"></div>
+                </div>
+                <!-- Contactless Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white/50 rotate-90">
+                    <path d="M12 2a10 10 0 0 1 0 20"></path>
+                    <path d="M16 5a7 7 0 0 1 0 14"></path>
+                    <path d="M20 8a4 4 0 0 1 0 8"></path>
+                </svg>
+            </div>
+
+            <div class="relative z-10 flex justify-between items-center">
                 <div>
                     <p class="text-xs font-bold text-white/80 uppercase tracking-wider">Reste à dépenser</p>
                     <h2 class="text-4xl font-black text-white mt-1 drop-shadow-sm" id="remaining_balance_disp">0.00 €</h2>
@@ -235,25 +664,28 @@
                 </div>
             </div>
             
-            <div class="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/15 text-[11px] leading-tight">
-                <div>
-                    <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Budget Base (+)</span>
+            <div id="card_bottom_grid" class="relative z-10 grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/15 text-[11px] leading-tight select-none">
+                <button type="button" onclick="openRecapModal('revenues')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-white/20">
+                    <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Revenus (+)</span>
                     <span class="text-sm font-black text-white" id="base_budget_disp">0.00 €</span>
-                </div>
-                <div class="border-l border-white/15 pl-2">
+                </button>
+                <button type="button" onclick="openRecapModal('fixedCharges')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl border-l border-white/15 pl-4 focus:outline-none focus:ring-1 focus:ring-white/20">
                     <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Frais Fixes (-)</span>
                     <span class="text-sm font-black text-white" id="fixed_charges_disp">0.00 €</span>
-                </div>
-                <div class="border-l border-white/15 pl-2">
+                </button>
+                <button type="button" onclick="openRecapModal('expenses')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl border-l border-white/15 pl-4 focus:outline-none focus:ring-1 focus:ring-white/20">
                     <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Dépenses (-)</span>
                     <span class="text-sm font-black text-white" id="expenses_disp">0.00 €</span>
-                </div>
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- Spacer structure to compensate height when golden card is compact -->
+    <div id="scroll_spacer" style="height: 0px;"></div>
+
     <!-- MAIN INTERFACE -->
-    <div class="space-y-4 mt-2">
+    <div id="main_dashboard_content" class="space-y-4 mt-2">
         
         <!-- CARD 1: SAISIE RAPIDE -->
         <div class="glass-card">
@@ -272,11 +704,25 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Date selection row -->
+                <div class="flex items-center gap-2 text-xs py-0.5 select-none">
+                    <button type="button" onclick="openExpenseDatePicker()" class="flex items-center gap-1.5 py-1.5 px-3 bg-stone-100 dark:bg-stone-900 text-stone-600 dark:text-stone-300 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-800 transition-all active:scale-95 border border-stone-300/20 dark:border-stone-800/30 font-bold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span id="expense_date_label">Date : Aujourd'hui</span>
+                    </button>
+                    <input type="hidden" id="expense_date_value" value="">
+                    <button type="button" id="btn_clear_expense_date" onclick="clearExpenseDate()" class="hidden w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center font-bold text-[9px] active:scale-90 transition-all shadow-sm">✕</button>
+                </div>
+
                 <button type="submit" class="w-full h-12 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 text-sm">
                     <span>💾</span> Enregistrer la Dépense
                 </button>
                 <button type="button" onclick="confirmAddRefund()" class="w-full h-12 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-semibold rounded-xl border border-emerald-100 dark:border-emerald-900/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm mt-2 shadow-sm">
                     <span>💵</span> Enregistrer un Remboursement
+                </button>
+                <button type="button" onclick="confirmCreateBudget()" class="w-full h-12 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl border border-indigo-100 dark:border-indigo-900/35 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm mt-2 shadow-sm">
+                    <span>🎯</span> Créer une Enveloppe
                 </button>
             </form>
         </div>
@@ -294,7 +740,7 @@
             </div>
             
             <div id="expenses_content" class="mt-4 transition-all duration-300">
-                <div id="expenses_container" class="space-y-2 max-h-56 overflow-y-auto pr-1 hide-scrollbar">
+                <div id="expenses_container" class="space-y-2">
                     <!-- Loaded dynamically -->
                 </div>
                 
@@ -308,7 +754,7 @@
         <!-- CARD 3: PARAMETRAGE BUDGET & CHARGES FIXES -->
         <div class="glass-card">
             <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 mb-4 flex items-center gap-2">
-                <span>⚙️</span> Frais Fixes & Budget Base
+                <span>⚙️</span> Frais Fixes & Revenus
             </h3>
             
             <div class="space-y-4">
@@ -323,19 +769,23 @@
                     </div>
                     
                     <div id="revenues_content" class="transition-all duration-300">
-                        <div id="revenues_container" class="space-y-2 max-h-40 overflow-y-auto pr-1 hide-scrollbar mb-3">
+                        <div id="revenues_container" class="space-y-2 mb-3">
                             <!-- Loaded dynamically -->
                         </div>
                         
                         <!-- Add revenue form -->
-                        <div class="grid grid-cols-3 gap-2">
-                            <input type="text" id="new_revenue_title" placeholder="Nom (ex: Salaire)" class="form-input h-10 text-xs font-semibold" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
-                            <div class="relative">
-                                <input type="text" inputmode="decimal" id="new_revenue_amount" placeholder="Montant" class="form-input h-10 text-right pr-6 text-xs font-black" oninput="normalizeAmountInput(event)">
-                                <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-450 text-[10px] pointer-events-none">€</span>
+                        <div class="space-y-2">
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="col-span-2">
+                                    <input type="text" id="new_revenue_title" placeholder="Nom (ex: Salaire)" class="form-input h-10 w-full text-xs font-semibold" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
+                                </div>
+                                <div class="relative">
+                                    <input type="text" inputmode="decimal" id="new_revenue_amount" placeholder="Montant" class="form-input h-10 text-right pr-6 text-xs font-black" oninput="normalizeAmountInput(event)">
+                                    <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-400 text-[10px] pointer-events-none">€</span>
+                                </div>
                             </div>
-                            <button type="button" onclick="addRevenue()" class="h-10 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-brand-600 dark:text-brand-400 font-bold rounded-xl active:scale-95 transition-all text-xs">
-                                ➕ Ajouter
+                            <button type="button" onclick="addRevenue()" class="w-full h-10 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl active:scale-95 transition-all text-xs shadow-sm flex items-center justify-center gap-1.5">
+                                ➕ Ajouter le revenu
                             </button>
                         </div>
                     </div>
@@ -354,19 +804,23 @@
                     </div>
                     
                     <div id="fixed_charges_content" class="transition-all duration-300">
-                        <div id="fixed_charges_container" class="space-y-2 max-h-40 overflow-y-auto pr-1 hide-scrollbar mb-3">
+                        <div id="fixed_charges_container" class="space-y-2 mb-3">
                             <!-- Loaded dynamically -->
                         </div>
                         
                         <!-- Add fixed charge form -->
-                        <div class="grid grid-cols-3 gap-2">
-                            <input type="text" id="new_charge_title" placeholder="Nom (ex: Loyer)" class="form-input h-10 text-xs font-semibold" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
-                            <div class="relative">
-                                <input type="text" inputmode="decimal" id="new_charge_amount" placeholder="Montant" class="form-input h-10 text-right pr-6 text-xs font-black" oninput="normalizeAmountInput(event)">
-                                <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-450 text-[10px] pointer-events-none">€</span>
+                        <div class="space-y-2">
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="col-span-2">
+                                    <input type="text" id="new_charge_title" placeholder="Nom (ex: Loyer)" class="form-input h-10 w-full text-xs font-semibold" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
+                                </div>
+                                <div class="relative">
+                                    <input type="text" inputmode="decimal" id="new_charge_amount" placeholder="Montant" class="form-input h-10 text-right pr-6 text-xs font-black" oninput="normalizeAmountInput(event)">
+                                    <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-400 text-[10px] pointer-events-none">€</span>
+                                </div>
                             </div>
-                            <button type="button" onclick="addFixedCharge()" class="h-10 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-brand-600 dark:text-brand-400 font-bold rounded-xl active:scale-95 transition-all text-xs">
-                                ➕ Ajouter
+                            <button type="button" onclick="addFixedCharge()" class="w-full h-10 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl active:scale-95 transition-all text-xs shadow-sm flex items-center justify-center gap-1.5">
+                                ➕ Ajouter le frais fixe
                             </button>
                         </div>
                     </div>
@@ -377,24 +831,144 @@
         <!-- RENEW BUDGET ACTION -->
         <div class="px-2 pt-2">
             <button onclick="confirmReset()" class="w-full h-12 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-bold rounded-xl border border-red-100 dark:border-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm shadow-sm">
-                <span>🔄</span> Renouveler le Budget (Effacer les opérations)
+                <span>🔄</span> Renouveler le Mois (Effacer les opérations)
             </button>
         </div>
 
     </div>
 
+    <!-- BUDGETS INTERFACE -->
+    <div id="budgets_dashboard_content" class="space-y-4 mt-2 hidden">
+        <!-- Budgets list will be loaded dynamically here -->
+    </div>
+
 </div>
 
-<!-- CONFIRM RESET MODAL -->
-<div id="confirm_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
-    <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col text-center space-y-4">
-        <div class="text-3xl">⚠️</div>
-        <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display">Renouveler le mois ?</h3>
-        <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">Toutes les opérations en cours seront effacées définitivement.<br>Le budget de base et les frais fixes seront conservés.</p>
-        <div class="grid grid-cols-2 gap-2 pt-2">
-            <button onclick="closeConfirmModal()" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95">Annuler</button>
-            <button onclick="resetBudget()" class="py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-xs active:scale-95">Confirmer</button>
+<!-- MONTH RENEWAL MODAL (MULTI-STEP) -->
+<div id="renewal_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col p-5 space-y-4">
+        
+        <!-- STEP 0: Active Budgets Carry-Forward Selection -->
+        <div id="renewal_step_budgets" class="space-y-4 hidden text-left">
+            <div class="text-center text-3xl">🎯</div>
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display text-center">Enveloppes Dédiées</h3>
+            <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold text-center">
+                Que souhaitez-vous faire de vos enveloppes actives pour la nouvelle période ?
+            </p>
+
+            <!-- Tip/Explanatory Alert Box -->
+            <div class="bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-[10px] md:text-xs text-amber-700 dark:text-amber-300 leading-relaxed font-semibold space-y-1">
+                <span class="font-black flex items-center gap-1 uppercase tracking-wider text-[9px]">💡 Conseil de gestion :</span>
+                <p>
+                    <strong>Reporter</strong> : L'enveloppe reste active le mois prochain avec sa part restante. L'historique des remboursements/dépenses est conservé visuellement.
+                </p>
+                <p class="mt-1">
+                    <strong>Clôturer</strong> : L'enveloppe est définitivement figée. Les remboursements en espèces non encore déposés en banque seront isolés pour suivi.
+                </p>
+            </div>
+            
+            <div id="renewal_budgets_list" class="space-y-2.5 max-h-48 overflow-y-auto pr-1 hide-scrollbar my-2">
+                <!-- Dynamically populated -->
+            </div>
+            
+            <div class="pt-2">
+                <button onclick="confirmBudgetsRenewalSelection()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all shadow-md">
+                    Continuer
+                </button>
+            </div>
         </div>
+
+        <!-- STEP 1: PDF Export Proposal -->
+        <div id="renewal_step_1" class="space-y-4 text-center">
+            <div class="text-3xl">📊</div>
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display">Exporter votre bilan ?</h3>
+            <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">Souhaitez-vous générer et enregistrer un bilan PDF complet de vos dépenses pour le mois de <strong id="renewal_pdf_month_name">...</strong> avant de renouveler la période ?</p>
+            <div class="grid grid-cols-1 gap-2 pt-2">
+                <button onclick="renewalExportPDF()" class="py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md">
+                    <span>📥</span> Oui, générer le bilan PDF
+                </button>
+                <button onclick="goToRenewalStep2()" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95 transition-all">
+                    Non, continuer sans PDF
+                </button>
+            </div>
+        </div>
+        
+        <!-- STEP 2: Option Selection -->
+        <div id="renewal_step_2" class="space-y-4 hidden text-center">
+            <div class="text-3xl">🔄</div>
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display">Nouvelle période</h3>
+            <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">Que souhaitez-vous faire ?</p>
+            
+            <div class="grid grid-cols-1 gap-2 pt-2">
+                <button onclick="selectRenewSameMonth()" class="py-3 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-100 rounded-xl font-bold text-xs active:scale-95 transition-all shadow-sm border border-stone-200 dark:border-stone-700">
+                    <span class="block text-base mb-1">🔁</span> Renouveler le mois en cours
+                </button>
+                <button onclick="selectRenewNextMonth()" class="py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all shadow-md">
+                    <span class="block text-base mb-1">➡️</span> Passer au mois suivant
+                </button>
+            </div>
+            <div class="pt-2">
+                <button onclick="closeRenewalModal()" class="text-xs text-stone-500 font-bold hover:underline">Annuler</button>
+            </div>
+        </div>
+        
+        <!-- STEP 2.5: Carry Over -->
+        <div id="renewal_step_2_5" class="space-y-4 hidden text-center">
+            <div class="text-3xl">💰</div>
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display">Report du Bilan</h3>
+            <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                Votre mois se termine avec un reste à vivre de <br>
+                <span id="renewal_carryover_amount" class="text-xl font-black block mt-2 mb-2"></span>
+                Voulez-vous reporter ce montant sur la nouvelle période ?
+            </p>
+            
+            <div class="grid grid-cols-1 gap-2 pt-2">
+                <button onclick="confirmCarryOver(true)" class="py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all shadow-md">
+                    Oui, reporter le solde
+                </button>
+                <button onclick="confirmCarryOver(false)" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95 transition-all border border-stone-200 dark:border-stone-700">
+                    Non, repartir à zéro
+                </button>
+            </div>
+        </div>
+        
+        <!-- STEP 2.7: Review Revenues -->
+        <div id="renewal_step_revenues" class="space-y-4 hidden text-left">
+            <div class="text-center text-3xl">💵</div>
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display text-center">Vos Revenus</h3>
+            <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold text-center">
+                Vérifiez et ajustez vos revenus pour la nouvelle période :
+            </p>
+            
+            <div id="renewal_revenues_list" class="space-y-2.5 max-h-56 overflow-y-auto pr-1 hide-scrollbar my-2">
+                <!-- Dynamically populated -->
+            </div>
+            
+            <div class="pt-2">
+                <button onclick="confirmRevenuesRenewalSelection()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all shadow-md">
+                    Continuer
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 3: Security Code Confirmation -->
+        <div id="renewal_step_3" class="space-y-4 hidden text-center">
+            <div class="text-3xl">⚠️</div>
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display">Confirmation de sécurité</h3>
+            <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">Toutes les opérations du mois en cours seront effacées.<br>Pour valider, veuillez recopier le code de sécurité :</p>
+            
+            <div class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl py-3">
+                <span id="renewal_security_code_display" class="text-2xl font-black font-mono tracking-widest text-brand-600 dark:text-brand-400">1234</span>
+            </div>
+            
+            <input type="text" inputmode="numeric" pattern="[0-9]*" id="renewal_security_code_input" placeholder="Saisir le code" class="form-input text-center text-lg font-black tracking-widest h-11 w-full rounded-xl" autocomplete="off" oninput="validateRenewalCode()">
+            
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="closeRenewalModal()" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95 transition-all">Annuler</button>
+                <button id="btn_confirm_renewal" onclick="executeRenewal()" disabled class="py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed">Confirmer</button>
+            </div>
+        </div>
+        
     </div>
 </div>
 
@@ -404,9 +978,21 @@
         <div class="text-3xl" id="generic_confirm_icon">⚠️</div>
         <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display" id="generic_confirm_title">Confirmation</h3>
         <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold" id="generic_confirm_message">Voulez-vous effectuer cette action ?</p>
+        
+        <!-- Optional security verification section -->
+        <div id="generic_confirm_security_section" class="hidden space-y-2 pt-1">
+            <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-wider">
+                Recopiez le code ci-dessous pour confirmer :
+            </p>
+            <div class="inline-block bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 px-3 py-1 rounded-xl text-stone-800 dark:text-stone-200 font-black text-sm select-none font-mono tracking-widest" id="generic_confirm_security_code_display">
+                0000
+            </div>
+            <input type="text" id="generic_confirm_security_input" class="form-input h-10 text-center text-sm font-black font-mono tracking-widest border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-xl focus:ring-1 focus:ring-stone-600 uppercase" placeholder="CODE" autocomplete="off" oninput="validateGenericConfirmCode()">
+        </div>
+
         <div class="grid grid-cols-2 gap-2 pt-2">
-            <button onclick="closeGenericConfirmModal()" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95">Annuler</button>
-            <button id="generic_confirm_btn" class="py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95">Confirmer</button>
+            <button id="generic_cancel_btn" onclick="handleCancelClick()" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95">Annuler</button>
+            <button id="generic_confirm_btn" class="py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 disabled:opacity-40 disabled:pointer-events-none">Confirmer</button>
         </div>
     </div>
 </div>
@@ -423,12 +1009,92 @@
     </div>
 </div>
 
+<div id="budget_funding_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col text-center space-y-4">
+        
+        <!-- STEP 1: Choose Envelope Type -->
+        <div id="budget_creation_step_type" class="space-y-4">
+            <div class="text-3xl">👥</div>
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display">Type d'Enveloppe</h3>
+            <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                Quel usage pour cette enveloppe ?
+            </p>
+            <div class="flex flex-col gap-2 pt-2 text-left">
+                <button type="button" onclick="selectBudgetSubType('classic')" class="w-full p-3 bg-emerald-100/60 hover:bg-emerald-200/50 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-xl active:scale-95 transition-all border border-emerald-300/80 dark:border-emerald-900/40 flex items-start gap-2.5">
+                    <span class="text-xl shrink-0 mt-0.5">🎯</span>
+                    <div>
+                        <span class="block font-bold text-xs">Budget Classique</span>
+                        <span class="block text-[10px] text-emerald-700/80 dark:text-emerald-400/80 mt-0.5 leading-tight font-medium">Pour vos dépenses personnelles (courses, cadeaux, loisirs...)</span>
+                    </div>
+                </button>
+                <button type="button" onclick="selectBudgetSubType('friends')" class="w-full p-3 bg-indigo-100/70 hover:bg-indigo-200/60 dark:bg-indigo-950/45 dark:hover:bg-indigo-950/55 text-indigo-600 dark:text-indigo-400 rounded-xl active:scale-95 transition-all border border-indigo-300/80 dark:border-indigo-800/50 flex items-start gap-2.5">
+                    <span class="text-xl shrink-0 mt-0.5">👥</span>
+                    <div>
+                        <span class="block font-bold text-xs">Enveloppe entre Amis</span>
+                        <span class="block text-[10px] text-indigo-700/80 dark:text-indigo-400/80 mt-0.5 leading-tight font-medium">Pour de l'argent que vous avancez (resto, vacances, colocation...)</span>
+                    </div>
+                </button>
+            </div>
+            <button type="button" onclick="closeBudgetFundingModal()" class="w-full py-2 bg-transparent text-stone-500 hover:text-stone-700 dark:hover:text-stone-400 font-bold text-xs active:scale-95 transition-all mt-1">
+                Annuler
+            </button>
+        </div>
+
+        <!-- STEP 2: Choose Funding Source -->
+        <div id="budget_creation_step_funding" class="space-y-4 hidden">
+            <div class="text-3xl">💰</div>
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 font-display">Financement</h3>
+            <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                Création de l'enveloppe <strong id="budget_funding_title" class="text-brand-500">...</strong> de <strong id="budget_funding_amount" class="text-brand-500">...</strong>.
+                <br><br>
+                Choisissez le type de financement :
+            </p>
+            <div class="flex flex-col gap-2 pt-2">
+                <button type="button" onclick="handleBudgetFundingChoice('deducted')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all shadow-md">
+                    📉 Déduire du Reste à Vivre
+                </button>
+                <button type="button" onclick="handleBudgetFundingChoice('independent')" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-100 rounded-xl font-bold text-xs active:scale-95 transition-all border border-stone-200 dark:border-stone-700">
+                    💸 Source extérieure (indépendante)
+                </button>
+                <button type="button" onclick="goBackToBudgetSubTypeSelection()" class="w-full py-2 bg-transparent text-stone-500 hover:text-stone-700 dark:hover:text-stone-400 font-bold text-xs active:scale-95 transition-all mt-1">
+                    Retour
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- VIEW BUDGET DETAILS MODAL -->
+<div id="view_budget_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-md transform scale-95 transition-transform duration-300 flex flex-col space-y-4 max-h-[85vh]">
+        <div class="flex justify-between items-center pb-2 border-b border-stone-200 dark:border-stone-800">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 font-display flex items-center gap-1.5">
+                <span>🎯</span> Détails de l'Enveloppe
+            </h3>
+            <button onclick="closeViewBudgetModal()" class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center font-bold text-xs shadow-sm active:scale-90 focus:outline-none">
+                ✕
+            </button>
+        </div>
+        
+        <div id="view_budget_modal_content" class="overflow-y-auto pr-1 hide-scrollbar space-y-4 flex-1">
+            <!-- Content dynamically populated in app.js -->
+        </div>
+        
+        <div id="view_budget_modal_footer" class="pt-2 border-t border-stone-200 dark:border-stone-800 flex gap-2">
+            <button onclick="closeViewBudgetModal()" class="w-full py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold rounded-xl text-xs active:scale-95 transition-all">
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- EDIT MODAL -->
 <div id="edit_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
     <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col space-y-4">
         <div class="flex justify-between items-center">
             <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 font-display" id="edit_modal_title">Modifier</h3>
-            <button onclick="closeEditModal()" class="w-6 h-6 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 font-bold flex items-center justify-center hover:bg-stone-200 dark:hover:bg-stone-700 active:scale-90 transition-all text-[10px]">✕</button>
+            <button onclick="closeEditModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-[10px] shadow-sm">✕</button>
         </div>
         <form id="edit_form" onsubmit="saveEdit(event)" class="space-y-3">
             <div>
@@ -442,6 +1108,18 @@
                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 font-black text-stone-400 pointer-events-none text-xs">€</span>
                 </div>
             </div>
+            <!-- Date editing section, only visible for expenses -->
+            <div id="edit_date_section" class="mb-2 select-none">
+                <label class="block text-[8px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-1">Date</label>
+                <div class="flex items-center gap-2 text-xs">
+                    <button type="button" onclick="openEditExpenseDatePicker()" class="flex items-center gap-1.5 py-2 px-3 bg-stone-100 dark:bg-stone-900 text-stone-600 dark:text-stone-300 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-800 transition-all active:scale-95 border border-stone-300/20 dark:border-stone-800/30 font-bold w-full flex justify-between items-center">
+                        <span id="edit_expense_date_label">-</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </button>
+                    <input type="hidden" id="edit_expense_date_value" value="">
+                </div>
+            </div>
+
             <div class="grid grid-cols-2 gap-2 pt-2">
                 <button type="button" onclick="closeEditModal()" class="py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95">Annuler</button>
                 <button type="submit" class="py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95">Enregistrer</button>
@@ -457,7 +1135,7 @@
             <h3 class="text-xl font-black text-stone-800 dark:text-stone-100 flex items-center gap-2 font-display">
                 <span>⚙️</span> Réglages & Données
             </h3>
-            <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 font-bold flex items-center justify-center hover:bg-stone-200 dark:hover:bg-stone-700 active:scale-90 transition-all">✕</button>
+            <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all shadow-sm">✕</button>
         </div>
         
         <div class="space-y-6 overflow-y-auto px-1 -mx-1 hide-scrollbar">
@@ -490,7 +1168,7 @@
                     <span>✨</span> Nouveau ? Lancer le guide interactif
                 </button>
 
-                <button onclick="shareApp()" class="w-full py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-xl font-bold text-xs active:scale-98 transition-all border border-stone-200 dark:border-stone-700 flex items-center justify-center gap-1.5">
+                <button id="settings_share_btn" onclick="shareApp()" class="w-full py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-xl font-bold text-xs active:scale-98 transition-all border border-stone-200 dark:border-stone-700 flex items-center justify-center gap-1.5">
                     <span>🔗</span> Partager l'application
                 </button>
             </div>
@@ -503,13 +1181,38 @@
                 <div id="storage_status_card" class="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200/40 dark:border-stone-800/40 flex flex-col gap-2">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-stone-700 dark:text-stone-300">Protection auto-nettoyage :</span>
-                        <span id="storage_status_badge" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-850 text-stone-500">Vérification...</span>
+                        <span id="storage_status_badge" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-900 text-stone-500">Vérification...</span>
                     </div>
                     <p id="storage_status_desc" class="text-[10px] text-stone-500 dark:text-stone-400 leading-normal font-medium">
                         Vérification du statut de stockage auprès du navigateur...
                     </p>
-                    <button id="btn_request_persistence" onclick="tryRequestPersistence()" class="hidden w-full py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 text-emerald-650 dark:text-emerald-450 rounded-xl font-bold text-xs active:scale-95 transition-all border border-emerald-100 dark:border-emerald-900/30 flex items-center justify-center gap-1.5 mt-1 shadow-sm">
+                    <button id="btn_request_persistence" onclick="tryRequestPersistence()" class="hidden w-full py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-xl font-bold text-xs active:scale-95 transition-all border border-emerald-100 dark:border-emerald-900/30 flex items-center justify-center gap-1.5 mt-1 shadow-sm">
                         <span>🛡️</span> Activer la protection renforcée
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-stone-200 dark:border-stone-800" />
+
+            <!-- Certification & Guide -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Certification & Aide</h4>
+                
+                <!-- Certified Badge Display -->
+                <div id="settings_certification_badge_container" class="hidden p-3 bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/20 rounded-xl flex items-center gap-3 select-none">
+                    <span class="text-2xl animate-bounce">🛡️</span>
+                    <div>
+                        <span class="block font-black text-xs text-amber-700 dark:text-amber-400 uppercase tracking-wider">Appli Certifiée Fiable</span>
+                        <span class="block text-[9px] text-amber-600/80 dark:text-amber-500/70 font-semibold mt-0.5">Tous les calculs et transitions sont vérifiés pour cette version.</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="openCertification()" class="py-2.5 px-3 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-xl font-bold text-xs active:scale-95 transition-all border border-stone-200 dark:border-stone-700 flex items-center justify-center gap-1.5 shadow-sm">
+                        🛡️ Certifier
+                    </button>
+                    <button onclick="openAppGuide()" class="py-2.5 px-3 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-xl font-bold text-xs active:scale-95 transition-all border border-stone-200 dark:border-stone-700 flex items-center justify-center gap-1.5 shadow-sm">
+                        📖 Guide App
                     </button>
                 </div>
             </div>
@@ -519,6 +1222,10 @@
             <!-- Backup & Restore -->
             <div class="space-y-3">
                 <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Sauvegarde & Restauration</h4>
+                <button onclick="quickExportJSON()" class="w-full py-2.5 px-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                    <span>💾</span> Sauvegarder (Exporter JSON)
+                </button>
+                
                 <button onclick="document.getElementById('import_file').click()" class="w-full py-2.5 px-3 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-stone-200 dark:border-stone-700">
                     <span>📥</span> Importer JSON
                 </button>
@@ -528,11 +1235,11 @@
                 </button>
             </div>
 
-            <hr class="border-stone-200 dark:border-stone-850" />
+            <hr class="border-stone-200 dark:border-stone-800" />
 
             <!-- Version & Dev Contact Footer -->
             <div class="flex flex-col items-center justify-center text-center space-y-2 pt-2 pb-1 text-[10px] font-semibold text-stone-400 dark:text-stone-500">
-                <div class="flex items-center gap-3">
+                <div id="footer_links_row" class="flex items-center gap-3">
                     <a href="mailto:lehcimcramtrebor.ztriw@gmail.com?subject=BUDGET%20PWA" class="hover:text-brand-500 transition-colors flex items-center gap-1 select-none">
                         ✉️ Contact Dev
                     </a>
@@ -542,19 +1249,75 @@
                     </a>
                 </div>
                 <div class="text-[9px] font-bold opacity-60 tracking-wider">
-                    BUDGETHMR — Version 1.3.0
+                    BUDGETHMR — Version 2.0.0
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- RECAP MODAL -->
+<div id="recap_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col max-h-[85vh] p-5 space-y-4">
+        <div class="flex justify-between items-center border-b border-stone-100 dark:border-stone-800/60 pb-3">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 font-display flex items-center gap-2" id="recap_modal_title">
+                <!-- Set dynamically -->
+            </h3>
+            <button onclick="closeRecapModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-[10px] shadow-sm">✕</button>
+        </div>
+        
+        <!-- Recap content (scrollable list) -->
+        <div id="recap_modal_content" class="overflow-y-auto pr-1 hide-scrollbar space-y-3 flex-1">
+            <!-- Loaded dynamically -->
+        </div>
+    </div>
+</div>
+
+<!-- CUSTOM DATE PICKER MODAL -->
+<div id="custom_date_picker_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col p-5 space-y-4">
+        <!-- Header: Selected Date Display -->
+        <div class="bg-brand-500 text-white p-4 -mx-5 -mt-5 rounded-t-3xl flex flex-col shadow-md">
+            <span id="calendar_selected_year" class="text-xs font-bold opacity-80">2026</span>
+            <span id="calendar_selected_date_long" class="text-base font-black font-display mt-0.5">Dim. 14 juin</span>
+        </div>
+
+        <!-- Locked Month Label -->
+        <div class="flex items-center justify-center py-1">
+            <span id="calendar_current_month_year" class="font-black text-sm text-stone-800 dark:text-stone-100 font-display">-</span>
+        </div>
+
+        <!-- Weekdays Grid -->
+        <div class="grid grid-cols-7 gap-1 text-center text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider">
+            <span>L</span>
+            <span>M</span>
+            <span>M</span>
+            <span>J</span>
+            <span>V</span>
+            <span>S</span>
+            <span>D</span>
+        </div>
+
+        <!-- Days Grid -->
+        <div id="calendar_days_grid" class="grid grid-cols-7 gap-1 text-center text-xs font-bold">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-100 dark:border-stone-800/60">
+            <button type="button" id="calendar_btn_clear" onclick="clearCustomDatePickerDate()" class="px-3 h-9 text-[10px] font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-colors uppercase tracking-wider">Effacer</button>
+            <button type="button" id="calendar_btn_cancel" onclick="closeCustomDatePicker()" class="px-3 h-9 text-[10px] font-black text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors uppercase tracking-wider">Annuler</button>
+            <button type="button" id="calendar_btn_confirm" onclick="confirmSelectedDate()" class="px-3 h-9 text-[10px] font-black text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-xl transition-colors uppercase tracking-wider">Définir</button>
+        </div>
+    </div>
+</div>
+
 <!-- TOUR TOOLTIP OVERLAY -->
 <div id="tour_overlay" class="fixed inset-0 bg-stone-950/40 z-50 pointer-events-none hidden transition-opacity duration-300"></div>
-<div id="tour_tooltip" class="fixed z-50 glass-card w-72 p-4 shadow-xl border border-stone-200/50 dark:border-stone-850 hidden flex flex-col space-y-3 transform scale-95 opacity-0 transition-[opacity,transform] duration-300">
+<div id="tour_tooltip" class="fixed z-50 glass-card w-72 p-4 shadow-xl border border-stone-200/50 dark:border-stone-800 hidden flex flex-col space-y-3 transform scale-95 opacity-0 transition-[opacity,transform] duration-300">
     <div class="flex justify-between items-center">
         <h4 class="text-[10px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest" id="tour_step_num">Étape 1 sur 6</h4>
-        <button onclick="endTour()" class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-xs">✕</button>
+        <button onclick="endTour()" class="w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-[8px] shadow-sm">✕</button>
     </div>
     <div class="space-y-1">
         <h3 class="text-xs font-black text-stone-800 dark:text-stone-100 font-display" id="tour_title">Titre de l'étape</h3>
@@ -576,6 +1339,402 @@
             </svg>
         </div>
         <span class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest font-display">Enregistré !</span>
+    </div>
+</div>
+
+<!-- BACKUP IMPORT OPTIONS MODAL -->
+<div id="import_options_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col p-5 space-y-4">
+        <div class="flex justify-between items-center pb-2 border-b border-stone-200 dark:border-stone-800">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-wider flex items-center gap-1.5">
+                📥 Importer une sauvegarde
+            </h3>
+            <button onclick="closeImportOptionsModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-xs shadow-sm">✕</button>
+        </div>
+        
+        <div class="space-y-2 select-none">
+            <p class="text-xs text-stone-500 dark:text-stone-400 font-semibold leading-relaxed" id="import_options_description">
+                Sélectionnez comment importer vos données.
+            </p>
+        </div>
+
+        <div id="import_options_container" class="space-y-2.5 pt-2">
+            <!-- Dynamically populated option buttons -->
+        </div>
+    </div>
+</div>
+
+<!-- MONTH TRANSITION REMINDER MODAL (NON-BLOCKING) -->
+<div id="transition_reminder_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col p-5 space-y-4">
+        <div class="flex justify-between items-center pb-2 border-b border-stone-200 dark:border-stone-800">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-wider flex items-center gap-1.5">
+                📅 Nouvelle période
+            </h3>
+            <button onclick="closeTransitionReminderModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-xs shadow-sm">✕</button>
+        </div>
+        <p class="text-xs text-stone-500 dark:text-stone-400 font-semibold leading-relaxed" id="transition_reminder_description">
+            Votre budget est resté sur le mois précédent. Souhaitez-vous effectuer la transition mensuelle vers le nouveau mois ?
+        </p>
+        <div class="grid grid-cols-1 gap-2 pt-2">
+            <button onclick="acceptTransitionReminder()" class="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold text-xs active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5">
+                🔄 Passer au mois en cours
+            </button>
+            <button onclick="closeTransitionReminderModal()" class="w-full py-3.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-2xl font-bold text-xs active:scale-95 transition-all border border-stone-200 dark:border-stone-700 shadow-sm">
+                Plus tard (salaire en retard, etc.)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MONTH TRANSITION FORCED MODAL (BLOCKING) -->
+<div id="transition_forced_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300" data-noclose="true">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col p-5 space-y-4">
+        <div class="pb-2 border-b border-stone-200 dark:border-stone-800 text-center">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-wider flex items-center justify-center gap-1.5">
+                ⚠️ Transition Requise
+            </h3>
+        </div>
+        <p class="text-xs text-stone-500 dark:text-stone-400 font-semibold leading-relaxed text-center" id="transition_forced_description">
+            Votre période budgétaire est trop en retard. Vous devez transitionner vers le mois actuel pour continuer à utiliser l'application.
+        </p>
+        <div class="space-y-2.5 pt-2">
+            <button onclick="executeForcedTransition('renew')" class="w-full py-3.5 px-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold text-xs active:scale-98 transition-all flex flex-col items-center justify-center shadow-md">
+                <span>🔄 Transitionner avec reports</span>
+                <span class="text-[9px] text-white/70 font-semibold mt-0.5">Reporte vos soldes et enveloppes vers le mois actuel.</span>
+            </button>
+            <button onclick="executeForcedTransition('reset')" class="w-full py-3.5 px-4 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700/80 border border-stone-200 dark:border-stone-700 rounded-2xl text-stone-800 dark:text-stone-100 text-xs font-bold active:scale-98 transition-all flex flex-col items-center justify-center shadow-sm">
+                <span>🧹 Repartir de zéro</span>
+                <span class="text-[9px] text-stone-400 dark:text-stone-500 font-semibold mt-0.5">Ignore le passé. Importe uniquement revenus & frais fixes.</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MONTH TRANSITION REINIT MODAL (BLOCKING) -->
+<div id="transition_reinit_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300" data-noclose="true">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col p-5 space-y-4">
+        <div class="pb-2 border-b border-stone-200 dark:border-stone-800 text-center">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-wider flex items-center justify-center gap-1.5">
+                💥 Réinitialisation Requise
+            </h3>
+        </div>
+        <p class="text-xs text-stone-500 dark:text-stone-400 font-semibold leading-relaxed text-center" id="transition_reinit_description">
+            Vous n'avez pas ouvert l'application depuis longtemps. Une réinitialisation vers la période en cours est requise.
+        </p>
+        <div class="space-y-2.5 pt-2">
+            <button onclick="executeReinitOption('keep')" class="w-full py-3.5 px-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold text-xs active:scale-98 transition-all flex flex-col items-center justify-center shadow-md">
+                <span>📋 Conserver les réglages de base</span>
+                <span class="text-[9px] text-white/70 font-semibold mt-0.5">Garde vos frais fixes & revenus et met à jour les revenus.</span>
+            </button>
+            <button onclick="executeReinitOption('wipe')" class="w-full py-3.5 px-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold text-xs active:scale-98 transition-all flex flex-col items-center justify-center shadow-md">
+                <span>🗑️ Tout effacer et repartir à blanc</span>
+                <span class="text-[9px] text-white/70 font-semibold mt-0.5">Lance une suppression complète des données et réglages.</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- WELCOME MODAL -->
+<div id="welcome_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300" data-noclose="true">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col p-6 space-y-5 text-center">
+        <div class="text-4xl animate-bounce">🎉</div>
+        <div class="space-y-1">
+            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 uppercase tracking-wide font-display">Bienvenue sur BUDGETHMR</h3>
+            <p class="text-[10px] font-bold text-brand-500 uppercase tracking-widest">Votre budget, en toute sécurité</p>
+        </div>
+        <p class="text-xs text-stone-500 dark:text-stone-400 font-semibold leading-relaxed">
+            Vos données de budget sont stockées localement de manière sécurisée et ne quittent jamais votre appareil. <br><br>Pour démarrer de la meilleure façon, nous vous conseillons de <strong>certifier l'application</strong> (vérifier les calculs sur votre téléphone) et de parcourir notre <strong>guide interactif</strong>.
+        </p>
+        <div class="space-y-2 pt-2">
+            <button onclick="acceptWelcomeOption('certify')" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold text-xs active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5">
+                🛡️ Certifier l'application
+            </button>
+            <button onclick="acceptWelcomeOption('guide')" class="w-full py-3 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-2xl font-bold text-xs active:scale-95 transition-all border border-stone-200 dark:border-stone-700 flex items-center justify-center gap-1.5 shadow-sm">
+                📖 Découvrir le guide interactif
+            </button>
+            <button onclick="acceptWelcomeOption('start')" class="w-full py-2.5 text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-400 font-bold text-[10px] uppercase tracking-wider active:scale-98 transition-all">
+                Passer et démarrer direct ➡️
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- APP GUIDE MODAL -->
+<div id="app_guide_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-md transform scale-95 transition-transform duration-300 flex flex-col p-6 space-y-4 max-h-[90vh]">
+        <div class="flex justify-between items-center pb-2 border-b border-stone-200 dark:border-stone-800">
+            <h3 class="text-xs font-black text-stone-500 uppercase tracking-widest flex items-center gap-1.5">
+                📖 Guide de l'Application
+            </h3>
+            <button onclick="closeAppGuide()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-xs shadow-sm">✕</button>
+        </div>
+
+        <!-- Carousel Content -->
+        <div class="flex-1 overflow-y-auto hide-scrollbar py-3 select-none">
+            <!-- Slide 1 -->
+            <div id="guide_slide_0" class="guide-slide space-y-4 text-center">
+                <div class="text-5xl">🛡️</div>
+                <h4 class="text-base font-black text-stone-800 dark:text-stone-100 font-display">Bienvenue sur BUDGETHMR</h4>
+                <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                    BUDGETHMR est conçu pour être un outil ultra-rapide, simple et entièrement confidentiel. <br><br>
+                    <strong>Stockage local</strong> : Toutes vos dépenses et revenus sont stockés exclusivement dans la mémoire locale de votre téléphone ou navigateur. Aucune donnée n'est envoyée sur un serveur distant.<br><br>
+                    <strong>Mode Sombre & Styles</strong> : Personnalisez l'application avec nos thèmes masculins/féminins et profitez d'une interface optimisée pour le suivi quotidien.
+                </p>
+            </div>
+
+            <!-- Slide 2 -->
+            <div id="guide_slide_1" class="guide-slide space-y-4 text-center hidden">
+                <div class="text-5xl">🎯</div>
+                <h4 class="text-base font-black text-stone-800 dark:text-stone-100 font-display">Solde principal & Enveloppes</h4>
+                <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                    L'application sépare votre budget en deux compartiments :<br><br>
+                    <strong>Le Reste à Vivre</strong> : Votre solde bancaire disponible après déduction de vos charges fixes de base. C'est l'argent disponible pour vos dépenses courantes.<br><br>
+                    <strong>Les Enveloppes Dédiées</strong> : Des enveloppes de budget que vous créez pour isoler des sommes spécifiques.<br><br>
+                    <em>Exemple concret</em> : Vous pouvez créer une enveloppe de <strong>150 €</strong> pour vos **sorties restaurants**. Cet argent peut être déduit de votre reste à vivre ou financé par une source externe.
+                </p>
+            </div>
+
+            <!-- Slide 3 -->
+            <div id="guide_slide_2" class="guide-slide space-y-4 text-center hidden">
+                <div class="text-5xl">👥</div>
+                <h4 class="text-base font-black text-stone-800 dark:text-stone-100 font-display">Enveloppes Classiques vs Entre Amis</h4>
+                <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                    Il existe deux types d'enveloppes :<br><br>
+                    <strong>Enveloppe Classique</strong> : Pour vos dépenses personnelles mensuelles.<br><br>
+                    <strong>Enveloppe entre Amis</strong> : Pour suivre l'argent que vous avancez pour d'autres personnes.<br><br>
+                    <em>Exemple concret (Cadeau commun)</em> : Vous achetez un cadeau d'anniversaire à <strong>200 €</strong> pour un ami commun. Vous créez une Enveloppe entre Amis de 200 €. Au fur et à mesure que vos amis vous remboursent (virement ou espèces), vous enregistrez les remboursements. La barre de progression affiche le pourcentage remboursé, et la "Part utilisateur" indique ce qui est réellement sorti de votre poche !
+                </p>
+            </div>
+
+            <!-- Slide 4 -->
+            <div id="guide_slide_3" class="guide-slide space-y-4 text-center hidden">
+                <div class="text-5xl">💵</div>
+                <h4 class="text-base font-black text-stone-800 dark:text-stone-100 font-display">La Gestion des Espèces (Cash)</h4>
+                <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                    Lorsque vos amis vous remboursent en espèces, ou que vous retirez de l'argent d'une enveloppe :<br><br>
+                    L'argent liquide reste dans votre poche. Pour éviter de fausser votre Reste à Vivre bancaire, BUDGETHMR considère ces espèces comme **en attente de dépôt**.<br><br>
+                    Elles sont comptabilisées à part. Une fois que vous déposez physiquement ce liquide à la banque, vous cliquez sur le bouton **Déposer** sur la fiche de l'enveloppe, ce qui réintègre proprement la somme dans votre Reste à Vivre bancaire.
+                </p>
+            </div>
+
+            <!-- Slide 5 (Demo Interactive) -->
+            <div id="guide_slide_4" class="guide-slide space-y-3 text-center hidden">
+                <div class="text-4xl">🎯</div>
+                <h4 class="text-base font-black text-stone-800 dark:text-stone-100 font-display">Démonstration Interactive</h4>
+                <p class="text-[11px] text-stone-500 dark:text-stone-400 font-semibold leading-relaxed">
+                    Expérimentez en direct la gestion du solde et les enveloppes avec cette simulation.
+                </p>
+                
+                <!-- Demo dashboard state -->
+                <div class="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl space-y-2 text-left select-none">
+                    <div class="flex justify-between items-center text-[11px] font-bold border-b border-stone-200 dark:border-stone-800 pb-1.5">
+                        <span class="text-stone-500 dark:text-stone-400">Solde Bancaire Principal :</span>
+                        <span id="demo_main_balance" class="text-brand-500 font-black text-sm transition-all duration-300">1000,00 €</span>
+                    </div>
+                    
+                    <!-- Envelope A (Travaux) -->
+                    <div class="p-2.5 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-800 rounded-lg space-y-1 font-mono text-[10px]">
+                        <div class="flex justify-between font-black text-stone-800 dark:text-stone-200">
+                            <span>🛠️ ENVELOPPE TRAVAUX (Classique)</span>
+                            <span id="demo_env_travaux_status" class="text-emerald-500">Reste: 400,00 €</span>
+                        </div>
+                        <div class="w-full bg-stone-200 dark:bg-stone-700 h-1.5 rounded-full overflow-hidden">
+                            <div id="demo_env_travaux_progress" class="bg-emerald-500 h-full transition-all duration-300" style="width: 80%;"></div>
+                        </div>
+                        <p class="text-[9px] text-stone-400 dark:text-stone-500 leading-normal">
+                            Financée par débit du Solde Principal. Allocation 500€, dépensé 100€.
+                        </p>
+                    </div>
+                    
+                    <!-- Envelope B (Resto) -->
+                    <div class="p-2.5 bg-slate-800 dark:bg-slate-900 border border-slate-700 dark:border-slate-800 rounded-lg text-slate-100 space-y-1 font-mono text-[10px]">
+                        <div class="flex justify-between font-black">
+                            <span>👥 RESTO (Entre Amis)</span>
+                            <span id="demo_env_resto_status" class="text-brand-400">Part: 120,00 €</span>
+                        </div>
+                        <div class="flex justify-between text-[9px] font-bold text-slate-400">
+                            <span>Remboursé: <span id="demo_env_resto_pct">0%</span></span>
+                            <span>Espèces en main: <span id="demo_env_resto_cash" class="text-amber-400">0,00 €</span></span>
+                        </div>
+                        <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                            <div id="demo_env_resto_progress" class="bg-brand-500 h-full transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-[9px] font-bold pt-1">
+                            <span id="demo_env_resto_cash_badge" class="hidden bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded uppercase">🏦 Espèces à déposer</span>
+                            <button id="demo_btn_deposit" onclick="runDemoAction('deposit')" class="hidden px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold uppercase active:scale-95 transition-all text-[8px]">🏦 Déposer Espèces</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Interactive Action Buttons -->
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button id="demo_btn_cb" onclick="runDemoAction('refund_cb')" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-xl font-bold text-[10px] active:scale-95 transition-all border border-stone-200 dark:border-stone-700 shadow-sm flex items-center justify-center gap-1">
+                        💳 Rembourser 40€ CB
+                    </button>
+                    <button id="demo_btn_cash" onclick="runDemoAction('refund_cash')" class="py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-xl font-bold text-[10px] active:scale-95 transition-all border border-stone-200 dark:border-stone-700 shadow-sm flex items-center justify-center gap-1">
+                        💵 Rembourser 30€ Cash
+                    </button>
+                </div>
+            </div>
+
+            <!-- Slide 6 -->
+            <div id="guide_slide_5" class="guide-slide space-y-4 text-center hidden">
+                <div class="text-5xl">🔄</div>
+                <h4 class="text-base font-black text-stone-800 dark:text-stone-100 font-display">Transitions & Sauvegardes</h4>
+                <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                    <strong>Changement de mois</strong> : À la fin de chaque mois, l'assistant vous permet d'exporter un bilan PDF de vos comptes, de choisir de reporter ou non vos enveloppes actives et votre reste à vivre, puis de réinitialiser vos dépenses courantes pour la nouvelle période.<br><br>
+                    <strong>Sauvegardes (Export/Import)</strong> : Le navigateur peut vider le cache par manque d'espace. Prenez l'habitude de cliquer sur la disquette en haut pour exporter vos données dans un fichier JSON, et réimportez-le facilement en cas de problème ou lors d'un changement de téléphone.
+                </p>
+            </div>
+        </div>
+
+        <!-- Navigation Dots & Buttons -->
+        <div class="space-y-4 pt-2 border-t border-stone-200 dark:border-stone-800">
+            <!-- Dots indicator -->
+            <div class="flex justify-center gap-1.5" id="guide_dots_container">
+                <span class="w-2 h-2 rounded-full bg-stone-300 dark:bg-stone-700 transition-all duration-300" id="guide_dot_0"></span>
+                <span class="w-2 h-2 rounded-full bg-stone-300 dark:bg-stone-700 transition-all duration-300" id="guide_dot_1"></span>
+                <span class="w-2 h-2 rounded-full bg-stone-300 dark:bg-stone-700 transition-all duration-300" id="guide_dot_2"></span>
+                <span class="w-2 h-2 rounded-full bg-stone-300 dark:bg-stone-700 transition-all duration-300" id="guide_dot_3"></span>
+                <span class="w-2 h-2 rounded-full bg-stone-300 dark:bg-stone-700 transition-all duration-300" id="guide_dot_4"></span>
+                <span class="w-2 h-2 rounded-full bg-stone-300 dark:bg-stone-700 transition-all duration-300" id="guide_dot_5"></span>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="prevGuideSlide()" id="btn_guide_prev" class="flex-1 py-3 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95 transition-all">
+                    Précédent
+                </button>
+                <button onclick="nextGuideSlide()" id="btn_guide_next" class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all shadow-md">
+                    Suivant
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- CERTIFICATION MODAL (TEST RUNNER) -->
+<div id="certification_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300" data-noclose="true">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col p-6 space-y-5">
+        <div class="flex justify-between items-center pb-2 border-b border-stone-200 dark:border-stone-800">
+            <h3 class="text-xs font-black text-stone-500 uppercase tracking-widest">
+                🛡️ Test Runner de Certification
+            </h3>
+        </div>
+
+        <!-- Testing status view -->
+        <div id="cert_testing_view" class="space-y-4">
+            <p class="text-xs text-stone-500 dark:text-stone-400 font-semibold leading-relaxed">
+                Vérification des composants de l'application et calculs en cours...
+            </p>
+
+            <div class="space-y-3 pt-2">
+                <!-- Test 1 -->
+                <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_0">
+                    <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                        <span class="status-icon">⏳</span> Calculs de base du budget
+                    </span>
+                    <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
+                </div>
+                <!-- Test 2 -->
+                <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_1">
+                    <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                        <span class="status-icon">⏳</span> Transitions courantes de mois
+                    </span>
+                    <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
+                </div>
+                <!-- Test 3 -->
+                <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_2">
+                    <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                        <span class="status-icon">⏳</span> Enveloppes classiques & reports
+                    </span>
+                    <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
+                </div>
+                <!-- Test 4 -->
+                <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_3">
+                    <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                        <span class="status-icon">⏳</span> Enveloppes amis & part utilisateur
+                    </span>
+                    <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
+                </div>
+                <!-- Test 5 -->
+                <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_4">
+                    <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                        <span class="status-icon">⏳</span> Gestion des espèces & dépôts
+                    </span>
+                    <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
+                </div>
+                <!-- Test 6 -->
+                <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_5">
+                    <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                        <span class="status-icon">⏳</span> Limites et sécurité de dates
+                    </span>
+                    <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
+                </div>
+            </div>
+            
+            <div class="pt-2 flex justify-center">
+                <span class="animate-spin text-2xl" id="cert_loading_spinner">⏳</span>
+            </div>
+        </div>
+
+        <!-- Success view -->
+        <div id="cert_success_view" class="space-y-5 text-center hidden">
+            <div class="relative w-36 h-36 mx-auto flex items-center justify-center select-none">
+                <div class="absolute inset-0 bg-amber-500/10 rounded-full animate-ping duration-1000"></div>
+                <div class="w-32 h-32 rounded-full border-4 border-double border-amber-500 bg-stone-900 dark:bg-black/60 shadow-lg flex flex-col items-center justify-center p-2 relative z-10">
+                    <span class="text-4xl filter drop-shadow-[0_2px_4px_rgba(217,119,6,0.3)]">🛡️</span>
+                    <span class="block text-[8px] font-black text-amber-500 tracking-widest mt-1.5 uppercase leading-none">APPLI CERTIFIÉE</span>
+                    <span class="block text-[10px] font-black text-amber-400 tracking-wider uppercase leading-none mt-1">FIABLE</span>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <h4 class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-wider font-display">Certification Réussie !</h4>
+                <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                    Tous les algorithmes comptables, de transition et de garde-fous temporels fonctionnent parfaitement sur votre appareil.
+                </p>
+            </div>
+
+            <button onclick="closeCertification()" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold text-xs active:scale-95 transition-all shadow-md">
+                Enregistrer & Terminer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- VERSION UPDATE MODAL -->
+<div id="version_update_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col p-6 space-y-4">
+        <div class="flex justify-between items-center pb-2 border-b border-stone-200 dark:border-stone-800">
+            <h3 class="text-xs font-black text-stone-500 uppercase tracking-widest flex items-center gap-1.5">
+                🚀 Mise à jour BUDGETHMR
+            </h3>
+            <button onclick="closeVersionUpdateModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-xs shadow-sm">✕</button>
+        </div>
+
+        <div class="space-y-3">
+            <h4 class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-wider font-display">Version 2.0.0 disponible</h4>
+            <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                L'application a été mise à jour en version 2.0.0. Voici les nouveautés :<br><br>
+                - 🎯 <strong>Enveloppes Dédiées</strong> : Budgets classiques et enveloppes entre amis avec tickets de caisse vintage.<br>
+                - 💳 <strong>Golden Card Premium</strong> : Texture effet carte bancaire avec microchip et ondes sans contact.<br>
+                - 🎨 <strong>Design Élevé</strong> : Ombres de survol en mode clair et contours affinés en mode sombre.<br>
+                - 🔐 <strong>Double Sécurité</strong> : Recopie de code pour la réinitialisation.<br><br>
+                <em>Note : Suite à cette mise à jour majeure, la certification de l'application doit être renouvelée.</em>
+            </p>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-stone-200 dark:border-stone-800">
+            <button onclick="acceptVersionUpdateCertify()" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold text-xs active:scale-95 transition-all shadow-md">
+                🛡️ Relancer la Certification
+            </button>
+            <button onclick="closeVersionUpdateModal()" class="w-full py-3 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-2xl font-bold text-xs active:scale-95 transition-all border border-stone-200 dark:border-stone-700 shadow-sm">
+                Fermer
+            </button>
+        </div>
     </div>
 </div>
 

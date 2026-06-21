@@ -21,12 +21,25 @@ const dirsToCopy = [
     'assets'
 ];
 
-// Helper to clean and recreate directory
+// Helper to clean and recreate directory contents
 function prepareDir(dir) {
     if (fs.existsSync(dir)) {
-        fs.rmSync(dir, { recursive: true, force: true });
+        try {
+            const files = fs.readdirSync(dir);
+            files.forEach(file => {
+                const curPath = path.join(dir, file);
+                try {
+                    fs.rmSync(curPath, { recursive: true, force: true });
+                } catch (err) {
+                    console.warn(`Warning: could not delete ${file} in ${path.basename(dir)}:`, err.message);
+                }
+            });
+        } catch (err) {
+            console.warn(`Warning: could not read directory ${dir}:`, err.message);
+        }
+    } else {
+        fs.mkdirSync(dir, { recursive: true });
     }
-    fs.mkdirSync(dir, { recursive: true });
 }
 
 prepareDir(wwwDir);

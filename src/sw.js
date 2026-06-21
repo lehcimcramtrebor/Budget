@@ -1,4 +1,4 @@
-const CACHE_NAME = "budget-hmr-cache-v1.01";
+const CACHE_NAME = "budget-hmr-cache-v2.00";
 const ASSETS = [
   "./",
   "./index.html",
