@@ -1,7 +1,8 @@
 // --- CONFIGURATION DES TAGS RAPIDES ---
 const EXPENSE_TAGS = {
     courses: { icon: "🛒", label: "Courses" },
-    resto: { icon: "🍔", label: "Resto" },
+    resto: { icon: "🍔", label: "Restauration" },
+    loisirs: { icon: "🔫", label: "Loisirs" },
     vape: { icon: "💨", label: "Vape" },
     numerique: { icon: "📱", label: "Numérique" },
     auto: { icon: "⛽", label: "Auto" },
@@ -24,9 +25,10 @@ function initTagsUI() {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.id = `tag_btn_${key}`;
-        // Style par défaut : inactif. Le JS mettra "divers" en actif au chargement
-        btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
-        btn.innerHTML = `<span class="text-xs">${tag.icon}</span> <span>${tag.label}</span>`;
+        // w-full, py-2, text-xs, justify-center ajoutés
+        btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+        // Icône en text-sm, et ajout de truncate pour éviter de casser la ligne
+        btn.innerHTML = `<span class="text-sm">${tag.icon}</span> <span class="truncate">${tag.label}</span>`;
         btn.onclick = () => selectTag(key);
         container.appendChild(btn);
     });
@@ -42,9 +44,11 @@ function selectTag(selectedKey) {
         const btn = document.getElementById(`tag_btn_${key}`);
         if (btn) {
             if (key === selectedKey) {
-                btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
+                // Classes état actif
+                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
             } else {
-                btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+                // Classes état inactif
+                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
             }
         }
     });
@@ -61,8 +65,9 @@ function initEditTagsUI() {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.id = `edit_tag_btn_${key}`;
-        btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
-        btn.innerHTML = `<span class="text-xs">${tag.icon}</span> <span>${tag.label}</span>`;
+        // Ajout de w-full, justify-center et text-xs
+        btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+        btn.innerHTML = `<span class="text-sm">${tag.icon}</span> <span class="truncate">${tag.label}</span>`;
         btn.onclick = () => selectEditTag(key);
         container.appendChild(btn);
     });
@@ -76,9 +81,9 @@ function selectEditTag(selectedKey) {
         const btn = document.getElementById(`edit_tag_btn_${key}`);
         if (btn) {
             if (key === selectedKey) {
-                btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
+                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
             } else {
-                btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
             }
         }
     });
@@ -99,8 +104,9 @@ function initEnvelopeTagsUI(budgetId) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.id = `env_tag_btn_${budgetId}_${key}`;
-        btn.className = "px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
-        btn.innerHTML = `<span class="text-[10px]">${tag.icon}</span> <span>${tag.label}</span>`;
+        // Design identique : w-full, justify-center, text-xs
+        btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+        btn.innerHTML = `<span class="text-sm">${tag.icon}</span> <span class="truncate">${tag.label}</span>`;
         btn.onclick = () => selectEnvelopeTag(budgetId, key);
         container.appendChild(btn);
     });
@@ -115,9 +121,9 @@ function selectEnvelopeTag(budgetId, selectedKey, isInitialLoad = false) {
         const btn = document.getElementById(`env_tag_btn_${budgetId}_${key}`);
         if (btn) {
             if (key === selectedKey) {
-                btn.className = "px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
+                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
             } else {
-                btn.className = "px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
             }
         }
     });
@@ -4731,9 +4737,9 @@ function renderBudgetsList() {
                         <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-400 dark:text-stone-500 text-xs pointer-events-none">€</span>
                     </div>
                 </div>
-                <div class="mb-1 select-none">
-                    <div class="flex flex-wrap gap-1" id="env_tag_container_${budget.id}"></div>
-                </div>
+                <div class="mb-1 select-none mt-1">
+					<div class="grid grid-cols-3 gap-1.5" id="env_tag_container_${budget.id}"></div>
+				</div>
                 <input type="hidden" id="env_op_tag_${budget.id}" value="divers">
                 <div class="grid grid-cols-2 gap-2 mt-1">
                     ${buttonsHTML}
