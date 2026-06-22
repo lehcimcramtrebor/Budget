@@ -240,21 +240,21 @@ function createCompactTagBtn(key, isActive, onClick, isMagic = false, shouldAnim
     
     let baseClass = "";
     if (isActive) {
-        // État sélectionné : Pleine couleur
-        baseClass = "w-full py-2 px-1 rounded-xl text-xs font-bold border bg-brand-500 text-white border-brand-500 shadow-md select-none overflow-hidden transition-all flex items-center justify-center gap-1 active:scale-[0.97]";
+        // Touche enfoncée (Incrustée dans la carte)
+        baseClass = "w-full py-2 px-1 rounded-lg text-xs font-black bg-brand-500 text-white border-t border-brand-600 shadow-[inset_0_2px_4px_rgba(0,0,0,0.25)] select-none overflow-hidden flex items-center justify-center gap-1 scale-[0.98]";
     } else if (isMagic) {
-        // État auto : Fond stone-800/60 en sombre pour se détacher du fond de la carte
-        baseClass = "w-full py-2 px-1 rounded-xl text-[11px] font-bold border border-dashed border-brand-500/60 dark:border-brand-400/60 bg-stone-50 dark:bg-stone-800/60 text-stone-600 dark:text-stone-300 select-none overflow-hidden flex items-center justify-center gap-1 active:scale-[0.97]";
+        // Touche en relief avec pointillés magiques
+        baseClass = "w-full py-2 px-1 rounded-lg text-[10px] font-bold border border-dashed border-brand-500/40 dark:border-brand-400/40 bg-gradient-to-b from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-850 text-stone-600 dark:text-stone-300 shadow-[0_2px_0_#cbd5e1] dark:shadow-[0_2px_0_#000000] select-none overflow-hidden flex items-center justify-center gap-1 active:scale-[0.97] transition-all";
         if (shouldAnimate) {
             baseClass += " animate-tag-pop";
         }
     } else {
-        // État classique au repos : Ligne pleine normale, fond stone-800/60 en sombre
-        baseClass = "w-full py-2 px-1 rounded-xl text-[11px] font-bold border border-stone-200 dark:border-stone-700/50 bg-stone-50 dark:bg-stone-800/60 text-stone-600 dark:text-stone-300 select-none overflow-hidden flex items-center justify-center gap-1 active:scale-[0.97] transition-all";
+        // Touche en relief classique au repos
+        baseClass = "w-full py-2 px-1 rounded-lg text-[10px] font-bold bg-gradient-to-b from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-850 text-stone-600 dark:text-stone-300 border-t border-white dark:border-stone-700/50 shadow-[0_2px_0_#cbd5e1] dark:shadow-[0_2px_0_#000000] select-none overflow-hidden flex items-center justify-center gap-1 active:scale-[0.97] transition-all";
     }
 
     btn.className = baseClass;
-    btn.innerHTML = `<span class="text-sm shrink-0">${tag.icon}</span> <span class="truncate">${tag.label}</span>`;
+    btn.innerHTML = `<span class="text-xs shrink-0">${tag.icon}</span> <span class="truncate">${tag.label}</span>`;
     btn.onclick = onClick;
     return btn;
 }
@@ -771,7 +771,16 @@ function renderExpensesList() {
         
         let badgeHTML = "";
 		const tagData = EXPENSE_TAGS[e.tag] || EXPENSE_TAGS['divers'];
-        const tagBadge = `<span class="inline-flex items-center gap-0.5 text-[8px] font-black bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 px-1.5 py-0.5 rounded-md uppercase tracking-wider select-none border border-stone-200 dark:border-stone-700 shadow-sm">${tagData.icon} ${tagData.label}</span>`;
+		const tagBadge = `
+		<div class="flex items-center gap-1.5">
+			<span class="w-6 h-6 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs shrink-0 select-none border border-brand-500/15">
+				${tagData.icon}
+			</span>
+			<span class="text-[9px] font-black text-stone-500 dark:text-stone-400 uppercase tracking-wider select-none">
+				${tagData.label}
+			</span>
+		</div>
+		`;
         let modifierText = "Modifier";
         let indicatorEmoji = "✏️";
         if (isBudget) {
@@ -4914,27 +4923,27 @@ function renderBudgetsList() {
         const chevronTransform = historyWasOpen ? "style=\"transform: rotate(180deg)\"" : "";
 
         const cardClass = isFriends 
-            ? "glass-card bg-indigo-100/70 dark:bg-indigo-950/45 border border-indigo-300/80 dark:border-indigo-800/50"
-            : "glass-card bg-emerald-100/60 dark:bg-emerald-950/30 border border-emerald-300/80 dark:border-emerald-900/40";
-        const cardIcon = isFriends ? "👥" : "🎯";
+            ? "glass-card bg-gradient-to-br from-indigo-100/60 to-indigo-50/40 dark:from-indigo-950/60 dark:to-stone-900/80 border-indigo-300/50 dark:border-indigo-500/15"
+            : "glass-card bg-gradient-to-br from-emerald-100/60 to-emerald-50/40 dark:from-emerald-950/20 dark:to-stone-900/60 border-emerald-300/40 dark:border-emerald-500/15";
+			const cardIcon = isFriends ? "👥" : "🎯";
 
         let buttonsHTML = "";
         if (isFriends) {
             buttonsHTML = `
                 <div class="space-y-2 col-span-2">
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="addBudgetOperation('${budget.id}', 'refund', false)" class="h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-[9px] uppercase tracking-wider active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1">
+                        <button onclick="addBudgetOperation('${budget.id}', 'refund', false)" class="h-11 bg-gradient-to-b from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 text-white font-black rounded-xl border-t border-emerald-400 dark:border-emerald-500/30 shadow-[0_3px_0_#047857] dark:shadow-[0_3px_0_#000000] transition-all active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-1 text-[9px] uppercase tracking-wider">
                             📱 Remb. Numérique
                         </button>
-                        <button onclick="addBudgetOperation('${budget.id}', 'expense', false)" class="h-10 bg-transparent hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl text-[9px] uppercase tracking-wider active:scale-95 transition-all border border-dashed border-emerald-500/30 flex items-center justify-center gap-1">
+                        <button onclick="addBudgetOperation('${budget.id}', 'expense', false)" class="h-11 bg-gradient-to-b from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800 text-emerald-600 dark:text-emerald-400 font-black rounded-xl border-t border-white dark:border-stone-600 shadow-[0_3px_0_#cbd5e1] dark:shadow-[0_3px_0_#000000] transition-all active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-1 text-[9px] uppercase tracking-wider">
                             💳 Dépense CB
                         </button>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="addBudgetOperation('${budget.id}', 'refund', true)" class="h-10 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-[9px] uppercase tracking-wider active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1">
+                        <button onclick="addBudgetOperation('${budget.id}', 'refund', true)" class="h-11 bg-gradient-to-b from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700 text-white font-black rounded-xl border-t border-amber-400 dark:border-amber-500/30 shadow-[0_3px_0_#b45309] dark:shadow-[0_3px_0_#000000] transition-all active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-1 text-[9px] uppercase tracking-wider">
                             💵 Remb. Espèces
                         </button>
-                        <button onclick="addBudgetOperation('${budget.id}', 'expense', true)" class="h-10 bg-transparent hover:bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold rounded-xl text-[9px] uppercase tracking-wider active:scale-95 transition-all border border-dashed border-amber-500/30 flex items-center justify-center gap-1">
+                        <button onclick="addBudgetOperation('${budget.id}', 'expense', true)" class="h-11 bg-gradient-to-b from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800 text-amber-600 dark:text-amber-500 font-black rounded-xl border-t border-white dark:border-stone-600 shadow-[0_3px_0_#cbd5e1] dark:shadow-[0_3px_0_#000000] transition-all active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-1 text-[9px] uppercase tracking-wider">
                             🪙 Dépense Espèces
                         </button>
                     </div>
@@ -4943,10 +4952,10 @@ function renderBudgetsList() {
         } else {
             buttonsHTML = `
                 <div class="grid grid-cols-2 gap-2 col-span-2 w-full">
-                    <button onclick="addBudgetOperation('${budget.id}', 'expense', false)" class="h-10 bg-stone-800 dark:bg-stone-200 hover:bg-stone-900 dark:hover:bg-white text-white dark:text-stone-900 font-bold rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-all shadow-sm">
+                    <button onclick="addBudgetOperation('${budget.id}', 'expense', false)" class="h-11 bg-gradient-to-b from-stone-800 to-stone-900 dark:from-stone-200 dark:to-stone-300 text-white dark:text-stone-900 font-black rounded-xl border-t border-stone-700 dark:border-white/60 shadow-[0_3px_0_#44403c] dark:shadow-[0_3px_0_#000000] transition-all active:translate-y-[3px] active:shadow-none text-[10px] uppercase tracking-wider">
                         ➖ Dépense
                     </button>
-                    <button onclick="addBudgetOperation('${budget.id}', 'refund', false)" class="h-10 bg-transparent hover:bg-stone-100/50 dark:hover:bg-stone-800/30 text-stone-400 dark:text-stone-500 font-bold rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-all border border-dashed border-stone-300 dark:border-stone-700">
+                    <button onclick="addBudgetOperation('${budget.id}', 'refund', false)" class="h-11 bg-gradient-to-b from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800 text-stone-700 dark:text-stone-300 font-black rounded-xl border-t border-white dark:border-stone-600 shadow-[0_3px_0_#cbd5e1] dark:shadow-[0_3px_0_#000000] transition-all active:translate-y-[3px] active:shadow-none text-[10px] uppercase tracking-wider">
                         ➕ Remboursement
                     </button>
                 </div>
@@ -4954,8 +4963,17 @@ function renderBudgetsList() {
         }
 
         const card = document.createElement("div");
-        card.className = `${cardClass} p-5 space-y-4`;
+        // On ajoute bien "relative overflow-hidden" ici pour fixer le rabat
+        card.className = `${cardClass} p-5 space-y-4 relative overflow-hidden`;
+        
+        // Look skeuomorphique calqué sur les vrais tickets de caisse de l'app
+        const ticketColors = isFriends
+            ? "bg-[#eef6fc] dark:bg-[#121921] text-[#1a2836] dark:text-[#cedee8] border-[#c8d9e6] dark:border-[#3d4f64]"
+            : "bg-[#faf6ee] dark:bg-[#1e1b15] text-[#2a2720] dark:text-[#e2dbcd] border-[#e5dcc5] dark:border-[#4d4433]";
+			
         card.innerHTML = `
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-2.5 bg-stone-900/5 dark:bg-white/5 rounded-b-lg border-x border-b border-stone-300/40 dark:border-stone-700/20 pointer-events-none"></div>
+
             <div class="flex justify-between items-start pt-1.5">
                 <div>
                     <h3 class="text-base font-black uppercase tracking-tight flex items-center gap-1.5 text-stone-800 dark:text-stone-100">
@@ -4967,8 +4985,9 @@ function renderBudgetsList() {
                 </div>
                 <div class="text-right select-none">
                     <span class="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1">${labelDisplay}</span>
-                    <div class="inline-flex items-center justify-end bg-stone-900 dark:bg-black/35 border border-stone-300 dark:border-stone-800 px-3 py-1 rounded-xl shadow-[inset_0_1.5px_3px_rgba(0,0,0,0.15)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]">
-                        <span class="font-mono text-sm md:text-base font-black tracking-tight ${isOverdrawn ? 'text-red-500 dark:text-red-400 drop-shadow-[0_0_2px_rgba(239,68,68,0.4)]' : 'text-emerald-600 dark:text-emerald-400 drop-shadow-[0_0_2px_rgba(52,211,153,0.4)]'}">
+                    
+                    <div class="relative overflow-hidden inline-flex items-center justify-end bg-stone-900 dark:bg-black/35 border border-stone-300 dark:border-stone-800 px-3 py-1 rounded-xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] dark:shadow-[inset_0_3px_6px_rgba(0,0,0,0.6)] before:absolute before:inset-0 before:bg-gradient-to-tr before:from-transparent before:via-white/5 before:to-transparent before:pointer-events-none">
+                        <span class="font-mono text-sm md:text-base font-black tracking-tight ${isOverdrawn ? 'text-red-500 dark:text-red-400 drop-shadow-[0_0_2px_rgba(239,68,68,0.4)]' : 'text-emerald-600 dark:text-emerald-400 drop-shadow-[0_0_2px_rgba(52,211,153,0.4)]'} relative z-10">
                             ${formatCurrency(displayAmount)}
                         </span>
                     </div>
@@ -4986,8 +5005,8 @@ function renderBudgetsList() {
 
             <!-- Remaining progress bar -->
             <div class="space-y-2 select-none pt-1">
-                <div class="w-full bg-stone-200 dark:bg-stone-800/80 h-3 rounded-xl overflow-hidden border border-stone-300 dark:border-stone-700/60">
-                    <div class="${progressColor} h-full rounded-xl transition-all duration-300" style="width: ${pct}%"></div>
+                <div class="w-full bg-stone-200/60 dark:bg-stone-800/80 h-3 rounded-xl overflow-hidden border border-stone-300/50 dark:border-stone-700/40 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]">
+                    <div class="${progressColor} h-full rounded-xl transition-all duration-300 bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:8px_8px]" style="width: ${pct}%"></div>
                 </div>
                 <div class="flex justify-between text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500">
                     ${subTextHTML}
@@ -4995,15 +5014,15 @@ function renderBudgetsList() {
             </div>
 
             <!-- Enregistrement d'une nouvelle opération (Toujours visible) -->
-            <div class="space-y-2.5 pt-3.5 border-t border-stone-200 dark:border-stone-800">
+				<div class="space-y-2.5 pt-3.5 border-t border-stone-200 dark:border-stone-800">
                 <span class="block text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider select-none">Nouvelle Opération</span>
                 <div class="grid grid-cols-3 gap-2">
                     <div class="col-span-2">
-                        <input type="text" id="budget_op_title_${budget.id}" placeholder="Opération (ex: Courses...)" class="form-input h-11 text-xs md:text-sm font-bold border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-xl focus:ring-1 focus:ring-stone-600" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
+                        <input type="text" id="budget_op_title_${budget.id}" placeholder="Opération (ex: Courses...)" class="form-input h-11 text-xs md:text-sm font-mono font-bold bg-stone-950/[0.03] dark:bg-black/40 text-stone-800 dark:text-stone-100 border border-stone-700 dark:border-stone-800/80 rounded-xl shadow-[inset_0_2.5px_5px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)] focus:ring-1 focus:ring-stone-500 placeholder-stone-400 dark:placeholder-stone-600" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
                     </div>
                     <div class="relative">
-                        <input type="text" inputmode="decimal" id="budget_op_amount_${budget.id}" placeholder="Montant" class="form-input h-11 text-right pr-6 text-xs md:text-sm font-black border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-xl focus:ring-1 focus:ring-stone-500" oninput="normalizeAmountInput(event)">
-                        <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-400 dark:text-stone-500 text-xs pointer-events-none">€</span>
+                        <input type="text" inputmode="decimal" id="budget_op_amount_${budget.id}" placeholder="0,00" class="form-input h-11 text-right pr-6 text-xs md:text-sm font-mono font-black bg-stone-950/[0.03] dark:bg-black/40 text-stone-800 dark:text-stone-100 border border-stone-700 dark:border-stone-800/80 rounded-xl shadow-[inset_0_2.5px_5px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)] focus:ring-1 focus:ring-stone-500 placeholder-stone-400 dark:placeholder-stone-600" oninput="normalizeAmountInput(event)">
+                        <span class="absolute right-2 top-1/2 -translate-y-1/2 font-mono font-bold text-stone-400 dark:text-stone-600 text-xs pointer-events-none">€</span>
                     </div>
                 </div>
                 <div class="mb-1 select-none mt-1">
@@ -5027,14 +5046,14 @@ function renderBudgetsList() {
                 </div>
             </div>
 
-            <div class="pt-2 border-t border-stone-200 dark:border-stone-800 select-none grid grid-cols-3 gap-2">
-				<button onclick="viewEnvelopeTicket('${budget.id}')" class="w-full py-3.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold rounded-xl border border-stone-300 dark:border-stone-700 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
+			<div class="pt-2 border-t border-stone-200 dark:border-stone-800 select-none grid grid-cols-3 gap-2">
+				<button onclick="viewEnvelopeTicket('${budget.id}')" class="w-full py-2.5 ${ticketColors} font-mono font-black rounded-xl border border-dashed transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-xs">
 					📋 Ticket
 				</button>
-				<button onclick="confirmCloseBudget('${budget.id}')" class="w-full py-3.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold rounded-xl border border-stone-300 dark:border-stone-700 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
+				<button onclick="confirmCloseBudget('${budget.id}')" class="w-full py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-black rounded-xl border border-emerald-500/25 dark:border-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-xs">
 					🔒 Clôturer
 				</button>
-				<button onclick="confirmDeleteBudget('${budget.id}')" class="w-full py-3.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-bold rounded-xl border border-red-100 dark:border-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm">
+				<button onclick="confirmDeleteBudget('${budget.id}')" class="w-full py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-black rounded-xl border border-red-500/25 dark:border-red-500/20 transition-all active:scale-95 flex items-center justify-center gap-1 text-[9px] md:text-[10px] uppercase tracking-wider shadow-xs">
 					🗑️ Supprimer
 				</button>
 			</div>
