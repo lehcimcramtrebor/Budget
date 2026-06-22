@@ -2136,8 +2136,8 @@ function openEditItem(type, id, parentId = null) {
 // Gestion de l'affichage du tag en édition
     const editTagSection = document.getElementById("edit_tag_section");
     if (editTagSection) {
-        if (type === "expense" || type === "budgetOperation" || type === "budget") {
-            editTagSection.classList.remove("hidden");
+	if (type === "expense" || type === "budget") {
+		editTagSection.classList.remove("hidden");
             let currentTag = "divers";
             
             if (type === "expense") {
@@ -2146,13 +2146,6 @@ function openEditItem(type, id, parentId = null) {
             } else if (type === "budget") {
                 const budget = state.budgets.find(b => b.id === id);
                 if (budget && budget.tag) currentTag = budget.tag;
-            } else if (type === "budgetOperation" && parentId) {
-                const budget = state.budgets.find(b => b.id === parentId);
-                if (budget) {
-                    let op = budget.expenses.find(e => e.id === id);
-                    if (!op && budget.archivedExpenses) op = budget.archivedExpenses.find(e => e.id === id);
-                    if (op && op.tag) currentTag = op.tag;
-                }
             }
             const editTagInput = document.getElementById("edit_exp_tag");
 			if (editTagInput) editTagInput.value = currentTag;
@@ -2247,7 +2240,6 @@ function saveEdit(event) {
                 item.title = title;
                 item.amount = isRefund ? -amount : amount;
                 item.date = document.getElementById("edit_expense_date_value").value;
-                item.tag = newTag; 
                 
                 if (budget.subType === "friends" && isRefund) {
                     if (!item.isCash) {
@@ -2256,7 +2248,6 @@ function saveEdit(event) {
                             mainTx.title = `Remb. numérique : ${budget.title} (${title})`;
                             mainTx.amount = item.amount;
                             mainTx.date = item.date;
-                            mainTx.tag = newTag; 
                         } else {
                             const txId = "tx_ref_cb_" + item.id;
                             const refCbTx = {
@@ -2268,7 +2259,6 @@ function saveEdit(event) {
                                 budgetId: budget.id,
                                 isDigitalRefundTx: true,
                                 budgetOpId: item.id,
-                                tag: newTag
                             };
                             state.expenses.push(refCbTx);
                         }
@@ -4893,11 +4883,7 @@ function renderBudgetsList() {
             const clickAttr = isEditable ? `onclick="openEditItem('budgetOperation', '${op.id}', '${budget.id}')"` : '';
             const cursorClass = isEditable ? 'cursor-pointer hover:text-brand-500 transition-colors group/op-click' : '';
             const editIndicator = isEditable ? `<span class="text-[8px] font-bold text-brand-500 opacity-0 group-hover/op-click:opacity-100 transition-all ml-1">👁️</span>` : '';
-            
-            // <-- NOUVEAU : PASTILLE DU TAG -->
-            const tagData = EXPENSE_TAGS[op.tag] || EXPENSE_TAGS['divers'];
-            const opTagBadge = op.isInitialAdvance ? '' : `<span class="inline-flex items-center gap-0.5 text-[8px] font-black bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 px-1 py-0.5 rounded-md uppercase tracking-wider select-none ml-1 border border-stone-200 dark:border-stone-700 shadow-sm" title="${tagData.label}">${tagData.icon}</span>`;
-            
+                       
             let depositStatusBadge = "";
             if (op.isCash && op.amount < 0) {
                 if (op.isDeposited) {
@@ -4917,7 +4903,7 @@ function renderBudgetsList() {
                 <div class="flex items-center justify-between py-2.5 border-b border-stone-200/60 dark:border-stone-800/40 text-[13px] md:text-sm ${op.isArchived ? 'opacity-70' : ''}">
                     <div ${clickAttr} class="min-w-0 flex-1 pr-2 ${cursorClass}">
                         <span class="font-bold text-stone-800 dark:text-stone-300 truncate block">
-                            ${op.isCash ? '💵 ' : ''}${archivedBadge}${op.title} ${opTagBadge}${depositStatusBadge}${editIndicator}
+                            ${op.isCash ? '💵 ' : ''}${archivedBadge}${op.title}${depositStatusBadge}${editIndicator}
                         </span>
                     </div>
                     <div class="flex items-center gap-2.5 shrink-0">
@@ -5039,10 +5025,6 @@ function renderBudgetsList() {
                         <span class="absolute right-2 top-1/2 -translate-y-1/2 font-mono font-bold text-stone-400 dark:text-stone-600 text-xs pointer-events-none">€</span>
                     </div>
                 </div>
-                <div class="mb-1 select-none mt-1">
-					<div class="grid grid-cols-3 gap-1.5" id="env_tag_container_${budget.id}"></div>
-				</div>
-                <input type="hidden" id="env_op_tag_${budget.id}" value="divers">
                 <div class="grid grid-cols-2 gap-2 mt-1">
                     ${buttonsHTML}
                 </div>
@@ -5075,17 +5057,6 @@ function renderBudgetsList() {
         
         container.appendChild(card);
     });
-	// Initialiser les tags pour toutes les cartes qu'on vient de créer
-    activeBudgets.forEach(budget => {
-        const tagInput = document.getElementById(`env_op_tag_${budget.id}`);
-        if (tagInput && !tagInput.value) tagInput.value = "divers";
-        renderCompactTags(`env_tag_container_${budget.id}`, `env_op_tag_${budget.id}`, "");
-
-        const titleInput = document.getElementById(`budget_op_title_${budget.id}`);
-        if (titleInput) {
-            titleInput.addEventListener("input", (e) => renderCompactTags(`env_tag_container_${budget.id}`, `env_op_tag_${budget.id}`, e.target.value));
-        }
-    });
 }
 
 function toggleBudgetOpHistory(budgetId) {
@@ -5110,9 +5081,7 @@ function addBudgetOperation(budgetId, type, isCash = false) {
     
     const titleInput = document.getElementById(`budget_op_title_${budgetId}`);
     const amountInput = document.getElementById(`budget_op_amount_${budgetId}`);
-    const tagInput = document.getElementById(`env_op_tag_${budgetId}`);
-	const selectedTag = tagInput ? tagInput.value : "divers";
-    
+   
 	const title = toTitleCase(titleInput.value.trim());
     let amountStr = amountInput.value.trim().replace(",", ".");
     let amount = parseFloat(amountStr);
@@ -5141,8 +5110,7 @@ function addBudgetOperation(budgetId, type, isCash = false) {
         amount: opAmount,
         date: getTodayDateString(),
         isCash: !!isCash,
-        isDeposited: false,
-		tag: selectedTag
+        isDeposited: false
     };
     
     budget.expenses.push(newOp);
@@ -5157,8 +5125,7 @@ function addBudgetOperation(budgetId, type, isCash = false) {
             isBudgetReference: true,
             budgetId: budget.id,
             isDigitalRefundTx: true,
-            budgetOpId: newOp.id,
-			tag: selectedTag
+            budgetOpId: newOp.id
         };
         state.expenses.push(refCbTx);
     }
@@ -5174,8 +5141,6 @@ function addBudgetOperation(budgetId, type, isCash = false) {
     titleInput.value = "";
     amountInput.value = "";
 	
-	if (tagInput) tagInput.value = "divers";
-    renderCompactTags(`env_tag_container_${budget.id}`, `env_op_tag_${budget.id}`, "");
 }
 
 function calculateCashDepositAmount(budget, cashAvailable, targetDepositTxId) {
@@ -5623,7 +5588,6 @@ function openViewBudgetModal(budgetId) {
             date: budget.createdDate || (state.budgetMonth + "-01"),
             isCash: false,
             isInitialAdvance: true,
-            tag: budget.tag // NOUVEAU
         });
     }
     allOps = [
@@ -5649,15 +5613,11 @@ function openViewBudgetModal(budgetId) {
         const cursorClass = isEditable ? 'cursor-pointer hover:text-brand-500 transition-colors group/op-click' : '';
         const editIndicator = isEditable ? `<span class="text-[8px] font-bold text-brand-500 opacity-0 group-hover/op-click:opacity-100 transition-all ml-1">👁️</span>` : '';
 
-        // NOUVEAU : Récupération et affichage du tag
-        const tagData = EXPENSE_TAGS[op.tag] || EXPENSE_TAGS['divers'];
-        const opTagBadge = op.isInitialAdvance ? '' : `<span class="inline-flex items-center gap-0.5 text-[8px] font-black bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 px-1 py-0.5 rounded-md uppercase tracking-wider select-none ml-1.5 border border-stone-200 dark:border-stone-700 shadow-sm">${tagData.icon}</span>`;
-
         opsHTML += `
             <div class="flex items-center justify-between py-2 border-b border-stone-200/50 dark:border-stone-800/40 text-xs ${op.isArchived ? 'opacity-70' : ''}">
                 <div ${clickAttr} class="min-w-0 flex-1 pr-2 ${cursorClass}">
                     <span class="font-bold text-stone-800 dark:text-stone-300 truncate block flex items-center flex-wrap">
-                        ${op.isCash ? '💵 ' : ''}${archivedBadge}${op.title}${opTagBadge}${editIndicator}
+                        ${op.isCash ? '💵 ' : ''}${archivedBadge}${op.title}${editIndicator}
                     </span>
                     <span class="text-[9px] text-stone-400 dark:text-stone-500 font-semibold block mt-0.5">${op.date ? op.date.split('-').reverse().join('/') : ""}</span>
                 </div>
