@@ -1,3 +1,144 @@
+// --- CONFIGURATION DES TAGS RAPIDES ---
+const EXPENSE_TAGS = {
+    courses: { icon: "🛒", label: "Courses" },
+    auto: { icon: "⛽", label: "Auto" },
+    moto: { icon: "🏍️", label: "Moto" },
+    resto: { icon: "🍔", label: "Resto" },
+    brico: { icon: "🛠️", label: "Matos" },
+    vape: { icon: "💨", label: "Vape" },
+    medical: { icon: "💊", label: "Santé" },
+    vetements: { icon: "👕", label: "Fringues" },
+    animaux: { icon: "🐶", label: "Animaux" },
+    enfant: { icon: "👧", label: "Progéniture" },
+    divers: { icon: "📝", label: "Divers" }
+};
+
+function initTagsUI() {
+    const container = document.getElementById("tag_selector_container");
+    if (!container) return;
+    container.innerHTML = "";
+    
+    Object.keys(EXPENSE_TAGS).forEach(key => {
+        const tag = EXPENSE_TAGS[key];
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.id = `tag_btn_${key}`;
+        // Style par défaut : inactif. Le JS mettra "divers" en actif au chargement
+        btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+        btn.innerHTML = `<span class="text-xs">${tag.icon}</span> <span>${tag.label}</span>`;
+        btn.onclick = () => selectTag(key);
+        container.appendChild(btn);
+    });
+    
+    selectTag('divers'); // Sélection par défaut
+}
+
+function selectTag(selectedKey) {
+    const input = document.getElementById("exp_tag");
+    if(input) input.value = selectedKey;
+    
+    Object.keys(EXPENSE_TAGS).forEach(key => {
+        const btn = document.getElementById(`tag_btn_${key}`);
+        if (btn) {
+            if (key === selectedKey) {
+                btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
+            } else {
+                btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+            }
+        }
+    });
+    triggerHaptic(10);
+}
+
+function initEditTagsUI() {
+    const container = document.getElementById("edit_tag_selector_container");
+    if (!container) return;
+    container.innerHTML = "";
+    
+    Object.keys(EXPENSE_TAGS).forEach(key => {
+        const tag = EXPENSE_TAGS[key];
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.id = `edit_tag_btn_${key}`;
+        btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+        btn.innerHTML = `<span class="text-xs">${tag.icon}</span> <span>${tag.label}</span>`;
+        btn.onclick = () => selectEditTag(key);
+        container.appendChild(btn);
+    });
+}
+
+function selectEditTag(selectedKey) {
+    const input = document.getElementById("edit_exp_tag");
+    if (input) input.value = selectedKey;
+    
+    Object.keys(EXPENSE_TAGS).forEach(key => {
+        const btn = document.getElementById(`edit_tag_btn_${key}`);
+        if (btn) {
+            if (key === selectedKey) {
+                btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
+            } else {
+                btn.className = "px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all flex items-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+            }
+        }
+    });
+    triggerHaptic(10);
+}
+
+function initEnvelopeTagsUI(budgetId) {
+    const container = document.getElementById(`env_tag_container_${budgetId}`);
+    if (!container) return;
+    container.innerHTML = "";
+    
+    // On récupère le tag par défaut de l'enveloppe mère
+    const budget = state.budgets.find(b => b.id === budgetId);
+    const defaultTag = (budget && budget.tag) ? budget.tag : 'divers';
+    
+    Object.keys(EXPENSE_TAGS).forEach(key => {
+        const tag = EXPENSE_TAGS[key];
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.id = `env_tag_btn_${budgetId}_${key}`;
+        btn.className = "px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+        btn.innerHTML = `<span class="text-[10px]">${tag.icon}</span> <span>${tag.label}</span>`;
+        btn.onclick = () => selectEnvelopeTag(budgetId, key);
+        container.appendChild(btn);
+    });
+    selectEnvelopeTag(budgetId, defaultTag, true); // Applique le bon tag par défaut
+}
+
+function selectEnvelopeTag(budgetId, selectedKey, isInitialLoad = false) {
+    const input = document.getElementById(`env_op_tag_${budgetId}`);
+    if (input) input.value = selectedKey;
+    
+    Object.keys(EXPENSE_TAGS).forEach(key => {
+        const btn = document.getElementById(`env_tag_btn_${budgetId}_${key}`);
+        if (btn) {
+            if (key === selectedKey) {
+                btn.className = "px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
+            } else {
+                btn.className = "px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
+            }
+        }
+    });
+
+    // On ne sauvegarde que si ce n'est pas le chargement initial
+    if (!isInitialLoad) {
+        const budget = state.budgets.find(b => b.id === budgetId);
+        if (budget) {
+            budget.tag = selectedKey;
+            if (budget.mainTransactionId) {
+                const mainTx = state.expenses.find(e => e.id === budget.mainTransactionId);
+                if (mainTx) mainTx.tag = selectedKey;
+            }
+            saveState();
+            renderBudgetsList(); 
+            updateUI();
+            updateEnvelopeTicket(budgetId);
+        }
+        triggerHaptic(10);
+    }
+}
+
 // --- APPLICATION STATE (SIMPLE MODEL) ---
 let state = {
     revenues: [
@@ -38,6 +179,7 @@ let activeTab = "main"; // "main" or "budgets"
 let pendingBudgetTitle = "";
 let pendingBudgetAmount = 0;
 let pendingBudgetSubType = "classic"; // "classic" or "friends"
+let pendingBudgetTag = "divers";
 
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -190,7 +332,9 @@ function initUI() {
 
     // Apply visual theme
     applyVisualTheme();
-
+	initTagsUI();
+	initEditTagsUI();
+	
     // Display current date month based on budgetMonth
     const currentMonthLabel = formatYearMonthFrench(state.budgetMonth);
     document.getElementById("current_date_label").innerText = currentMonthLabel;
@@ -355,6 +499,8 @@ function renderExpensesList() {
         const displayTitle = isBudget ? (e.isCashDepositPending ? `🏦 ${e.title}` : `🎯 ${e.title}`) : e.title;
         
         let badgeHTML = "";
+		const tagData = EXPENSE_TAGS[e.tag] || EXPENSE_TAGS['divers'];
+        const tagBadge = `<span class="inline-flex items-center gap-0.5 text-[8px] font-black bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 px-1.5 py-0.5 rounded-md uppercase tracking-wider select-none border border-stone-200 dark:border-stone-700 shadow-sm">${tagData.icon} ${tagData.label}</span>`;
         let modifierText = "Modifier";
         let indicatorEmoji = "✏️";
         if (isBudget) {
@@ -378,7 +524,8 @@ function renderExpensesList() {
                 <div class="font-bold text-sm text-stone-800 dark:text-stone-100 truncate group-hover/item-click:text-brand-500 transition-colors">${displayTitle}</div>
                 <div class="flex items-center gap-2 mt-1 flex-wrap">
                     <span class="text-[9px] font-semibold text-stone-400 dark:text-stone-500">${dateDisplay}</span>
-                    ${badgeHTML}
+                    ${tagBadge}
+					${badgeHTML}
                     ${depositButtonHTML}
                     <span class="text-[8px] font-bold text-brand-500 opacity-0 group-hover/item-click:opacity-100 transition-all">${indicatorEmoji} ${modifierText}</span>
                 </div>
@@ -466,12 +613,14 @@ function addExpense(event) {
         const d = String(now.getDate()).padStart(2, '0');
         selectedDate = `${y}-${m}-${d}`;
     }
-
+	
+	const tag = document.getElementById("exp_tag").value || "divers"; // <-- NOUVEAU
     const newExpense = {
         id: Date.now().toString(),
         title,
         amount,
-        date: selectedDate
+        date: selectedDate,
+        tag: tag
     };
 
     state.expenses.push(newExpense);
@@ -484,6 +633,7 @@ function addExpense(event) {
     titleInput.value = "";
     amountInput.value = "";
     clearExpenseDate();
+	selectTag("divers");
     titleInput.focus();
 }
 
@@ -590,7 +740,9 @@ function confirmAddRefund() {
         const d = String(now.getDate()).padStart(2, '0');
         selectedDate = `${y}-${m}-${d}`;
     }
-
+	
+	const tag = document.getElementById("exp_tag").value || "divers";
+	
     showGenericConfirm(
         "Enregistrer un remboursement ?",
         `Voulez-vous enregistrer le remboursement <strong>"${title}"</strong> de <strong>${amount.toFixed(2).replace('.', ',')} €</strong> ?<br><br>Il sera déduit de vos dépenses.`,
@@ -612,6 +764,7 @@ function confirmAddRefund() {
             titleInput.value = "";
             amountInput.value = "";
             clearExpenseDate();
+			selectTag("divers");
             titleInput.focus();
         }
     );
@@ -1123,6 +1276,30 @@ function executeRenewal() {
     pdfTx += makeSep("-") + "\n";
     pdfTx += padLine("RESTE A VIVRE NET", formatCurrency(remaining)) + "\n";
     pdfTx += makeSep("=") + "\n\n";
+	
+	// --- NOUVEAU : RÉPARTITION DES DÉPENSES PAR CATÉGORIE ---
+    const tagTotals = {};
+    state.expenses.forEach(e => {
+        if (e.isCashDepositPending && !e.isDeposited) return;
+        const tagKey = e.tag || 'divers';
+        if (!tagTotals[tagKey]) tagTotals[tagKey] = 0;
+        tagTotals[tagKey] += e.amount;
+    });
+    
+    pdfTx += `REPARTITION DES DEPENSES\n`;
+    pdfTx += makeSep("-") + "\n";
+    const sortedTags = Object.keys(tagTotals).sort((a, b) => tagTotals[b] - tagTotals[a]);
+    let hasTags = false;
+    sortedTags.forEach(key => {
+        if (tagTotals[key] === 0) return;
+        hasTags = true;
+        const tagData = EXPENSE_TAGS[key] || EXPENSE_TAGS['divers'];
+        pdfTx += padLine(` ${tagData.icon} ${tagData.label}`, formatCurrency(tagTotals[key])) + "\n";
+    });
+    if (!hasTags) {
+        pdfTx += ` [Aucune dépense catégorisée]\n`;
+    }
+    pdfTx += "\n";
     
     pdfTx += `DETAIL DES REVENUS\n`;
     pdfTx += makeSep("-") + "\n";
@@ -1660,6 +1837,33 @@ function openEditItem(type, id, parentId = null) {
         dateSection.classList.add("hidden");
     }
 
+// Gestion de l'affichage du tag en édition
+    const editTagSection = document.getElementById("edit_tag_section");
+    if (editTagSection) {
+        if (type === "expense" || type === "budgetOperation" || type === "budget") {
+            editTagSection.classList.remove("hidden");
+            let currentTag = "divers";
+            
+            if (type === "expense") {
+                const exp = state.expenses.find(e => e.id === id);
+                if (exp && exp.tag) currentTag = exp.tag;
+            } else if (type === "budget") {
+                const budget = state.budgets.find(b => b.id === id);
+                if (budget && budget.tag) currentTag = budget.tag;
+            } else if (type === "budgetOperation" && parentId) {
+                const budget = state.budgets.find(b => b.id === parentId);
+                if (budget) {
+                    let op = budget.expenses.find(e => e.id === id);
+                    if (!op && budget.archivedExpenses) op = budget.archivedExpenses.find(e => e.id === id);
+                    if (op && op.tag) currentTag = op.tag;
+                }
+            }
+            selectEditTag(currentTag);
+        } else {
+            editTagSection.classList.add("hidden");
+        }
+    }
+	
     const modal = document.getElementById("edit_modal");
     modal.classList.remove("hidden");
     setTimeout(() => {
@@ -1685,6 +1889,7 @@ function saveEdit(event) {
     const { type, id, parentId } = currentEditingItem;
     const titleInput = document.getElementById("edit_title");
     const amountInput = document.getElementById("edit_amount");
+    const newTag = document.getElementById("edit_exp_tag").value || "divers"; 
 
     const title = toTitleCase(titleInput.value.trim());
     let amountStr = amountInput.value.trim().replace(",", ".");
@@ -1701,6 +1906,39 @@ function saveEdit(event) {
             item.title = title;
             item.amount = isRefund ? -amount : amount;
             item.date = document.getElementById("edit_expense_date_value").value;
+            item.tag = newTag; 
+
+            // SYNCHRONISATION RETROACTIVE VERS L'ENVELOPPE LIEER
+            if (item.budgetId) {
+                const budget = state.budgets.find(b => b.id === item.budgetId);
+                if (budget) {
+                    if (item.budgetOpId) {
+                        const op = budget.expenses.find(o => o.id === item.budgetOpId) || (budget.archivedExpenses && budget.archivedExpenses.find(o => o.id === item.budgetOpId));
+                        if (op) op.tag = newTag;
+                    } else {
+                        budget.tag = newTag;
+                    }
+                    updateEnvelopeTicket(budget.id);
+                }
+            }
+        }
+    } else if (type === "budget") {
+        const item = state.budgets.find(b => b.id === id);
+        if (item) {
+            item.title = title;
+            item.allocated = amount;
+            item.tag = newTag;
+            
+            // Met à jour la ligne de référence correspondante dans la liste principale
+            if (item.mainTransactionId) {
+                const mainTx = state.expenses.find(e => e.id === item.mainTransactionId);
+                if (mainTx) {
+                    mainTx.title = (item.subType === "friends" ? "Avance : " : "Enveloppe : ") + title;
+                    mainTx.amount = amount;
+                    mainTx.tag = newTag;
+                }
+            }
+            updateEnvelopeTicket(item.id);
         }
     } else if (type === "budgetOperation") {
         const budget = state.budgets.find(b => b.id === parentId);
@@ -1711,6 +1949,7 @@ function saveEdit(event) {
                 item.title = title;
                 item.amount = isRefund ? -amount : amount;
                 item.date = document.getElementById("edit_expense_date_value").value;
+                item.tag = newTag; 
                 
                 if (budget.subType === "friends" && isRefund) {
                     if (!item.isCash) {
@@ -1719,6 +1958,7 @@ function saveEdit(event) {
                             mainTx.title = `Remb. numérique : ${budget.title} (${title})`;
                             mainTx.amount = item.amount;
                             mainTx.date = item.date;
+                            mainTx.tag = newTag; 
                         } else {
                             const txId = "tx_ref_cb_" + item.id;
                             const refCbTx = {
@@ -1729,7 +1969,8 @@ function saveEdit(event) {
                                 isBudgetReference: true,
                                 budgetId: budget.id,
                                 isDigitalRefundTx: true,
-                                budgetOpId: item.id
+                                budgetOpId: item.id,
+                                tag: newTag
                             };
                             state.expenses.push(refCbTx);
                         }
@@ -1762,9 +2003,9 @@ function saveEdit(event) {
         }
     }
 
-	if (type === "budgetOperation" && parentId) {
-    updateEnvelopeTicket(parentId);
-	}
+    if (type === "budgetOperation" && parentId) {
+        updateEnvelopeTicket(parentId);
+    }
     saveState();
     closeEditModal();
     renderBudgetsList();
@@ -3376,6 +3617,36 @@ function openRecapModal(category) {
         });
         if (state.expenses.length === 0) {
             html = `<div class="text-center py-6 text-xs text-stone-400 font-bold">Aucune dépense enregistrée</div>`;
+        } else {
+            // --- NOUVEAU : CALCUL ET AFFICHAGE DES TOTAUX PAR TAG ---
+            const tagTotals = {};
+            state.expenses.forEach(e => {
+                if (e.isCashDepositPending && !e.isDeposited) return; // Ignore les espèces en transit
+                const tagKey = e.tag || 'divers';
+                if (!tagTotals[tagKey]) tagTotals[tagKey] = 0;
+                tagTotals[tagKey] += e.amount;
+            });
+
+            let summaryHTML = `<div class="grid grid-cols-2 gap-2 mb-4 bg-stone-100 dark:bg-stone-800/40 p-2.5 rounded-2xl border border-stone-200/50 dark:border-stone-800">`;
+            let hasSummary = false;
+            
+            // Tri décroissant pour afficher les plus grosses dépenses en premier
+            Object.keys(tagTotals).sort((a, b) => tagTotals[b] - tagTotals[a]).forEach(key => {
+                if (tagTotals[key] === 0) return; // On masque les catégories à zéro
+                hasSummary = true;
+                const tagData = EXPENSE_TAGS[key] || EXPENSE_TAGS['divers'];
+                summaryHTML += `
+                    <div class="flex items-center justify-between bg-white dark:bg-stone-900 px-2.5 py-2 rounded-xl shadow-sm border border-stone-100 dark:border-stone-800">
+                        <span class="text-[9px] font-black text-stone-500 uppercase tracking-wider flex items-center gap-1">${tagData.icon} ${tagData.label}</span>
+                        <span class="text-[11px] font-black text-stone-800 dark:text-stone-200">${formatCurrency(tagTotals[key])}</span>
+                    </div>
+                `;
+            });
+            summaryHTML += `</div>`;
+            
+            if (hasSummary) {
+                html = summaryHTML + html; // On place le résumé AU-DESSUS de la liste chronologique
+            }
         }
     }
     
@@ -3649,6 +3920,30 @@ function generateBudgetPDF() {
         pdfTx += padLine("RESTE A VIVRE NET", formatCurrency(remaining)) + "\n";
         pdfTx += makeSep("=") + "\n\n";
         
+		// --- NOUVEAU : RÉPARTITION DES DÉPENSES PAR CATÉGORIE ---
+		const tagTotals = {};
+		state.expenses.forEach(e => {
+			if (e.isCashDepositPending && !e.isDeposited) return;
+			const tagKey = e.tag || 'divers';
+			if (!tagTotals[tagKey]) tagTotals[tagKey] = 0;
+			tagTotals[tagKey] += e.amount;
+		});
+		
+		pdfTx += `REPARTITION DES DEPENSES\n`;
+		pdfTx += makeSep("-") + "\n";
+		const sortedTags = Object.keys(tagTotals).sort((a, b) => tagTotals[b] - tagTotals[a]);
+		let hasTags = false;
+		sortedTags.forEach(key => {
+			if (tagTotals[key] === 0) return;
+			hasTags = true;
+			const tagData = EXPENSE_TAGS[key] || EXPENSE_TAGS['divers'];
+			pdfTx += padLine(` ${tagData.icon} ${tagData.label}`, formatCurrency(tagTotals[key])) + "\n";
+		});
+		if (!hasTags) {
+			pdfTx += ` [Aucune dépense catégorisée]\n`;
+		}
+		pdfTx += "\n";
+	
         pdfTx += `DETAIL DES REVENUS\n`;
         pdfTx += makeSep("-") + "\n";
         if (!state.revenues || state.revenues.length === 0) {
@@ -4044,7 +4339,8 @@ function confirmCreateBudget() {
     pendingBudgetTitle = title;
     pendingBudgetAmount = amount;
     pendingBudgetSubType = "classic"; // default
-
+	pendingBudgetTag = document.getElementById("exp_tag").value || "divers";
+	
     document.getElementById("budget_funding_title").innerText = title;
     document.getElementById("budget_funding_amount").innerText = formatCurrency(amount);
 
@@ -4101,7 +4397,8 @@ function handleBudgetFundingChoice(type) {
         expenses: [],
         archivedExpenses: [],
         mainTransactionId: mainTransactionId,
-        createdDate: getTodayDateString()
+        createdDate: getTodayDateString(),
+		tag: pendingBudgetTag
     };
     
     state.budgets = state.budgets || [];
@@ -4115,7 +4412,8 @@ function handleBudgetFundingChoice(type) {
             amount: pendingBudgetAmount,
             date: getTodayDateString(),
             isBudgetReference: true,
-            budgetId: budgetId
+            budgetId: budgetId,
+			tag: pendingBudgetTag
         };
         state.expenses.push(budgetExpense);
     }
@@ -4127,6 +4425,7 @@ function handleBudgetFundingChoice(type) {
     document.getElementById("exp_title").value = "";
     document.getElementById("exp_amount").value = "";
     clearExpenseDate();
+	selectTag("divers");
     
     updateUI();
     switchDashboardTab('budgets');
@@ -4296,6 +4595,10 @@ function renderBudgetsList() {
             const cursorClass = isEditable ? 'cursor-pointer hover:text-brand-500 transition-colors group/op-click' : '';
             const editIndicator = isEditable ? `<span class="text-[8px] font-bold text-brand-500 opacity-0 group-hover/op-click:opacity-100 transition-all ml-1">👁️</span>` : '';
             
+            // <-- NOUVEAU : PASTILLE DU TAG -->
+            const tagData = EXPENSE_TAGS[op.tag] || EXPENSE_TAGS['divers'];
+            const opTagBadge = op.isInitialAdvance ? '' : `<span class="inline-flex items-center gap-0.5 text-[8px] font-black bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 px-1 py-0.5 rounded-md uppercase tracking-wider select-none ml-1 border border-stone-200 dark:border-stone-700 shadow-sm" title="${tagData.label}">${tagData.icon}</span>`;
+            
             let depositStatusBadge = "";
             if (op.isCash && op.amount < 0) {
                 if (op.isDeposited) {
@@ -4315,7 +4618,7 @@ function renderBudgetsList() {
                 <div class="flex items-center justify-between py-2.5 border-b border-stone-200/60 dark:border-stone-800/40 text-[13px] md:text-sm ${op.isArchived ? 'opacity-70' : ''}">
                     <div ${clickAttr} class="min-w-0 flex-1 pr-2 ${cursorClass}">
                         <span class="font-bold text-stone-800 dark:text-stone-300 truncate block">
-                            ${op.isCash ? '💵 ' : ''}${archivedBadge}${op.title}${depositStatusBadge}${editIndicator}
+                            ${op.isCash ? '💵 ' : ''}${archivedBadge}${op.title} ${opTagBadge}${depositStatusBadge}${editIndicator}
                         </span>
                     </div>
                     <div class="flex items-center gap-2.5 shrink-0">
@@ -4427,7 +4730,11 @@ function renderBudgetsList() {
                         <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-400 dark:text-stone-500 text-xs pointer-events-none">€</span>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="mb-1 select-none">
+                    <div class="flex flex-wrap gap-1" id="env_tag_container_${budget.id}"></div>
+                </div>
+                <input type="hidden" id="env_op_tag_${budget.id}" value="divers">
+                <div class="grid grid-cols-2 gap-2 mt-1">
                     ${buttonsHTML}
                 </div>
             </div>
@@ -4459,6 +4766,10 @@ function renderBudgetsList() {
         
         container.appendChild(card);
     });
+	// Initialiser les tags pour toutes les cartes qu'on vient de créer
+    activeBudgets.forEach(budget => {
+        initEnvelopeTagsUI(budget.id);
+    });
 }
 
 function toggleBudgetOpHistory(budgetId) {
@@ -4483,8 +4794,10 @@ function addBudgetOperation(budgetId, type, isCash = false) {
     
     const titleInput = document.getElementById(`budget_op_title_${budgetId}`);
     const amountInput = document.getElementById(`budget_op_amount_${budgetId}`);
+    const tagInput = document.getElementById(`env_op_tag_${budgetId}`);
+	const selectedTag = tagInput ? tagInput.value : "divers";
     
-    const title = toTitleCase(titleInput.value.trim());
+	const title = toTitleCase(titleInput.value.trim());
     let amountStr = amountInput.value.trim().replace(",", ".");
     let amount = parseFloat(amountStr);
     
@@ -4512,7 +4825,8 @@ function addBudgetOperation(budgetId, type, isCash = false) {
         amount: opAmount,
         date: getTodayDateString(),
         isCash: !!isCash,
-        isDeposited: false
+        isDeposited: false,
+		tag: selectedTag
     };
     
     budget.expenses.push(newOp);
@@ -4527,7 +4841,8 @@ function addBudgetOperation(budgetId, type, isCash = false) {
             isBudgetReference: true,
             budgetId: budget.id,
             isDigitalRefundTx: true,
-            budgetOpId: newOp.id
+            budgetOpId: newOp.id,
+			tag: selectedTag
         };
         state.expenses.push(refCbTx);
     }
@@ -4988,7 +5303,8 @@ function openViewBudgetModal(budgetId) {
             amount: origAlloc,
             date: budget.createdDate || (state.budgetMonth + "-01"),
             isCash: false,
-            isInitialAdvance: true
+            isInitialAdvance: true,
+            tag: budget.tag // NOUVEAU
         });
     }
     allOps = [
@@ -5007,18 +5323,24 @@ function openViewBudgetModal(budgetId) {
             ? `<span class="inline-block text-[8px] font-extrabold bg-stone-100 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border border-stone-300 dark:border-stone-700/60 px-1 py-0.2 rounded select-none mr-1">Mois préc.</span>` 
             : '';
         
-        const isEditable = !op.isInitialAdvance;
+        const isEditable = !op.isInitialAdvance && !op.isCashDeposit;
+        
+        // CORRECTION : On passe bien budget.id comme 3ème paramètre
         const clickAttr = isEditable ? `onclick="openEditItem('budgetOperation', '${op.id}', '${budget.id}')"` : '';
         const cursorClass = isEditable ? 'cursor-pointer hover:text-brand-500 transition-colors group/op-click' : '';
         const editIndicator = isEditable ? `<span class="text-[8px] font-bold text-brand-500 opacity-0 group-hover/op-click:opacity-100 transition-all ml-1">👁️</span>` : '';
 
+        // NOUVEAU : Récupération et affichage du tag
+        const tagData = EXPENSE_TAGS[op.tag] || EXPENSE_TAGS['divers'];
+        const opTagBadge = op.isInitialAdvance ? '' : `<span class="inline-flex items-center gap-0.5 text-[8px] font-black bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 px-1 py-0.5 rounded-md uppercase tracking-wider select-none ml-1.5 border border-stone-200 dark:border-stone-700 shadow-sm">${tagData.icon}</span>`;
+
         opsHTML += `
             <div class="flex items-center justify-between py-2 border-b border-stone-200/50 dark:border-stone-800/40 text-xs ${op.isArchived ? 'opacity-70' : ''}">
                 <div ${clickAttr} class="min-w-0 flex-1 pr-2 ${cursorClass}">
-                    <span class="font-bold text-stone-800 dark:text-stone-300 truncate block">
-                        ${op.isCash ? '💵 ' : ''}${archivedBadge}${op.title}${editIndicator}
+                    <span class="font-bold text-stone-800 dark:text-stone-300 truncate block flex items-center flex-wrap">
+                        ${op.isCash ? '💵 ' : ''}${archivedBadge}${op.title}${opTagBadge}${editIndicator}
                     </span>
-                    <span class="text-[9px] text-stone-400 dark:text-stone-500 font-semibold block">${op.date || ""}</span>
+                    <span class="text-[9px] text-stone-400 dark:text-stone-500 font-semibold block mt-0.5">${op.date ? op.date.split('-').reverse().join('/') : ""}</span>
                 </div>
                 <div class="shrink-0">
                     <span class="${amtColor} font-black">${amtSign} ${formatCurrency(absAmt)}</span>
@@ -5083,31 +5405,30 @@ function openViewBudgetModal(budgetId) {
     
     const modal = document.getElementById("view_budget_modal");
     if (modal) {
-        // Update footer buttons dynamically
         const footerContainer = document.getElementById("view_budget_modal_footer");
         if (footerContainer) {
             if (budget.closed) {
-				footerContainer.innerHTML = `
-					<button onclick="viewEnvelopeTicket('${budget.id}')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm">
-						📋 Ticket PDF
-					</button>
-					<button onclick="reopenBudget('${budget.id}')" class="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-sm">
-						🔓 Réouvrir
-					</button>
-					<button onclick="closeViewBudgetModal()" class="flex-1 py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold rounded-xl text-xs active:scale-95 transition-all">
-						Fermer
-					</button>
-				`;
-			} else {
-				footerContainer.innerHTML = `
-					<button onclick="viewEnvelopeTicket('${budget.id}')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm">
-						📋 Ticket PDF
-					</button>
-					<button onclick="closeViewBudgetModal()" class="flex-1 py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold rounded-xl text-xs active:scale-95 transition-all">
-						Fermer
-					</button>
-				`;
-			}
+                footerContainer.innerHTML = `
+                    <button onclick="viewEnvelopeTicket('${budget.id}')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm">
+                        📋 Ticket PDF
+                    </button>
+                    <button onclick="reopenBudget('${budget.id}')" class="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                        🔓 Réouvrir
+                    </button>
+                    <button onclick="closeViewBudgetModal()" class="flex-1 py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold rounded-xl text-xs active:scale-95 transition-all">
+                        Fermer
+                    </button>
+                `;
+            } else {
+                footerContainer.innerHTML = `
+                    <button onclick="viewEnvelopeTicket('${budget.id}')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm">
+                        📋 Ticket PDF
+                    </button>
+                    <button onclick="closeViewBudgetModal()" class="flex-1 py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold rounded-xl text-xs active:scale-95 transition-all">
+                        Fermer
+                    </button>
+                `;
+            }
         }
 
         modal.classList.remove("hidden");

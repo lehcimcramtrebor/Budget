@@ -704,7 +704,12 @@
                         </div>
                     </div>
                 </div>
-                
+                <!-- Sélecteur de tags -->
+                <div class="mb-1 select-none mt-1">
+                    <div class="flex flex-wrap gap-1.5" id="tag_selector_container">
+                        </div>
+                </div>
+                <input type="hidden" id="exp_tag" value="divers">
                 <!-- Date selection row -->
                 <div class="flex items-center gap-2 text-xs py-0.5 select-none">
                     <button type="button" onclick="openExpenseDatePicker()" class="flex items-center gap-1.5 py-1.5 px-3 bg-stone-100 dark:bg-stone-900 text-stone-600 dark:text-stone-300 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-800 transition-all active:scale-95 border border-stone-300/20 dark:border-stone-800/30 font-bold">
@@ -719,10 +724,10 @@
                     <span>💾</span> Enregistrer la Dépense
                 </button>
                 <button type="button" onclick="confirmAddRefund()" class="w-full h-12 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-semibold rounded-xl border border-emerald-100 dark:border-emerald-900/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm mt-2 shadow-sm">
-                    <span>💵</span> Enregistrer un Remboursement
+                    <span>↩️</span> Enregistrer un Remboursement
                 </button>
                 <button type="button" onclick="confirmCreateBudget()" class="w-full h-12 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl border border-indigo-100 dark:border-indigo-900/35 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm mt-2 shadow-sm">
-                    <span>🎯</span> Créer une Enveloppe
+                    <span>📩</span> Créer une Enveloppe
                 </button>
             </form>
         </div>
@@ -1097,7 +1102,7 @@
                 </div>
             </div>
             <!-- Date editing section, only visible for expenses -->
-            <div id="edit_date_section" class="mb-2 select-none">
+			<div id="edit_date_section" class="mb-2 select-none">
                 <label class="block text-[8px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-1">Date</label>
                 <div class="flex items-center gap-2 text-xs">
                     <button type="button" onclick="openEditExpenseDatePicker()" class="flex items-center gap-1.5 py-2 px-3 bg-stone-100 dark:bg-stone-900 text-stone-600 dark:text-stone-300 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-800 transition-all active:scale-95 border border-stone-300/20 dark:border-stone-800/30 font-bold w-full flex justify-between items-center">
@@ -1108,6 +1113,12 @@
                 </div>
             </div>
 
+            <div id="edit_tag_section" class="mb-4 select-none hidden">
+                <label class="block text-[8px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-1.5">Catégorie</label>
+                <div class="flex flex-wrap gap-1.5" id="edit_tag_selector_container">
+                    </div>
+                <input type="hidden" id="edit_exp_tag" value="divers">
+            </div>
             <div class="grid grid-cols-2 gap-2 pt-2">
                 <button type="button" onclick="closeEditModal()" class="py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95">Annuler</button>
                 <button type="submit" class="py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95">Enregistrer</button>
