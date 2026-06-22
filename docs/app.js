@@ -175,10 +175,30 @@ function getSuggestedTags(titleVal) {
         if (b.archivedExpenses) allOps.push(...b.archivedExpenses);
     });
 
-    // 1. Chercher des correspondances exactes sur le titre tapé
+    // 1. Chercher des correspondances intelligentes sur le titre tapé
     let matchedOps = [];
     if (titleLower.length >= 2) {
-        matchedOps = allOps.filter(op => op.title && op.title.toLowerCase().includes(titleLower));
+        // On découpe la saisie en mots de 3 lettres minimum (pour ignorer "le", "de", "au"...)
+        const searchWords = titleLower.split(/\s+/).filter(w => w.length >= 3);
+        
+        // Si on tape juste un mot court (ex: "Mc"), on le garde quand même
+        if (searchWords.length === 0 && titleLower.length > 0) {
+            searchWords.push(titleLower);
+        }
+
+        matchedOps = allOps.filter(op => {
+            if (!op.title) return false;
+            const opTitleLower = op.title.toLowerCase();
+            
+            // 1. Le libellé historique contient ce qu'on tape (ex: tapé="Boul", historique="Boulangerie")
+            if (opTitleLower.includes(titleLower)) return true;
+            
+            // 2. Ce qu'on tape contient le libellé historique (ex: tapé="Courses Auchan", historique="Auchan")
+            if (titleLower.includes(opTitleLower)) return true;
+            
+            // 3. Un des mots tapés correspond à l'historique
+            return searchWords.some(word => opTitleLower.includes(word));
+        });
     }
 
     if (matchedOps.length > 0) {
