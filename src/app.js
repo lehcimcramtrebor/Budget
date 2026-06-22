@@ -1858,21 +1858,6 @@ let revenuesCollapsed = true;
 let expensesCollapsed = true;
 let fixedChargesCollapsed = true;
 
-function toggleRevenuesCollapse() {
-    revenuesCollapsed = !revenuesCollapsed;
-    updateCollapsibleUI();
-}
-
-function toggleExpensesCollapse() {
-    expensesCollapsed = !expensesCollapsed;
-    updateCollapsibleUI();
-}
-
-function toggleFixedChargesCollapse() {
-    fixedChargesCollapsed = !fixedChargesCollapsed;
-    updateCollapsibleUI();
-}
-
 function updateCollapsibleUI() {
     const revContent = document.getElementById("revenues_content");
     const revChevron = document.getElementById("revenues_chevron");
@@ -7170,6 +7155,52 @@ function reexportArchiveToPDF(archive) {
         showGenericAlert("Erreur PDF", "Impossible de générer le document.", "❌");
         triggerHaptic('error');
     });
+}
+
+// --- GESTION DES MODALES DU DASHBOARD ---
+function openExpensesModal() {
+    const modal = document.getElementById('expenses_modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.glass-card').classList.remove('scale-95');
+    }, 10);
+}
+function closeExpensesModal() {
+    const modal = document.getElementById('expenses_modal');
+    modal.classList.add('opacity-0');
+    modal.querySelector('.glass-card').classList.add('scale-95');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+function openRevenuesModal() {
+    const modal = document.getElementById('revenues_modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.glass-card').classList.remove('scale-95');
+    }, 10);
+}
+function closeRevenuesModal() {
+    const modal = document.getElementById('revenues_modal');
+    modal.classList.add('opacity-0');
+    modal.querySelector('.glass-card').classList.add('scale-95');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+function openChargesModal() {
+    const modal = document.getElementById('charges_modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.glass-card').classList.remove('scale-95');
+    }, 10);
+}
+function closeChargesModal() {
+    const modal = document.getElementById('charges_modal');
+    modal.classList.add('opacity-0');
+    modal.querySelector('.glass-card').classList.add('scale-95');
+    setTimeout(() => modal.classList.add('hidden'), 300);
 }
 
 

@@ -130,6 +130,13 @@
             color: #a8a29e !important;
             border-color: rgba(255, 255, 255, 0.05) !important;
         }
+		
+		html {
+			overscroll-behavior-y: none;
+			overflow-x: clip;
+			overflow-anchor: none !important;
+			scrollbar-gutter: stable; /* Garde la place de la scrollbar même si elle disparaît */
+		}
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -756,112 +763,31 @@
         </div>
 
         <!-- CARD 2: DEPENSES EN COURS -->
-        <div class="glass-card">
-            <div onclick="toggleExpensesCollapse()" class="flex justify-between items-center cursor-pointer select-none group">
-                <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 flex items-center gap-2">
-                    <span>🛒</span> Opérations en cours
-                </h3>
-                <div class="flex items-center gap-2">
-                    <span id="expenses_summary" class="text-xs font-semibold text-stone-500 dark:text-stone-400 opacity-80 group-hover:opacity-100 transition-opacity"></span>
-					<span id="expenses_chevron" class="text-brand-500 dark:text-brand-400 transition-transform duration-300 w-5 h-5 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full shrink-0 shadow-sm border border-stone-200/50 dark:border-stone-700/50">
-						<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-					</span>
+<div class="grid grid-cols-1 gap-3">
+            <button type="button" onclick="openExpensesModal()" class="glass-card flex justify-between items-center w-full active:scale-95 transition-all p-5 focus:outline-none">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">🛒</span>
+                    <div class="text-left">
+                        <h3 class="text-sm font-black text-stone-800 dark:text-stone-100">Opérations en cours</h3>
+                        <span id="expenses_summary" class="text-[10px] font-bold text-stone-500 dark:text-stone-400 mt-0.5 block">0 opération</span>
+                    </div>
                 </div>
-            </div>
-            
-            <div id="expenses_content" class="mt-4 transition-all duration-300">
-                <div id="expenses_container" class="space-y-2">
-                    <!-- Loaded dynamically -->
-                </div>
-                
-                <div id="empty_state" class="hidden text-center py-6 text-stone-400 space-y-1">
-                    <span class="text-2xl">🤷‍♂️</span>
-                    <p class="font-bold text-xs">Aucune opération enregistrée</p>
-                </div>
-            </div>
-        </div>
+                <span class="text-brand-500 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">➔</span>
+            </button>
 
-        <!-- CARD 3: PARAMETRAGE BUDGET & CHARGES FIXES -->
-        <div class="glass-card">
-            <h3 class="text-lg font-black text-stone-800 dark:text-stone-100 mb-4 flex items-center gap-2">
-                <span>⚙️</span> Frais Fixes & Revenus
-            </h3>
-            
-            <div class="space-y-4">
-                <!-- Revenues Section -->
-                <div>
-                    <div onclick="toggleRevenuesCollapse()" class="flex justify-between items-center cursor-pointer select-none group mb-2">
-                        <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider cursor-pointer">Revenus Mensuels</label>
-                        <div class="flex items-center gap-2">
-                            <span id="revenues_summary" class="text-[10px] font-semibold text-stone-500 dark:text-stone-400 opacity-80 group-hover:opacity-100 transition-opacity"></span>
-							<span id="revenues_chevron" class="text-brand-500 dark:text-brand-400 transition-transform duration-300 w-5 h-5 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full shrink-0 shadow-sm border border-stone-200/50 dark:border-stone-700/50">
-								<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-							</span>
-                        </div>
-                    </div>
-                    
-                    <div id="revenues_content" class="transition-all duration-300">
-                        <div id="revenues_container" class="space-y-2 mb-3">
-                            <!-- Loaded dynamically -->
-                        </div>
-                        
-                        <!-- Add revenue form -->
-                        <div class="space-y-2">
-                            <div class="grid grid-cols-3 gap-2">
-                                <div class="col-span-2">
-                                    <input type="text" id="new_revenue_title" placeholder="Nom (ex: Salaire)" class="form-input h-10 w-full text-xs font-semibold" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
-                                </div>
-                                <div class="relative">
-                                    <input type="text" inputmode="decimal" id="new_revenue_amount" placeholder="Montant" class="form-input h-10 text-right pr-6 text-xs font-black" oninput="normalizeAmountInput(event)">
-                                    <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-400 text-[10px] pointer-events-none">€</span>
-                                </div>
-                            </div>
-                            <button type="button" onclick="addRevenue()" class="w-full h-10 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl active:scale-95 transition-all text-xs shadow-sm flex items-center justify-center gap-1.5">
-                                ➕ Ajouter le revenu
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <hr class="border-stone-200 dark:border-stone-800" />
-
-                <!-- Fixed Charges List -->
-                <div>
-                    <div onclick="toggleFixedChargesCollapse()" class="flex justify-between items-center cursor-pointer select-none group mb-2">
-                        <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider cursor-pointer">Frais Fixes Mensuels</label>
-                        <div class="flex items-center gap-2">
-                            <span id="fixed_charges_summary" class="text-[10px] font-semibold text-stone-500 dark:text-stone-400 opacity-80 group-hover:opacity-100 transition-opacity"></span>
-							<span id="fixed_charges_chevron" class="text-brand-500 dark:text-brand-400 transition-transform duration-300 w-5 h-5 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full shrink-0 shadow-sm border border-stone-200/50 dark:border-stone-700/50">
-								<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-							</span>
-                        </div>
-                    </div>
-                    
-                    <div id="fixed_charges_content" class="transition-all duration-300">
-                        <div id="fixed_charges_container" class="space-y-2 mb-3">
-                            <!-- Loaded dynamically -->
-                        </div>
-                        
-                        <!-- Add fixed charge form -->
-                        <div class="space-y-2">
-                            <div class="grid grid-cols-3 gap-2">
-                                <div class="col-span-2">
-                                    <input type="text" id="new_charge_title" placeholder="Nom (ex: Loyer)" class="form-input h-10 w-full text-xs font-semibold" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
-                                </div>
-                                <div class="relative">
-                                    <input type="text" inputmode="decimal" id="new_charge_amount" placeholder="Montant" class="form-input h-10 text-right pr-6 text-xs font-black" oninput="normalizeAmountInput(event)">
-                                    <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-400 text-[10px] pointer-events-none">€</span>
-                                </div>
-                            </div>
-                            <button type="button" onclick="addFixedCharge()" class="w-full h-10 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl active:scale-95 transition-all text-xs shadow-sm flex items-center justify-center gap-1.5">
-                                ➕ Ajouter le frais fixe
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" onclick="openRevenuesModal()" class="glass-card flex flex-col justify-center items-center w-full active:scale-95 transition-all p-4 focus:outline-none">
+                    <span class="text-2xl mb-1.5">💵</span>
+                    <h3 class="text-xs font-black text-stone-800 dark:text-stone-100">Revenus</h3>
+                    <span id="revenues_summary" class="text-[10px] font-bold text-stone-500 dark:text-stone-400 mt-0.5">0.00 €</span>
+                </button>
+                <button type="button" onclick="openChargesModal()" class="glass-card flex flex-col justify-center items-center w-full active:scale-95 transition-all p-4 focus:outline-none">
+                    <span class="text-2xl mb-1.5">⚙️</span>
+                    <h3 class="text-xs font-black text-stone-800 dark:text-stone-100">Frais Fixes</h3>
+                    <span id="fixed_charges_summary" class="text-[10px] font-bold text-stone-500 dark:text-stone-400 mt-0.5">0.00 €</span>
+                </button>
             </div>
         </div>
-
         <!-- RENEW BUDGET ACTION -->
         <div class="px-2 pt-2">
             <button onclick="confirmReset()" class="w-full h-12 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-bold rounded-xl border border-red-100 dark:border-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm shadow-sm">
@@ -1799,6 +1725,80 @@
                 </div>
         </div>
 
+    </div>
+</div>
+
+<div id="expenses_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[55] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col max-h-[85vh] p-5 space-y-4">
+        <div class="flex justify-between items-center border-b border-stone-200 dark:border-stone-800 pb-2">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 font-display flex items-center gap-1.5">
+                <span>🛒</span> Opérations du mois
+            </h3>
+            <button onclick="closeExpensesModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-[10px] shadow-sm">✕</button>
+        </div>
+        <div class="overflow-y-auto pr-1 hide-scrollbar space-y-2 flex-1">
+            <div id="expenses_container" class="space-y-2"></div>
+            <div id="empty_state" class="hidden text-center py-6 text-stone-400 space-y-1">
+                <span class="text-2xl">🤷‍♂️</span>
+                <p class="font-bold text-xs">Aucune opération enregistrée</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="revenues_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[55] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col max-h-[85vh] p-5 space-y-4">
+        <div class="flex justify-between items-center border-b border-stone-200 dark:border-stone-800 pb-2">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 font-display flex items-center gap-1.5">
+                <span>💵</span> Vos Revenus
+            </h3>
+            <button onclick="closeRevenuesModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-[10px] shadow-sm">✕</button>
+        </div>
+        <div class="overflow-y-auto pr-1 hide-scrollbar space-y-3 flex-1">
+            <div id="revenues_container" class="space-y-2 mb-3"></div>
+            <div class="space-y-2 pt-2 border-t border-stone-200 dark:border-stone-800">
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="col-span-2">
+                        <input type="text" id="new_revenue_title" placeholder="Nom (ex: Salaire)" class="form-input h-10 w-full text-xs font-semibold" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
+                    </div>
+                    <div class="relative">
+                        <input type="text" inputmode="decimal" id="new_revenue_amount" placeholder="Montant" class="form-input h-10 text-right pr-6 text-xs font-black" oninput="normalizeAmountInput(event)">
+                        <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-400 text-[10px] pointer-events-none">€</span>
+                    </div>
+                </div>
+                <button type="button" onclick="addRevenue()" class="w-full h-10 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl active:scale-95 transition-all text-xs shadow-sm flex items-center justify-center gap-1.5">
+                    ➕ Ajouter le revenu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="charges_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[55] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-sm transform scale-95 transition-transform duration-300 flex flex-col max-h-[85vh] p-5 space-y-4">
+        <div class="flex justify-between items-center border-b border-stone-200 dark:border-stone-800 pb-2">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 font-display flex items-center gap-1.5">
+                <span>⚙️</span> Frais Fixes
+            </h3>
+            <button onclick="closeChargesModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-[10px] shadow-sm">✕</button>
+        </div>
+        <div class="overflow-y-auto pr-1 hide-scrollbar space-y-3 flex-1">
+            <div id="fixed_charges_container" class="space-y-2 mb-3"></div>
+            <div class="space-y-2 pt-2 border-t border-stone-200 dark:border-stone-800">
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="col-span-2">
+                        <input type="text" id="new_charge_title" placeholder="Nom (ex: Loyer)" class="form-input h-10 w-full text-xs font-semibold" autocomplete="off" onblur="this.value = toTitleCase(this.value)">
+                    </div>
+                    <div class="relative">
+                        <input type="text" inputmode="decimal" id="new_charge_amount" placeholder="Montant" class="form-input h-10 text-right pr-6 text-xs font-black" oninput="normalizeAmountInput(event)">
+                        <span class="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-stone-400 text-[10px] pointer-events-none">€</span>
+                    </div>
+                </div>
+                <button type="button" onclick="addFixedCharge()" class="w-full h-10 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl active:scale-95 transition-all text-xs shadow-sm flex items-center justify-center gap-1.5">
+                    ➕ Ajouter le frais fixe
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
