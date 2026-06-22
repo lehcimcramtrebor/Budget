@@ -4,11 +4,12 @@ const TAG_DATA = {
         label: "🍔 Alimentation",
         items: {
             courses: { icon: "🛒", label: "Courses" },
-            resto: { icon: "🍔", label: "Resto" },
+            resto: { icon: "🍽️", label: "Resto" },
+            fastfood: { icon: "🍔", label: "Fast-Food" },
             boulangerie: { icon: "🥖", label: "Boulangerie" },
             boucherie: { icon: "🥩", label: "Boucherie" },
             marche: { icon: "🍎", label: "Marché" },
-            cantine: { icon: "🍱", label: "Cantine" }, // Ajout
+            cantine: { icon: "🍱", label: "Cantine" },
             bar: { icon: "🍺", label: "Bar/Café" },
             livraison: { icon: "🛵", label: "Livraison" }
         }
@@ -18,11 +19,11 @@ const TAG_DATA = {
         items: {
             auto: { icon: "⛽", label: "Auto" },
             moto: { icon: "🏍️", label: "Moto" },
-            garage: { icon: "🔧", label: "Garage" }, // Ajout (entretien/réparation)
+            garage: { icon: "🔧", label: "Garage" },
             transport: { icon: "🚌", label: "Transports" },
             train: { icon: "🚆", label: "Train" },
             avion: { icon: "✈️", label: "Avion" },
-            taxi: { icon: "🚕", label: "Taxi/VTC" }, // Ajout
+            taxi: { icon: "🚕", label: "Taxi/VTC" },
             peage: { icon: "🎫", label: "Péage" },
             parking: { icon: "🅿️", label: "Parking" },
             velo: { icon: "🚲", label: "Vélo/Trot" }
@@ -35,11 +36,12 @@ const TAG_DATA = {
             factures: { icon: "⚡", label: "Factures" },
             assurance: { icon: "🛡️", label: "Assurance" },
             internet: { icon: "🌐", label: "Internet" },
-            electro: { icon: "📺", label: "Équipement" }, // Ajout (électroménager/meubles)
-            menage: { icon: "🧹", label: "Entretien" }, // Ajout (produits, laverie, femme de ménage)
+            electro: { icon: "📺", label: "Équipement" },
+            menage: { icon: "🧹", label: "Entretien" },
             deco: { icon: "🛋️", label: "Déco" },
             jardin: { icon: "🌱", label: "Jardin" },
-            brico: { icon: "🛠️", label: "Matos" }
+            brico: { icon: "🛠️", label: "Matos" },
+            travaux: { icon: "🏗️", label: "Gros Travaux" }
         }
     },
     loisirs: {
@@ -52,34 +54,44 @@ const TAG_DATA = {
             musique: { icon: "🎵", label: "Musique" },
             streaming: { icon: "📺", label: "Streaming" },
             livres: { icon: "📚", label: "Lecture" },
-            presse: { icon: "📰", label: "Presse" }, // Ajout
+            presse: { icon: "📰", label: "Presse" },
             sorties: { icon: "🎟️", label: "Sorties" },
             voyage: { icon: "🏖️", label: "Voyage" },
             tabac: { icon: "🚬", label: "Tabac" },
-            numerique: { icon: "📱", label: "Numérique" }
+            numerique: { icon: "📱", label: "Numérique" },
+            abonnement: { icon: "💳", label: "Abos divers" }
         }
     },
     sante: {
         label: "💊 Santé & Beauté",
         items: {
-            medical: { icon: "💊", label: "Santé" },
+            medical: { icon: "👨‍⚕️", label: "Généraliste" }, // Icone ajustée
+            specialiste: { icon: "🩺", label: "Spécialiste" }, // Ajout (Cardio, ophtalmo, etc.)
             pharmacie: { icon: "⚕️", label: "Pharmacie" },
-            therapie: { icon: "🧘", label: "Thérapie" }, // Ajout (ostéo, kiné, psy)
-            coiffeur: { icon: "✂️", label: "Coiffeur" },
-            beaute: { icon: "🧴", label: "Beauté" },
+            labo: { icon: "🔬", label: "Analyses/Labo" }, // Ajout (Prises de sang, examens)
+            mutuelle: { icon: "🏥", label: "Mutuelle" }, // Ajout (Cotisations ou reste à charge)
+            complements: { icon: "🌿", label: "Compléments" }, // Ajout (Vitamines, nutrition spécifique)
+            therapie: { icon: "🧘", label: "Kiné/Ostéo" },
+            dentiste: { icon: "🦷", label: "Dentiste" },
             opticien: { icon: "👓", label: "Opticien" },
-            dentiste: { icon: "🦷", label: "Dentiste" }
+            coiffeur: { icon: "✂️", label: "Coiffeur" },
+            beaute: { icon: "🧴", label: "Beauté/Soin" }
         }
     },
     sport: {
         label: "🏋️ Sports",
         items: {
-            sport: { icon: "🏋️", label: "Sport" },
-            foot: { icon: "⚽", label: "Collectif" },
-            raquette: { icon: "🎾", label: "Raquette" },
-            natation: { icon: "🏊", label: "Natation" },
+            club: { icon: "💳", label: "Abo/Licence" }, // Ajout (Inscriptions, cotisations club)
+            matos_sport: { icon: "👟", label: "Équipement" }, // Ajout (Chaussures, fringues, accessoires)
+            evenement: { icon: "🏅", label: "Dossard/Tournoi" }, // Ajout (Frais de compète ou d'inscription aux courses)
+            running: { icon: "🏃", label: "Running" },
+            muscu: { icon: "💪", label: "Muscu/Fitness" },
+            cyclisme: { icon: "🚴", label: "Cyclisme" },
             rando: { icon: "🏔️", label: "Rando/Ski" },
-            combat: { icon: "🥊", label: "Combat" }
+            natation: { icon: "🏊", label: "Natation" },
+            combat: { icon: "🥊", label: "Combat" },
+            raquette: { icon: "🎾", label: "Raquette" },
+            foot: { icon: "⚽", label: "Collectif" }
         }
     },
     famille: {
@@ -90,19 +102,21 @@ const TAG_DATA = {
             jouets: { icon: "🧸", label: "Jouets" },
             nounou: { icon: "🍼", label: "Garde" },
             animaux: { icon: "🐶", label: "Animaux" },
-            veto: { icon: "🩺", label: "Véto" }, // Ajout
+            veto: { icon: "🩺", label: "Véto" },
             vetements: { icon: "👕", label: "Fringues" },
-            cadeaux: { icon: "🎁", label: "Cadeaux" }
+            cadeaux: { icon: "🎁", label: "Cadeaux" },
+            poche: { icon: "🪙", label: "Argent de poche" }
         }
     },
     admin: {
-        label: "🏦 Admin & Finances", // Label ajusté
+        label: "🏦 Admin & Finances",
         items: {
             banque: { icon: "🏦", label: "Banque" },
-            epargne: { icon: "🐷", label: "Épargne" }, // Ajout
-            impots: { icon: "⚖️", label: "Impôts" },
+            epargne: { icon: "🐷", label: "Épargne" },
+            impots: { icon: "📄", label: "Impôts" },
+            juridique: { icon: "⚖️", label: "Justice/Notaire" },
             amende: { icon: "👮", label: "Amende" },
-            dons: { icon: "🤝", label: "Dons/Asso" }, // Ajout
+            dons: { icon: "🤝", label: "Dons/Asso" },
             poste: { icon: "📮", label: "Poste" },
             divers: { icon: "📝", label: "Divers" }
         }
