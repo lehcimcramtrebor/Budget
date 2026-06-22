@@ -1,17 +1,18 @@
 // --- CONFIGURATION DES TAGS RAPIDES ---
 const EXPENSE_TAGS = {
     courses: { icon: "🛒", label: "Courses" },
-    resto: { icon: "🍔", label: "Restauration" },
+    resto: { icon: "🍔", label: "Resto" },
     loisirs: { icon: "🔫", label: "Loisirs" },
     vape: { icon: "💨", label: "Vape" },
     numerique: { icon: "📱", label: "Numérique" },
     auto: { icon: "⛽", label: "Auto" },
     moto: { icon: "🏍️", label: "Moto" },
     brico: { icon: "🛠️", label: "Matos" },
-    enfant: { icon: "👧", label: "Progéniture" },
+    enfant: { icon: "👧", label: "Enfants" },
     medical: { icon: "💊", label: "Santé" },
     vetements: { icon: "👕", label: "Fringues" },
     animaux: { icon: "🐶", label: "Animaux" },
+    cadeaux: { icon: "🎁", label: "Cadeaux" },
     divers: { icon: "📝", label: "Divers" }
 };
 
