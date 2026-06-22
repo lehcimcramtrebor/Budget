@@ -549,6 +549,16 @@
         .dark .receipt-card-friends::after {
             background-image: linear-gradient(45deg, #121921 25%, transparent 25%), linear-gradient(315deg, #121921 25%, transparent 25%);
         }
+		
+		@keyframes tagPop {
+            0% { transform: scale(0.93); }
+            70% { transform: scale(1.04); }
+            100% { transform: scale(1); }
+        }
+        .animate-tag-pop {
+            animation: tagPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+		
     </style>
 </head>
 <body class="min-h-screen p-2 sm:p-4 md:p-8 bg-gradient-to-br from-stone-100 via-stone-50 to-stone-200 dark:from-stone-950 dark:via-stone-950 dark:to-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300">
@@ -695,12 +705,16 @@
             <form id="expense_form" onsubmit="addExpense(event)" class="space-y-3">
                 <div class="grid grid-cols-3 gap-3">
                     <div class="col-span-2">
-                        <input type="text" id="exp_title" placeholder="Libellé (ex: Carrefour...)" class="form-input" required autocomplete="off" maxlength="25" onblur="this.value = toTitleCase(this.value)">
+                        <input type="text" id="exp_title" placeholder="Libellé (ex: Carrefour...)" 
+                               class="w-full h-12 rounded-xl px-4 font-semibold bg-white text-stone-900 border border-brand-500/55 dark:border-brand-500/50 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.06)] dark:shadow-[inset_0_2px_6px_0_rgba(0,0,0,0.45)] dark:bg-stone-800 dark:text-stone-100 transition-all" 
+                               required autocomplete="off" maxlength="25" onblur="this.value = toTitleCase(this.value)">
                     </div>
                     <div>
                         <div class="relative">
-                            <input type="text" id="exp_amount" inputmode="decimal" placeholder="0,00" class="form-input text-right pr-7 font-black" required oninput="normalizeAmountInput(event)">
-                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 font-black text-stone-400 pointer-events-none text-xs">€</span>
+                            <input type="text" id="exp_amount" inputmode="decimal" placeholder="0,00" 
+                                   class="w-full h-12 rounded-xl px-4 bg-white text-stone-900 border border-brand-500/55 dark:border-brand-500/50 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.06)] dark:shadow-[inset_0_2px_6px_0_rgba(0,0,0,0.45)] dark:bg-stone-800 dark:text-stone-100 text-right pr-7 font-black transition-all" 
+                                   required oninput="normalizeAmountInput(event)">
+                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 font-black text-stone-400 dark:text-stone-500 pointer-events-none text-xs">€</span>
                         </div>
                     </div>
                 </div>
@@ -711,24 +725,33 @@
                 </div>
                 <input type="hidden" id="exp_tag" value="divers">
                 <!-- Date selection row -->
-                <div class="flex items-center gap-2 text-xs py-0.5 select-none">
-                    <button type="button" onclick="openExpenseDatePicker()" class="flex items-center gap-1.5 py-1.5 px-3 bg-stone-100 dark:bg-stone-900 text-stone-600 dark:text-stone-300 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-800 transition-all active:scale-95 border border-stone-300/20 dark:border-stone-800/30 font-bold">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        <span id="expense_date_label">Date : Aujourd'hui</span>
-                    </button>
-                    <input type="hidden" id="expense_date_value" value="">
-                    <button type="button" id="btn_clear_expense_date" onclick="clearExpenseDate()" class="hidden w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center font-bold text-[9px] active:scale-90 transition-all shadow-sm">✕</button>
+                <div class="flex items-center justify-between mt-2 mb-4 select-none px-1">
+                    <span class="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider">📅 Date de l'opération</span>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="openExpenseDatePicker()" class="flex items-center gap-2 py-1.5 px-3 bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-700 transition-all active:scale-95 border border-stone-200/80 dark:border-stone-700/80 shadow-sm text-xs font-bold">
+                            <span id="expense_date_label">Aujourd'hui</span>
+                            <span class="text-[8px] text-brand-500">▼</span>
+                        </button>
+                        <input type="hidden" id="expense_date_value" value="">
+                        <button type="button" id="btn_clear_expense_date" onclick="clearExpenseDate()" class="hidden w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-900/30 text-red-500 flex items-center justify-center font-bold text-[10px] active:scale-90 transition-all shadow-sm">✕</button>
+                    </div>
                 </div>
 
-                <button type="submit" class="w-full h-12 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 text-sm">
-                    <span>💾</span> Enregistrer la Dépense
-                </button>
-                <button type="button" onclick="confirmAddRefund()" class="w-full h-12 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-semibold rounded-xl border border-emerald-100 dark:border-emerald-900/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm mt-2 shadow-sm">
-                    <span>↩️</span> Enregistrer un Remboursement
-                </button>
-                <button type="button" onclick="confirmCreateBudget()" class="w-full h-12 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl border border-indigo-100 dark:border-indigo-900/35 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm mt-2 shadow-sm">
-                    <span>📩</span> Créer une Enveloppe
-                </button>
+                <div class="flex flex-col gap-2 mt-4">
+                    <button type="submit" class="w-full h-12 bg-brand-500 hover:bg-brand-600 text-white font-black rounded-xl shadow-[0_8px_16px_-6px_rgba(var(--brand-500)/0.4)] transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm border border-brand-400/20">
+                        <span>💾</span> Enregistrer la Dépense
+                    </button>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="confirmAddRefund()" class="h-10 bg-brand-500/25 hover:bg-brand-500/35 text-brand-700 dark:text-brand-300 font-bold rounded-xl border border-brand-500/30 transition-all active:scale-95 flex items-center justify-center gap-1.5 text-[11px]">
+                            <span>↩️</span> Remboursement
+                        </button>
+                        
+                        <button type="button" onclick="confirmCreateBudget()" class="h-10 bg-brand-500/10 hover:bg-brand-500/20 text-brand-600 dark:text-brand-400 font-bold rounded-xl border border-brand-500/15 transition-all active:scale-95 flex items-center justify-center gap-1.5 text-[11px]">
+                            <span>📩</span> Nouvelle Enveloppe
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
 
@@ -1119,7 +1142,7 @@
                     </div>
                 <input type="hidden" id="edit_exp_tag" value="divers">
             </div>
-            <div class="grid grid-cols-2 gap-2 pt-2">
+            <div class="grid grid-cols-3 gap-2 pt-2">
                 <button type="button" onclick="closeEditModal()" class="py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-bold text-xs active:scale-95">Annuler</button>
                 <button type="submit" class="py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95">Enregistrer</button>
             </div>
@@ -1752,6 +1775,24 @@
             <button id="btn_reexport_archive" class="py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs active:scale-95">📥 PDF</button>
             <button onclick="closeArchiveModal()" class="py-2 bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-xl font-bold text-xs">Fermer</button>
         </div>
+    </div>
+</div>
+
+<div id="tag_selection_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col p-5 space-y-4 max-h-[85vh]">
+        
+        <div class="flex justify-between items-center pb-2 border-b border-stone-200 dark:border-stone-800 shrink-0">
+            <h3 class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-wider flex items-center gap-1.5">
+                🏷️ Choisir une catégorie
+            </h3>
+            <button onclick="closeTagSelectionModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-xs shadow-sm">✕</button>
+        </div>
+        
+        <div class="overflow-y-auto hide-scrollbar pb-2">
+            <div id="tag_selection_grid" class="flex flex-col space-y-5">
+                </div>
+        </div>
+
     </div>
 </div>
 

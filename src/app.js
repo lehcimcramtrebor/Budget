@@ -1,150 +1,402 @@
-// --- CONFIGURATION DES TAGS RAPIDES ---
-const EXPENSE_TAGS = {
-    courses: { icon: "🛒", label: "Courses" },
-    resto: { icon: "🍔", label: "Resto" },
-    loisirs: { icon: "🔫", label: "Loisirs" },
-    vape: { icon: "💨", label: "Vape" },
-    numerique: { icon: "📱", label: "Numérique" },
-    auto: { icon: "⛽", label: "Auto" },
-    moto: { icon: "🏍️", label: "Moto" },
-    brico: { icon: "🛠️", label: "Matos" },
-    enfant: { icon: "👧", label: "Enfants" },
-    medical: { icon: "💊", label: "Santé" },
-    vetements: { icon: "👕", label: "Fringues" },
-    animaux: { icon: "🐶", label: "Animaux" },
-    cadeaux: { icon: "🎁", label: "Cadeaux" },
-    divers: { icon: "📝", label: "Divers" }
+// --- BLOC UNIQUE DE CONFIGURATION DES TAGS ---
+const TAG_DATA = {
+    alimentation: {
+        label: "🍔 Alimentation",
+        items: {
+            courses: { icon: "🛒", label: "Courses" },
+            resto: { icon: "🍔", label: "Resto" },
+            boulangerie: { icon: "🥖", label: "Boulangerie" },
+            boucherie: { icon: "🥩", label: "Boucherie" },
+            marche: { icon: "🍎", label: "Marché" },
+            cantine: { icon: "🍱", label: "Cantine" }, // Ajout
+            bar: { icon: "🍺", label: "Bar/Café" },
+            livraison: { icon: "🛵", label: "Livraison" }
+        }
+    },
+    vehicule: {
+        label: "🚗 Véhicules & Transports",
+        items: {
+            auto: { icon: "⛽", label: "Auto" },
+            moto: { icon: "🏍️", label: "Moto" },
+            garage: { icon: "🔧", label: "Garage" }, // Ajout (entretien/réparation)
+            transport: { icon: "🚌", label: "Transports" },
+            train: { icon: "🚆", label: "Train" },
+            avion: { icon: "✈️", label: "Avion" },
+            taxi: { icon: "🚕", label: "Taxi/VTC" }, // Ajout
+            peage: { icon: "🎫", label: "Péage" },
+            parking: { icon: "🅿️", label: "Parking" },
+            velo: { icon: "🚲", label: "Vélo/Trot" }
+        }
+    },
+    maison: {
+        label: "🏠 Maison & Quotidien",
+        items: {
+            logement: { icon: "🏠", label: "Logement" },
+            factures: { icon: "⚡", label: "Factures" },
+            assurance: { icon: "🛡️", label: "Assurance" },
+            internet: { icon: "🌐", label: "Internet" },
+            electro: { icon: "📺", label: "Équipement" }, // Ajout (électroménager/meubles)
+            menage: { icon: "🧹", label: "Entretien" }, // Ajout (produits, laverie, femme de ménage)
+            deco: { icon: "🛋️", label: "Déco" },
+            jardin: { icon: "🌱", label: "Jardin" },
+            brico: { icon: "🛠️", label: "Matos" }
+        }
+    },
+    loisirs: {
+        label: "🍿 Loisirs & Culture",
+        items: {
+            loisirs: { icon: "🔫", label: "Loisirs" },
+            vape: { icon: "💨", label: "Vape" },
+            cine: { icon: "🍿", label: "Cinéma" },
+            jeuxvideo: { icon: "🎮", label: "Gaming" },
+            musique: { icon: "🎵", label: "Musique" },
+            streaming: { icon: "📺", label: "Streaming" },
+            livres: { icon: "📚", label: "Lecture" },
+            presse: { icon: "📰", label: "Presse" }, // Ajout
+            sorties: { icon: "🎟️", label: "Sorties" },
+            voyage: { icon: "🏖️", label: "Voyage" },
+            tabac: { icon: "🚬", label: "Tabac" },
+            numerique: { icon: "📱", label: "Numérique" }
+        }
+    },
+    sante: {
+        label: "💊 Santé & Beauté",
+        items: {
+            medical: { icon: "💊", label: "Santé" },
+            pharmacie: { icon: "⚕️", label: "Pharmacie" },
+            therapie: { icon: "🧘", label: "Thérapie" }, // Ajout (ostéo, kiné, psy)
+            coiffeur: { icon: "✂️", label: "Coiffeur" },
+            beaute: { icon: "🧴", label: "Beauté" },
+            opticien: { icon: "👓", label: "Opticien" },
+            dentiste: { icon: "🦷", label: "Dentiste" }
+        }
+    },
+    sport: {
+        label: "🏋️ Sports",
+        items: {
+            sport: { icon: "🏋️", label: "Sport" },
+            foot: { icon: "⚽", label: "Collectif" },
+            raquette: { icon: "🎾", label: "Raquette" },
+            natation: { icon: "🏊", label: "Natation" },
+            rando: { icon: "🏔️", label: "Rando/Ski" },
+            combat: { icon: "🥊", label: "Combat" }
+        }
+    },
+    famille: {
+        label: "👧 Famille & Animaux",
+        items: {
+            enfant: { icon: "👧", label: "Enfants" },
+            ecole: { icon: "🎒", label: "École" },
+            jouets: { icon: "🧸", label: "Jouets" },
+            nounou: { icon: "🍼", label: "Garde" },
+            animaux: { icon: "🐶", label: "Animaux" },
+            veto: { icon: "🩺", label: "Véto" }, // Ajout
+            vetements: { icon: "👕", label: "Fringues" },
+            cadeaux: { icon: "🎁", label: "Cadeaux" }
+        }
+    },
+    admin: {
+        label: "🏦 Admin & Finances", // Label ajusté
+        items: {
+            banque: { icon: "🏦", label: "Banque" },
+            epargne: { icon: "🐷", label: "Épargne" }, // Ajout
+            impots: { icon: "⚖️", label: "Impôts" },
+            amende: { icon: "👮", label: "Amende" },
+            dons: { icon: "🤝", label: "Dons/Asso" }, // Ajout
+            poste: { icon: "📮", label: "Poste" },
+            divers: { icon: "📝", label: "Divers" }
+        }
+    }
 };
 
-function initTagsUI() {
-    const container = document.getElementById("tag_selector_container");
-    if (!container) return;
-    container.innerHTML = "";
-    
-    Object.keys(EXPENSE_TAGS).forEach(key => {
-        const tag = EXPENSE_TAGS[key];
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.id = `tag_btn_${key}`;
-        // w-full, py-2, text-xs, justify-center ajoutés
-        btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
-        // Icône en text-sm, et ajout de truncate pour éviter de casser la ligne
-        btn.innerHTML = `<span class="text-sm">${tag.icon}</span> <span class="truncate">${tag.label}</span>`;
-        btn.onclick = () => selectTag(key);
-        container.appendChild(btn);
+// --- GÉNÉRATION AUTOMATIQUE DES VARIABLES UTILISÉES PAR L'APP ---
+const EXPENSE_TAGS = {};
+const TAG_CATEGORIES = {};
+
+Object.keys(TAG_DATA).forEach(catKey => {
+    const category = TAG_DATA[catKey];
+    // On extrait les clés pour TAG_CATEGORIES
+    TAG_CATEGORIES[catKey] = { 
+        label: category.label, 
+        keys: Object.keys(category.items) 
+    };
+    // On fusionne tous les items dans EXPENSE_TAGS
+    Object.assign(EXPENSE_TAGS, category.items);
+});
+
+// --- CALCUL DES TAGS LES PLUS UTILISÉS (POUR LA SECTION DYNAMIQUE) ---
+function getTopUsedTags(limit = 12) {
+    const counts = {};
+    const allOps = [...state.expenses];
+    state.budgets.forEach(b => {
+        if (b.expenses) allOps.push(...b.expenses);
+        if (b.archivedExpenses) allOps.push(...b.archivedExpenses);
     });
+
+    allOps.forEach(op => {
+        if (op.tag) counts[op.tag] = (counts[op.tag] || 0) + 1;
+    });
+
+    let sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
     
-    selectTag('divers'); // Sélection par défaut
+    // Tes anciens tags par défaut si l'historique est vierge ou faible
+    const defaultTop = ['courses', 'resto', 'loisirs', 'vape', 'numerique', 'auto', 'moto', 'brico', 'enfant', 'medical', 'vetements', 'animaux', 'cadeaux', 'divers'];
+    
+    defaultTop.forEach(tag => {
+        if (!sorted.includes(tag)) sorted.push(tag);
+    });
+
+    return sorted.slice(0, limit);
 }
 
-function selectTag(selectedKey) {
-    const input = document.getElementById("exp_tag");
-    if(input) input.value = selectedKey;
-    
-    Object.keys(EXPENSE_TAGS).forEach(key => {
-        const btn = document.getElementById(`tag_btn_${key}`);
-        if (btn) {
-            if (key === selectedKey) {
-                // Classes état actif
-                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
-            } else {
-                // Classes état inactif
-                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
-            }
-        }
-    });
-    triggerHaptic(10);
-}
+// --- NOUVEAU SYSTEME DE TAGS COMPACTS ---
+function getSuggestedTags(titleVal) {
+    const counts = {};
+    const titleLower = (titleVal || "").trim().toLowerCase();
 
-function initEditTagsUI() {
-    const container = document.getElementById("edit_tag_selector_container");
-    if (!container) return;
-    container.innerHTML = "";
-    
-    Object.keys(EXPENSE_TAGS).forEach(key => {
-        const tag = EXPENSE_TAGS[key];
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.id = `edit_tag_btn_${key}`;
-        // Ajout de w-full, justify-center et text-xs
-        btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
-        btn.innerHTML = `<span class="text-sm">${tag.icon}</span> <span class="truncate">${tag.label}</span>`;
-        btn.onclick = () => selectEditTag(key);
-        container.appendChild(btn);
-    });
-}
-
-function selectEditTag(selectedKey) {
-    const input = document.getElementById("edit_exp_tag");
-    if (input) input.value = selectedKey;
-    
-    Object.keys(EXPENSE_TAGS).forEach(key => {
-        const btn = document.getElementById(`edit_tag_btn_${key}`);
-        if (btn) {
-            if (key === selectedKey) {
-                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
-            } else {
-                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
-            }
-        }
-    });
-    triggerHaptic(10);
-}
-
-function initEnvelopeTagsUI(budgetId) {
-    const container = document.getElementById(`env_tag_container_${budgetId}`);
-    if (!container) return;
-    container.innerHTML = "";
-    
-    // On récupère le tag par défaut de l'enveloppe mère
-    const budget = state.budgets.find(b => b.id === budgetId);
-    const defaultTag = (budget && budget.tag) ? budget.tag : 'divers';
-    
-    Object.keys(EXPENSE_TAGS).forEach(key => {
-        const tag = EXPENSE_TAGS[key];
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.id = `env_tag_btn_${budgetId}_${key}`;
-        // Design identique : w-full, justify-center, text-xs
-        btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
-        btn.innerHTML = `<span class="text-sm">${tag.icon}</span> <span class="truncate">${tag.label}</span>`;
-        btn.onclick = () => selectEnvelopeTag(budgetId, key);
-        container.appendChild(btn);
-    });
-    selectEnvelopeTag(budgetId, defaultTag, true); // Applique le bon tag par défaut
-}
-
-function selectEnvelopeTag(budgetId, selectedKey, isInitialLoad = false) {
-    const input = document.getElementById(`env_op_tag_${budgetId}`);
-    if (input) input.value = selectedKey;
-    
-    Object.keys(EXPENSE_TAGS).forEach(key => {
-        const btn = document.getElementById(`env_tag_btn_${budgetId}_${key}`);
-        if (btn) {
-            if (key === selectedKey) {
-                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-brand-500 text-white border-brand-500 shadow-md select-none";
-            } else {
-                btn.className = "w-full py-2 px-1 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800 select-none";
-            }
-        }
+    // Récupérer tout l'historique
+    const allOps = [...state.expenses];
+    state.budgets.forEach(b => {
+        if (b.expenses) allOps.push(...b.expenses);
+        if (b.archivedExpenses) allOps.push(...b.archivedExpenses);
     });
 
-    // On ne sauvegarde que si ce n'est pas le chargement initial
-    if (!isInitialLoad) {
-        const budget = state.budgets.find(b => b.id === budgetId);
-        if (budget) {
-            budget.tag = selectedKey;
-            if (budget.mainTransactionId) {
-                const mainTx = state.expenses.find(e => e.id === budget.mainTransactionId);
-                if (mainTx) mainTx.tag = selectedKey;
-            }
-            saveState();
-            renderBudgetsList(); 
-            updateUI();
-            updateEnvelopeTicket(budgetId);
-        }
-        triggerHaptic(10);
+    // 1. Chercher des correspondances exactes sur le titre tapé
+    let matchedOps = [];
+    if (titleLower.length >= 2) {
+        matchedOps = allOps.filter(op => op.title && op.title.toLowerCase().includes(titleLower));
     }
+
+    if (matchedOps.length > 0) {
+        matchedOps.forEach(op => {
+            if (op.tag && op.tag !== 'divers') counts[op.tag] = (counts[op.tag] || 0) + 1;
+        });
+    }
+
+    let sortedTags = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+
+    // 2. Compléter avec les tags les plus utilisés globalement si besoin
+    if (sortedTags.length < 2) {
+        const globalCounts = {};
+        allOps.forEach(op => {
+            if (op.tag && op.tag !== 'divers') globalCounts[op.tag] = (globalCounts[op.tag] || 0) + 1;
+        });
+        const globalSorted = Object.keys(globalCounts).sort((a, b) => globalCounts[b] - globalCounts[a]);
+        globalSorted.forEach(tag => {
+            if (!sortedTags.includes(tag) && sortedTags.length < 2) sortedTags.push(tag);
+        });
+    }
+
+    // 3. Valeurs par défaut de secours
+    const fallbacks = ['courses', 'auto', 'resto', 'loisirs'];
+    fallbacks.forEach(tag => {
+        if (!sortedTags.includes(tag) && sortedTags.length < 2) sortedTags.push(tag);
+    });
+
+    return sortedTags.slice(0, 2);
+}
+
+function renderCompactTags(containerId, inputId, titleVal = "") {
+    const container = document.getElementById(containerId);
+    const input = document.getElementById(inputId);
+    if (!container || !input) return;
+
+    let selectedKey = input.value || 'divers';
+    const suggestions = getSuggestedTags(titleVal);
+
+    // Détection intelligente du changement pour éviter le tremblement à la frappe
+    const currentSugStr = suggestions.join(',');
+    const hasChanged = container.dataset.lastSug !== currentSugStr;
+    container.dataset.lastSug = currentSugStr;
+
+    let thirdBtnKey = 'divers';
+    if (!suggestions.includes(selectedKey)) {
+        thirdBtnKey = selectedKey;
+    }
+
+    container.innerHTML = "";
+
+    // Boutons de suggestion (gauche & milieu)
+    suggestions.forEach(key => {
+        container.appendChild(createCompactTagBtn(key, key === selectedKey, () => {
+            input.value = key;
+            renderCompactTags(containerId, inputId, titleVal);
+            triggerHaptic(10);
+        }, true, hasChanged)); // Transmet le signal d'animation
+    });
+
+    // 3ème Bouton (Ouvre la modale)
+    const thirdBtn = createCompactTagBtn(thirdBtnKey, thirdBtnKey === selectedKey, () => {
+        openTagSelectionModal(inputId, containerId, titleVal, suggestions);
+    }, false, false);
+    thirdBtn.innerHTML += `<span class="ml-1 text-[8px] opacity-50">▼</span>`;
+    container.appendChild(thirdBtn);
+}
+
+function createCompactTagBtn(key, isActive, onClick, isMagic = false, shouldAnimate = false) {
+    const tag = EXPENSE_TAGS[key] || EXPENSE_TAGS['divers'];
+    const btn = document.createElement("button");
+    btn.type = "button";
+    
+    let baseClass = "";
+    if (isActive) {
+        // État sélectionné : Pleine couleur
+        baseClass = "w-full py-2 px-1 rounded-xl text-xs font-bold border bg-brand-500 text-white border-brand-500 shadow-md select-none overflow-hidden transition-all flex items-center justify-center gap-1 active:scale-[0.97]";
+    } else if (isMagic) {
+        // État auto : Fond stone-800/60 en sombre pour se détacher du fond de la carte
+        baseClass = "w-full py-2 px-1 rounded-xl text-[11px] font-bold border border-dashed border-brand-500/60 dark:border-brand-400/60 bg-stone-50 dark:bg-stone-800/60 text-stone-600 dark:text-stone-300 select-none overflow-hidden flex items-center justify-center gap-1 active:scale-[0.97]";
+        if (shouldAnimate) {
+            baseClass += " animate-tag-pop";
+        }
+    } else {
+        // État classique au repos : Ligne pleine normale, fond stone-800/60 en sombre
+        baseClass = "w-full py-2 px-1 rounded-xl text-[11px] font-bold border border-stone-200 dark:border-stone-700/50 bg-stone-50 dark:bg-stone-800/60 text-stone-600 dark:text-stone-300 select-none overflow-hidden flex items-center justify-center gap-1 active:scale-[0.97] transition-all";
+    }
+
+    btn.className = baseClass;
+    btn.innerHTML = `<span class="text-sm shrink-0">${tag.icon}</span> <span class="truncate">${tag.label}</span>`;
+    btn.onclick = onClick;
+    return btn;
+}
+
+// Variables de session pour la modale
+let activeTagInputId = "";
+let activeTagContainerId = "";
+let activeTagTitleVal = "";
+let activeExcludedKeys = []; // NOUVEAU : Pour recharger la modale dynamiquement
+
+function toggleTagCategory(catKey) {
+    let collapsed = JSON.parse(localStorage.getItem('budget_hmr_collapsed_cats') || '[]');
+    if (collapsed.includes(catKey)) {
+        collapsed = collapsed.filter(k => k !== catKey); // Déroule
+    } else {
+        collapsed.push(catKey); // Enroule
+    }
+    localStorage.setItem('budget_hmr_collapsed_cats', JSON.stringify(collapsed));
+    
+    // Recharge la modale instantanément avec les mêmes paramètres
+    openTagSelectionModal(activeTagInputId, activeTagContainerId, activeTagTitleVal, activeExcludedKeys);
+}
+
+function openTagSelectionModal(inputId, containerId, titleVal, excludedKeys) {
+    activeTagInputId = inputId;
+    activeTagContainerId = containerId;
+    activeTagTitleVal = titleVal;
+    activeExcludedKeys = excludedKeys; // Sauvegarde pour la bascule
+
+    const container = document.getElementById("tag_selection_grid");
+    container.innerHTML = "";
+
+    // Helper pour générer un bouton de tag
+    const createBtn = (key) => {
+        if (excludedKeys.includes(key)) return null; 
+        
+        const tag = EXPENSE_TAGS[key];
+        if (!tag) return null;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "py-2.5 px-1 rounded-xl text-[10px] font-bold border transition-all flex flex-col items-center justify-center gap-1 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-800 hover:border-brand-400 select-none";
+        btn.innerHTML = `<span class="text-xl">${tag.icon}</span> <span class="truncate w-full text-center">${tag.label}</span>`;
+
+        btn.onclick = () => {
+            const input = document.getElementById(activeTagInputId);
+            if (input) input.value = key;
+            renderCompactTags(activeTagContainerId, activeTagInputId, activeTagTitleVal);
+            closeTagSelectionModal();
+            triggerHaptic(10);
+        };
+        return btn;
+    };
+
+    // --- CALCUL DES STATISTIQUES GLOBAL ---
+    const tagCounts = {};
+    const allOps = [...state.expenses];
+    state.budgets.forEach(b => {
+        if (b.expenses) allOps.push(...b.expenses);
+        if (b.archivedExpenses) allOps.push(...b.archivedExpenses);
+    });
+    allOps.forEach(op => {
+        if (op.tag) tagCounts[op.tag] = (tagCounts[op.tag] || 0) + 1;
+    });
+
+    // Lecture des préférences d'affichage
+    const collapsedCats = JSON.parse(localStorage.getItem('budget_hmr_collapsed_cats') || '[]');
+
+    // --- 1. SECTION DYNAMIQUE (FAVORIS) ---
+    const topTags = getTopUsedTags(12);
+    const dynSection = document.createElement("div");
+    dynSection.innerHTML = `<h4 class="text-[9px] font-black text-brand-500 uppercase tracking-widest mb-2 px-1">⭐ Les plus utilisés</h4><div class="grid grid-cols-3 gap-2"></div>`;
+    const dynGrid = dynSection.querySelector(".grid");
+    
+    topTags.forEach(key => {
+        const btn = createBtn(key);
+        if (btn) dynGrid.appendChild(btn);
+    });
+    if (dynGrid.children.length > 0) container.appendChild(dynSection);
+
+    // --- 2. SECTIONS PAR CATÉGORIE (TRIÉES PAR STATS ET ÉTAT) ---
+    const scoredCategories = Object.keys(TAG_CATEGORIES).map(catKey => {
+        const cat = TAG_CATEGORIES[catKey];
+        let score = 0;
+        cat.keys.forEach(key => { score += (tagCounts[key] || 0); });
+        return { catKey, score, cat, isCollapsed: collapsedCats.includes(catKey) };
+    });
+
+    // Tri : Déroulés d'abord (par score), puis Enroulés à la fin (par score)
+    scoredCategories.sort((a, b) => {
+        if (a.isCollapsed === b.isCollapsed) return b.score - a.score;
+        return a.isCollapsed ? 1 : -1;
+    });
+
+    scoredCategories.forEach(scoredCat => {
+        const { catKey, cat, isCollapsed } = scoredCat;
+        const sec = document.createElement("div");
+        
+        // En-tête cliquable
+        const header = document.createElement("div");
+        header.className = "flex justify-between items-center mb-2 px-1 cursor-pointer select-none active:scale-95 transition-transform";
+        header.onclick = () => { 
+            triggerHaptic(10); 
+            toggleTagCategory(catKey); 
+        };
+        
+        header.innerHTML = `
+            <h4 class="text-[9px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">${cat.label}</h4>
+            <span class="text-stone-500 dark:text-stone-400 bg-stone-200/50 dark:bg-stone-800 rounded-full w-6 h-6 flex items-center justify-center transition-transform duration-300 ${isCollapsed ? '-rotate-90' : 'rotate-0'}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+        `;
+        sec.appendChild(header);
+
+        // Grille de boutons (injectée seulement si la catégorie est déroulée)
+        if (!isCollapsed) {
+            const grid = document.createElement("div");
+            grid.className = "grid grid-cols-3 gap-2";
+            cat.keys.forEach(key => {
+                const btn = createBtn(key);
+                if (btn) grid.appendChild(btn);
+            });
+            if (grid.children.length > 0) sec.appendChild(grid);
+        }
+        
+        container.appendChild(sec);
+    });
+
+    // Affichage de la modale
+    const modal = document.getElementById("tag_selection_modal");
+    modal.classList.remove("hidden");
+    setTimeout(() => {
+        modal.classList.remove("opacity-0");
+        modal.querySelector(".glass-card").classList.remove("scale-95");
+    }, 10);
+}
+
+function closeTagSelectionModal() {
+    const modal = document.getElementById("tag_selection_modal");
+    modal.classList.add("opacity-0");
+    modal.querySelector(".glass-card").classList.add("scale-95");
+    setTimeout(() => modal.classList.add("hidden"), 300);
 }
 
 // --- APPLICATION STATE (SIMPLE MODEL) ---
@@ -340,8 +592,19 @@ function initUI() {
 
     // Apply visual theme
     applyVisualTheme();
-	initTagsUI();
-	initEditTagsUI();
+	document.getElementById("exp_tag").value = "divers";
+    renderCompactTags("tag_selector_container", "exp_tag", "");
+
+    // Écoute la saisie pour auto-suggérer
+    const expTitle = document.getElementById("exp_title");
+    if (expTitle) {
+        expTitle.addEventListener("input", (e) => renderCompactTags("tag_selector_container", "exp_tag", e.target.value));
+    }
+
+    const editTitle = document.getElementById("edit_title");
+    if (editTitle) {
+        editTitle.addEventListener("input", (e) => renderCompactTags("edit_tag_selector_container", "edit_exp_tag", e.target.value));
+    }
 	
     // Display current date month based on budgetMonth
     const currentMonthLabel = formatYearMonthFrench(state.budgetMonth);
@@ -641,7 +904,8 @@ function addExpense(event) {
     titleInput.value = "";
     amountInput.value = "";
     clearExpenseDate();
-	selectTag("divers");
+	document.getElementById("exp_tag").value = "divers";
+    renderCompactTags("tag_selector_container", "exp_tag", "");
     titleInput.focus();
 }
 
@@ -772,7 +1036,8 @@ function confirmAddRefund() {
             titleInput.value = "";
             amountInput.value = "";
             clearExpenseDate();
-			selectTag("divers");
+			document.getElementById("exp_tag").value = "divers";
+    renderCompactTags("tag_selector_container", "exp_tag", "");
             titleInput.focus();
         }
     );
@@ -1866,7 +2131,9 @@ function openEditItem(type, id, parentId = null) {
                     if (op && op.tag) currentTag = op.tag;
                 }
             }
-            selectEditTag(currentTag);
+            const editTagInput = document.getElementById("edit_exp_tag");
+			if (editTagInput) editTagInput.value = currentTag;
+			renderCompactTags("edit_tag_selector_container", "edit_exp_tag", item.title);
         } else {
             editTagSection.classList.add("hidden");
         }
@@ -4433,7 +4700,8 @@ function handleBudgetFundingChoice(type) {
     document.getElementById("exp_title").value = "";
     document.getElementById("exp_amount").value = "";
     clearExpenseDate();
-	selectTag("divers");
+	document.getElementById("exp_tag").value = "divers";
+    renderCompactTags("tag_selector_container", "exp_tag", "");
     
     updateUI();
     switchDashboardTab('budgets');
@@ -4776,7 +5044,14 @@ function renderBudgetsList() {
     });
 	// Initialiser les tags pour toutes les cartes qu'on vient de créer
     activeBudgets.forEach(budget => {
-        initEnvelopeTagsUI(budget.id);
+        const tagInput = document.getElementById(`env_op_tag_${budget.id}`);
+        if (tagInput && !tagInput.value) tagInput.value = "divers";
+        renderCompactTags(`env_tag_container_${budget.id}`, `env_op_tag_${budget.id}`, "");
+
+        const titleInput = document.getElementById(`budget_op_title_${budget.id}`);
+        if (titleInput) {
+            titleInput.addEventListener("input", (e) => renderCompactTags(`env_tag_container_${budget.id}`, `env_op_tag_${budget.id}`, e.target.value));
+        }
     });
 }
 
@@ -4865,6 +5140,9 @@ function addBudgetOperation(budgetId, type, isCash = false) {
     
     titleInput.value = "";
     amountInput.value = "";
+	
+	if (tagInput) tagInput.value = "divers";
+    renderCompactTags(`env_tag_container_${budget.id}`, `env_op_tag_${budget.id}`, "");
 }
 
 function calculateCashDepositAmount(budget, cashAvailable, targetDepositTxId) {
