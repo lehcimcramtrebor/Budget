@@ -7053,7 +7053,9 @@ function runCertificationTests() {
         { name: "Enveloppes amis", fn: testFriendsEnvelopes },
         { name: "Gestion des espèces", fn: testCashManagement },
         { name: "Garde-fous de date", fn: testPeriodSecurity },
-        { name: "Périodicité des frais", fn: testPeriodicityCalculations }
+        { name: "Périodicité des frais", fn: testPeriodicityCalculations },
+        { name: "Paiements fractionnés", fn: testInstallmentPayments },
+        { name: "Cas limites fractionnés", fn: testInstallmentEdgeCases }
     ];
     
     function runNext() {
@@ -7655,6 +7657,161 @@ function testPeriodicityCalculations() {
 
     // Restaurer le mois original
     state.budgetMonth = savedMonth;
+    return true;
+}
+
+// ============================================================
+// --- TEST : PAIEMENTS EN PLUSIEURS FOIS ---
+// ============================================================
+
+function testInstallmentPayments() {
+    state.budgetMonth = "2026-06";
+    state.revenues    = [{ id: "r1", title: "Salaire", amount: 2000 }];
+    state.fixedCharges = [];
+    state.expenses    = [];
+
+    // === 1. Création d'un paiement 4× à partir de l'échéance 1 ===
+    const groupId = "test_inst_group_1";
+    const baseExpense = {
+        id:     "inst_1",
+        title:  "Samsung Galaxy",
+        amount: 50,
+        date:   "2026-06-10",
+        tag:    "divers",
+        installment: { groupId, current: 1, total: 4 }
+    };
+    state.expenses.push(baseExpense);
+
+    // Vérifier la présence et le badge
+    const found = state.expenses.find(e => e.id === "inst_1");
+    if (!found)                                throw new Error("Dépense installment non créée");
+    if (!found.installment)                    throw new Error("Métadonnée installment absente");
+    if (found.installment.current !== 1)       throw new Error("current doit être 1");
+    if (found.installment.total !== 4)         throw new Error("total doit être 4");
+    if (found.installment.groupId !== groupId) throw new Error("groupId incorrect");
+
+    // === 2. Calcul du reste à vivre (1 échéance de 50 €) ===
+    let totals = calculateTotals();
+    if (totals.totalExpenses !== 50)  throw new Error(`totalExpenses attendu 50, obtenu ${totals.totalExpenses}`);
+    if (totals.remaining !== 1950)    throw new Error(`remaining attendu 1950, obtenu ${totals.remaining}`);
+
+    // === 3. Simulation du report automatique au mois suivant ===
+    // (logique de finalizeRenewal : copier les installments avec current < total)
+    const carriedInstallments = state.expenses
+        .filter(e => e.installment && e.installment.current < e.installment.total)
+        .map(e => ({
+            ...e,
+            id:   `${e.id}_carried`,
+            date: "2026-07-01",
+            installment: { ...e.installment, current: e.installment.current + 1 }
+        }));
+
+    state.budgetMonth = "2026-07";
+    state.expenses    = [];
+    carriedInstallments.forEach(e => state.expenses.push(e));
+
+    if (state.expenses.length !== 1) throw new Error(`Report: attendu 1 dépense, obtenu ${state.expenses.length}`);
+    const carried = state.expenses[0];
+    if (carried.installment.current !== 2) throw new Error(`Report: current attendu 2, obtenu ${carried.installment.current}`);
+    if (carried.installment.total !== 4)   throw new Error(`Report: total attendu 4, obtenu ${carried.installment.total}`);
+    if (carried.amount !== 50)             throw new Error(`Report: montant attendu 50, obtenu ${carried.amount}`);
+
+    // === 4. Suppression en cascade (toutes les échéances current >= instCur) ===
+    // On simule: on est à l'échéance 2, on supprime → 2, 3, 4 supprimées
+    // D'abord, simuler les échéances 2, 3, 4 dans state
+    state.expenses = [
+        { id: "inst_2", title: "Samsung Galaxy", amount: 50, date: "2026-07-01", tag: "divers", installment: { groupId, current: 2, total: 4 } },
+        { id: "inst_3", title: "Samsung Galaxy", amount: 50, date: "2026-08-01", tag: "divers", installment: { groupId, current: 3, total: 4 } },
+        { id: "inst_4", title: "Samsung Galaxy", amount: 50, date: "2026-09-01", tag: "divers", installment: { groupId, current: 4, total: 4 } }
+    ];
+    const instCurToDelete = 2;
+    state.expenses = state.expenses.filter(e =>
+        !(e.installment && e.installment.groupId === groupId && e.installment.current >= instCurToDelete)
+    );
+    if (state.expenses.length !== 0) throw new Error(`Suppression cascade: attendu 0 restant, obtenu ${state.expenses.length}`);
+
+    // === 5. Remboursement anticipé (consolidation) ===
+    // Simuler: on est à l'échéance 2/4, on consolide → 3 échéances × 50 = 150 €
+    const instExpense = { id: "inst_cur", title: "Samsung Galaxy", amount: 50, date: "2026-07-01", tag: "divers",
+        installment: { groupId: "test_inst_group_2", current: 2, total: 4 } };
+    state.expenses = [
+        instExpense,
+        { id: "inst_f3", title: "Samsung Galaxy", amount: 50, date: "2026-08-01", tag: "divers", installment: { groupId: "test_inst_group_2", current: 3, total: 4 } },
+        { id: "inst_f4", title: "Samsung Galaxy", amount: 50, date: "2026-09-01", tag: "divers", installment: { groupId: "test_inst_group_2", current: 4, total: 4 } }
+    ];
+    const perMonth   = Math.abs(instExpense.amount);
+    const remaining  = instExpense.installment.total - instExpense.installment.current + 1; // 3
+    const totalDue   = perMonth * remaining; // 150
+    if (remaining !== 3)    throw new Error(`Remb. anticipé: remaining attendu 3, obtenu ${remaining}`);
+    if (totalDue !== 150)   throw new Error(`Remb. anticipé: totalDue attendu 150, obtenu ${totalDue}`);
+
+    // Supprimer toutes les échéances current >= 2 et créer une dépense unique
+    const gId2 = instExpense.installment.groupId;
+    state.expenses = state.expenses.filter(e =>
+        !(e.installment && e.installment.groupId === gId2 && e.installment.current >= instExpense.installment.current)
+    );
+    const repaid = { id: "repaid_1", title: instExpense.title, amount: totalDue, date: instExpense.date, tag: instExpense.tag };
+    state.expenses.push(repaid);
+
+    if (state.expenses.length !== 1)       throw new Error(`Remb. anticipé: attendu 1 dépense après consolidation, obtenu ${state.expenses.length}`);
+    if (state.expenses[0].amount !== 150)  throw new Error(`Remb. anticipé: montant consolidé attendu 150, obtenu ${state.expenses[0].amount}`);
+    if (state.expenses[0].installment)     throw new Error("Remb. anticipé: la dépense consolidée ne doit pas avoir de métadonnée installment");
+
+    return true;
+}
+
+function testInstallmentEdgeCases() {
+    state.budgetMonth  = "2026-06";
+    state.revenues     = [{ id: "r1", title: "Salaire", amount: 3000 }];
+    state.fixedCharges = [];
+    state.expenses     = [];
+
+    // === 1. Départ à N°3 sur 6 (paiement en cours depuis 2 mois) ===
+    const groupId = "test_edge_group";
+    state.expenses = [
+        { id: "e_3", title: "PayPal 6x", amount: 100, date: "2026-06-15", tag: "divers",
+          installment: { groupId, current: 3, total: 6 } }
+    ];
+
+    const e3 = state.expenses[0];
+    if (e3.installment.current !== 3) throw new Error("Départ N°3 : current incorrect");
+    if (e3.installment.total !== 6)   throw new Error("Départ N°3 : total incorrect");
+
+    // Reste à payer : 6 - 3 + 1 = 4 échéances × 100 = 400 €
+    const remainingFromN3 = e3.installment.total - e3.installment.current + 1;
+    if (remainingFromN3 !== 4) throw new Error(`Reste depuis N°3 : attendu 4, obtenu ${remainingFromN3}`);
+
+    // === 2. Report successif jusqu'à la dernière échéance ===
+    // Simuler les reports de N°3 à N°6
+    let mockExpense = { ...e3 };
+    const reportTrace = [3];
+    while (mockExpense.installment.current < mockExpense.installment.total) {
+        mockExpense = { ...mockExpense, installment: { ...mockExpense.installment, current: mockExpense.installment.current + 1 } };
+        reportTrace.push(mockExpense.installment.current);
+    }
+    if (reportTrace.length !== 4) throw new Error(`Report successif: attendu 4 étapes, obtenu ${reportTrace.length}`);
+    if (mockExpense.installment.current !== 6) throw new Error(`Fin de report: current final attendu 6, obtenu ${mockExpense.installment.current}`);
+
+    // === 3. À la dernière échéance, le report ne doit PAS être généré ===
+    const lastExpense = { ...e3, installment: { ...e3.installment, current: 6 } };
+    const shouldCarry = lastExpense.installment.current < lastExpense.installment.total;
+    if (shouldCarry) throw new Error("Dernière échéance : ne doit pas être reportée");
+
+    // === 4. Total cohérent sur 6× 100 = 600 € ===
+    const fullTotal = e3.amount * e3.installment.total;
+    if (fullTotal !== 600) throw new Error(`Total 6× 100 : attendu 600, obtenu ${fullTotal}`);
+
+    // === 5. Vérification que le calcul du reste à vivre n'inclut que l'échéance courante ===
+    // (pas le total du groupe — chaque mois ne débite que sa propre échéance)
+    state.budgetMonth = "2026-06";
+    state.expenses    = [
+        { id: "e_cur", title: "PayPal 6x", amount: 100, date: "2026-06-15", tag: "divers",
+          installment: { groupId, current: 3, total: 6 } }
+    ];
+    const totals = calculateTotals();
+    if (totals.totalExpenses !== 100) throw new Error(`RAV: seule l'échéance courante compte (100), obtenu ${totals.totalExpenses}`);
+    if (totals.remaining !== 2900)    throw new Error(`RAV: remaining attendu 2900, obtenu ${totals.remaining}`);
+
     return true;
 }
 
