@@ -8431,6 +8431,7 @@ const _cssScrollDrivenSupported = CSS.supports('animation-timeline', 'scroll()')
 let _cssScrollDrivenStyle = null; // <style> injecté dynamiquement
 
 function measureBannerHeights() {
+	return; //GOLDEN CARD EFFECTS DEACTIVATE
     requestAnimationFrame(() => {
         const bannerContainer = document.getElementById("sticky_banner_container");
         if (!bannerContainer) return;
@@ -8516,6 +8517,7 @@ function measureBannerHeights() {
 
 
 function updateScrollEffects() {
+	return;	//GOLDEN CARD EFFECTS DEACTIVATE
     const bannerContainer = document.getElementById("sticky_banner_container");
     const scrollSpacer    = document.getElementById("scroll_spacer");
     const cardBottomGrid  = document.getElementById("card_bottom_grid");
