@@ -4131,6 +4131,12 @@ const tourSteps = [
         placement: "bottom"
     },
     {
+        elementId: "installment_trigger_btn",
+        title: "Paiement en Plusieurs Fois 🔢",
+        message: "Ce bouton permet de fractionner une dépense en 2, 3, 4, 6, 10 ou 12 mensualités. Vous indiquez aussi le numéro de l'échéance actuelle — utile si vous êtes déjà au 3e versement sur 6, par exemple. Chaque mois, l'app reporte automatiquement la mensualité suivante avec le bon numéro d'échéance.",
+        placement: "top"
+    },
+    {
         elementId: "tour_expenses_btn",
         title: "Opérations en Cours 🛒",
         message: "Tap sur cette carte pour ouvrir la liste de toutes vos dépenses du mois. Elles sont affichées dans l'ordre de saisie — contrairement au récap qui lui trie par date déclarée. Tap sur une opération pour la modifier ou la supprimer.",
