@@ -2797,38 +2797,43 @@ function earlyRepayInstallment() {
         </tr>
     </table>`;
 
-    showGenericConfirm(
-        `💳 Remboursement anticipé ?`,
-        `<strong>${remaining} échéance${remaining > 1 ? 's' : ''}</strong> vont être consolidées en une seule dépense de <strong>${totalDue.toFixed(2).replace('.',',')} €</strong> :
-        ${detailHTML}
-        <br><span style="font-size:9px;color:#9ca3af">Les futures échéances seront supprimées. La dépense de ce mois sera remplacée par le montant total soldé.</span>`,
-        '💰',
-        () => {
-            // 1. Supprimer toutes les échéances du groupe (current et futures)
-            state.expenses = state.expenses.filter(e =>
-                !(e.installment && e.installment.groupId === groupId &&
-                  e.installment.current >= inst.current)
-            );
-            // 2. Créer une dépense unique pour le montant total, sans installment
-            const repaidExpense = {
-                id:     `${Date.now()}_repaid`,
-                title:  expense.title,
-                amount: totalDue,
-                date:   expense.date,
-                tag:    expense.tag || 'divers'
-            };
-            state.expenses.push(repaidExpense);
-            saveState();
-            closeEditModal();
-            updateUI();
-            triggerHaptic('success');
-            showGenericAlert(
-                'Remboursement effectué',
-                `<strong>${expense.title}</strong> soldé pour <strong>${totalDue.toFixed(2).replace('.',',')} €</strong>. Les ${remaining - 1} échéance${remaining - 1 > 1 ? 's' : ''} future${remaining - 1 > 1 ? 's' : ''} ont été supprimée${remaining - 1 > 1 ? 's' : ''}.`,
-                '✅'
-            );
-        }
-    );
+    // Fermer la modale d'édition AVANT d'afficher la confirmation
+    // pour que la modale de confirmation soit bien au premier plan
+    closeEditModal();
+
+    setTimeout(() => {
+        showGenericConfirm(
+            `💳 Remboursement anticipé ?`,
+            `<strong>${remaining} échéance${remaining > 1 ? 's' : ''}</strong> vont être consolidées en une seule dépense de <strong>${totalDue.toFixed(2).replace('.',',')} €</strong> :
+            ${detailHTML}
+            <br><span style="font-size:9px;color:#9ca3af">Les futures échéances seront supprimées. La dépense de ce mois sera remplacée par le montant total soldé.</span>`,
+            '💰',
+            () => {
+                // 1. Supprimer toutes les échéances du groupe (current et futures)
+                state.expenses = state.expenses.filter(e =>
+                    !(e.installment && e.installment.groupId === groupId &&
+                      e.installment.current >= inst.current)
+                );
+                // 2. Créer une dépense unique pour le montant total, sans installment
+                const repaidExpense = {
+                    id:     `${Date.now()}_repaid`,
+                    title:  expense.title,
+                    amount: totalDue,
+                    date:   expense.date,
+                    tag:    expense.tag || 'divers'
+                };
+                state.expenses.push(repaidExpense);
+                saveState();
+                updateUI();
+                triggerHaptic('success');
+                showGenericAlert(
+                    'Remboursement effectué',
+                    `<strong>${expense.title}</strong> soldé pour <strong>${totalDue.toFixed(2).replace('.',',')} €</strong>. Les ${remaining - 1} échéance${remaining - 1 > 1 ? 's' : ''} future${remaining - 1 > 1 ? 's' : ''} ont été supprimée${remaining - 1 > 1 ? 's' : ''}.`,
+                    '✅'
+                );
+            }
+        );
+    }, 320); // Attendre la fin de l'animation de fermeture de l'edit modal
 }
 
 function saveEdit(event) {
@@ -4618,7 +4623,15 @@ function openRecapModal(category) {
                 const absAmt = Math.abs(e.amount);
                 const amtColor = isRefund ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400';
                 const amtSign = isRefund ? '+' : '-';
-                bodyHTML += makeRow(e.title.toUpperCase(), `${amtSign} ${formatCurrency(absAmt)}`, amtColor);
+                // Mention fractionnement en texte monospace discret
+                const instSuffix = (e.installment && e.installment.total > 1)
+                    ? ` <span style="font-size:9px;opacity:0.55">${e.installment.current}/${e.installment.total}</span>`
+                    : '';
+                bodyHTML += `
+                    <div class="${lineHover} flex justify-between items-baseline px-1 py-0.5 rounded transition-colors">
+                        <span class="font-mono text-[11px] ${ticketText} truncate max-w-[60%]">${e.title.toUpperCase()}${instSuffix}</span>
+                        <span class="font-mono font-black text-[11px] ${amtColor} tabular-nums">${amtSign} ${formatCurrency(absAmt)}</span>
+                    </div>`;
             });
         });
         
