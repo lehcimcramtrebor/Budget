@@ -988,6 +988,17 @@ function cancelInstallmentModal() {
     closeInstallmentModal();
 }
 
+function confirmCancelInstallment() {
+    const total   = parseInt(document.getElementById('exp_installment_total').value) || 1;
+    const current = parseInt(document.getElementById('exp_installment_current').value) || 1;
+    showGenericConfirm(
+        'Annuler le paiement fractionné ?',
+        `Le paiement en <strong>×${total}</strong> (échéance N°${current}) sera supprimé et vous reviendrez à un paiement simple.`,
+        '🔢',
+        () => { resetInstallmentUI(); triggerHaptic(10); }
+    );
+}
+
 function confirmInstallmentModal() {
     // Vérifier que les montants sont cohérents
     const total = parseInt(document.getElementById('exp_installment_total').value) || 1;
