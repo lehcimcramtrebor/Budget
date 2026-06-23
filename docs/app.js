@@ -538,6 +538,10 @@ document.addEventListener("DOMContentLoaded", () => {
     initPlatformSpecifics();
     initScrollEffects();
     hideSplashScreen();
+    // Initialiser le sélecteur de périodicité pour le formulaire de nouveau frais fixe
+    resetChargePeriodicityUI();
+    // Scroll automatique au focus des inputs (mobile uniquement)
+    initQuickEntryScroll();
 });
 
 function hideSplashScreen() {
@@ -604,7 +608,14 @@ function initDatabase() {
             } else if (typeof parsed.baseBudget === 'number') {
                 state.revenues = [{ id: "r1", title: "Revenu Principal", amount: parsed.baseBudget }];
             }
-            if (Array.isArray(parsed.fixedCharges)) state.fixedCharges = parsed.fixedCharges;
+            if (Array.isArray(parsed.fixedCharges)) {
+                state.fixedCharges = parsed.fixedCharges.map(c => {
+                    // Migration silencieuse : ajoute periodicity si absent
+                    if (!c.periodicity) c.periodicity = { type: 'monthly' };
+                    return c;
+                });
+                migrationPerformed = true;
+            }
             if (Array.isArray(parsed.expenses)) state.expenses = parsed.expenses;
             if (typeof parsed.darkMode === 'boolean') state.darkMode = parsed.darkMode;
             
@@ -708,10 +719,51 @@ function saveState() {
     updateQuickSaveUI();
 }
 
+// --- PERIODICITY HELPERS ---
+
+/**
+ * Compte combien de fois un jour de la semaine apparaît dans un mois donné.
+ * dayOfWeek : 0=Dim, 1=Lun, 2=Mar, 3=Mer, 4=Jeu, 5=Ven, 6=Sam
+ * month : 0-indexed (getMonth())
+ */
+function countDayOccurrences(dayOfWeek, year, month) {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let count = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+        if (new Date(year, month, d).getDay() === dayOfWeek) count++;
+    }
+    return count;
+}
+
+/**
+ * Retourne le montant effectif d'un frais fixe pour le mois courant du budget.
+ * Tout est débité immédiatement — aucune simulation de date.
+ */
+function getEffectiveChargeAmount(charge) {
+    const [year, monthNum] = state.budgetMonth.split('-').map(Number);
+    const month = monthNum - 1; // 0-indexed
+    const p = charge.periodicity || { type: 'monthly' };
+
+    if (p.type === 'specific_months') {
+        return Array.isArray(p.months) && p.months.includes(month) ? charge.amount : 0;
+    }
+    if (p.type === 'weekly') {
+        const count = countDayOccurrences(p.dayOfWeek, year, month);
+        return charge.amount * count;
+    }
+    // 'monthly' par défaut
+    return charge.amount;
+}
+
+// Noms des jours pour affichage
+const DAY_NAMES_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const DAY_NAMES_FULL  = ['Dimanches', 'Lundis', 'Mardis', 'Mercredis', 'Jeudis', 'Vendredis', 'Samedis'];
+const MONTH_NAMES_SHORT = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+
 // --- CORE LOGIC & CALCULATIONS ---
 function calculateTotals() {
     const totalRevenues = state.revenues.reduce((sum, r) => sum + r.amount, 0);
-    const totalFixed = state.fixedCharges.reduce((sum, c) => sum + c.amount, 0);
+    const totalFixed = state.fixedCharges.reduce((sum, c) => sum + getEffectiveChargeAmount(c), 0);
     // Exclude pending cash deposits from total expenses until they are actually deposited
     const totalExpenses = state.expenses
         .filter(e => !(e.isCashDepositPending && !e.isDeposited))
@@ -908,15 +960,49 @@ function renderFixedChargesList() {
     const container = document.getElementById("fixed_charges_container");
     container.innerHTML = "";
 
+    const [yr, mo] = state.budgetMonth.split('-').map(Number);
+    const currentMonth = mo - 1; // 0-indexed
+
     state.fixedCharges.forEach(c => {
+        const p = c.periodicity || { type: 'monthly' };
+        const eff = getEffectiveChargeAmount(c);
+        const isInactive = eff === 0;
+
+        // Badge périodicité
+        let badgeHtml = '';
+        if (p.type === 'weekly') {
+            const n = countDayOccurrences(p.dayOfWeek, yr, currentMonth);
+            badgeHtml = `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-md bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 font-mono font-black text-[9px] border border-brand-500/20 select-none">×${n} ${DAY_NAMES_SHORT[p.dayOfWeek]}</span>`;
+        } else if (p.type === 'specific_months') {
+            if (isInactive) {
+                badgeHtml = `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-md bg-stone-200/60 dark:bg-stone-800 text-stone-400 dark:text-stone-600 font-black text-[9px] border border-stone-200 dark:border-stone-800 select-none">INACTIF</span>`;
+            } else {
+                badgeHtml = `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-black text-[9px] border border-emerald-500/20 select-none">CE MOIS</span>`;
+            }
+        }
+
+        // Sous-texte périodicité
+        let subText = '';
+        if (p.type === 'weekly') {
+            const n = countDayOccurrences(p.dayOfWeek, yr, currentMonth);
+            subText = `<span class="font-mono text-[9px] text-stone-400 dark:text-stone-600 mt-0.5 block">${formatCurrency(c.amount)} × ${n} ${DAY_NAMES_FULL[p.dayOfWeek]} dans le mois</span>`;
+        } else if (p.type === 'specific_months' && isInactive) {
+            const activeMonthNames = (p.months || []).map(m => MONTH_NAMES_SHORT[m]).join(', ');
+            subText = `<span class="font-mono text-[9px] text-stone-400 dark:text-stone-600 mt-0.5 block">Actif en : ${activeMonthNames || '–'}</span>`;
+        }
+
         const item = document.createElement("div");
-        item.className = "flex items-center justify-between px-3 py-2 bg-stone-950/[0.03] dark:bg-black/30 rounded-xl border border-stone-200/60 dark:border-stone-800/60 group/charge";
+        item.className = `flex items-center justify-between px-3 py-2 bg-stone-950/[0.03] dark:bg-black/30 rounded-xl border border-stone-200/60 dark:border-stone-800/60 group/charge transition-opacity ${isInactive ? 'opacity-50' : ''}`;
         item.innerHTML = `
             <div onclick="openEditItem('fixedCharge', '${c.id}')" class="min-w-0 pr-2 flex-1 cursor-pointer">
-                <span class="font-mono font-bold text-xs text-stone-800 dark:text-stone-200 truncate block group-hover/charge:text-brand-500 transition-colors">${c.title}</span>
+                <div class="flex items-center flex-wrap gap-0.5">
+                    <span class="font-mono font-bold text-xs text-stone-800 dark:text-stone-200 truncate group-hover/charge:text-brand-500 transition-colors">${c.title}</span>
+                    ${badgeHtml}
+                </div>
+                ${subText}
             </div>
             <div class="flex items-center gap-2 shrink-0">
-                <span class="font-mono font-black text-[11px] text-red-500 dark:text-red-400">- ${c.amount.toFixed(2).replace('.', ',')} €</span>
+                <span class="font-mono font-black text-[11px] ${isInactive ? 'text-stone-400 dark:text-stone-600 line-through' : 'text-red-500 dark:text-red-400'}">- ${formatCurrency(eff)}</span>
                 <button onclick="deleteFixedCharge('${c.id}')" class="w-6 h-6 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-bold text-[9px] active:scale-90 border border-red-500/20" title="Supprimer">
                     ✕
                 </button>
@@ -1155,19 +1241,37 @@ function addFixedCharge() {
     const amount = parseFloat(amountStr);
 
     if (title && !isNaN(amount) && amount >= 0) {
+        // Lire la périodicité depuis le formulaire
+        const periodicityType = document.getElementById("new_charge_periodicity_type")?.value || 'monthly';
+        let periodicity = { type: periodicityType };
+
+        if (periodicityType === 'weekly') {
+            const dayOfWeek = parseInt(document.getElementById("new_charge_day_of_week")?.value ?? '1');
+            periodicity = { type: 'weekly', dayOfWeek };
+        } else if (periodicityType === 'specific_months') {
+            const months = [];
+            document.querySelectorAll(".new_charge_month_checkbox:checked").forEach(cb => {
+                months.push(parseInt(cb.value));
+            });
+            periodicity = { type: 'specific_months', months };
+        }
+
         state.fixedCharges.push({
             id: Date.now().toString(),
             title,
-            amount
+            amount,
+            periodicity
         });
         saveState();
-        fixedChargesCollapsed = false; // Auto-expand when adding new
+        fixedChargesCollapsed = false;
         updateUI();
         triggerHaptic('success');
 
         // Clear Inputs
         titleInput.value = "";
         amountInput.value = "";
+        // Reset periodicity selector to monthly
+        resetChargePeriodicityUI();
     }
 }
 
@@ -1936,7 +2040,7 @@ function updateCollapsibleUI() {
 
     const fcSummary = document.getElementById("fixed_charges_summary");
     if (fcSummary) {
-        const total = state.fixedCharges.reduce((s, c) => s + c.amount, 0);
+        const total = state.fixedCharges.reduce((s, c) => s + getEffectiveChargeAmount(c), 0);
         fcSummary.textContent = formatCurrency(total);
     }
 }
@@ -2189,13 +2293,189 @@ function openEditItem(type, id, parentId = null) {
             editTagSection.classList.add("hidden");
         }
     }
-	
+
+    // Section périodicité : visible uniquement pour les frais fixes
+    const periodicitySection = document.getElementById("edit_periodicity_section");
+    if (periodicitySection) {
+        if (type === "fixedCharge") {
+            periodicitySection.classList.remove("hidden");
+            renderPeriodicitySelector('edit_periodicity_section', 'edit_periodicity_type', item.periodicity || { type: 'monthly' });
+        } else {
+            periodicitySection.classList.add("hidden");
+        }
+    }
+
     const modal = document.getElementById("edit_modal");
     modal.classList.remove("hidden");
     setTimeout(() => {
         modal.classList.remove("opacity-0");
         modal.querySelector(".glass-card").classList.remove("scale-95");
     }, 10);
+}
+
+// Affiche le sélecteur de périodicité dans la section #edit_periodicity_section ou #new_charge_periodicity_section
+function renderPeriodicitySelector(containerId, hiddenInputId, currentPeriodicity) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const p = currentPeriodicity || { type: 'monthly' };
+    const [yr, mo] = state.budgetMonth.split('-').map(Number);
+    const currentMonth = mo - 1;
+
+    const types = [
+        { key: 'monthly', label: 'Mensuel', icon: '🗓️' },
+        { key: 'weekly', label: 'Hebdo', icon: '🔁' },
+        { key: 'specific_months', label: 'Mois choisis', icon: '📅' }
+    ];
+
+    let typeButtons = types.map(t => `
+        <button type="button"
+            onclick="selectPeriodicityType('${containerId}','${hiddenInputId}','${t.key}')"
+            class="periodicity-type-btn flex-1 py-2 rounded-xl font-black text-[9px] uppercase tracking-wider border transition-all active:scale-95 select-none
+                   ${ p.type === t.key
+                       ? 'bg-gradient-to-b from-brand-500 to-brand-600 text-white border-brand-600 shadow-[0_2px_0_theme(colors.brand.700)]'
+                       : 'bg-stone-100 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800'}"
+            data-ptype="${t.key}">
+            ${t.icon} ${t.label}
+        </button>
+    `).join('');
+
+    // Panel hebdo
+    const weeklyPanel = (() => {
+        const days = DAY_NAMES_SHORT.map((d, i) => `
+            <button type="button"
+                onclick="selectPeriodicityDay('${containerId}','${hiddenInputId}',${i})"
+                class="periodicity-day-btn py-1.5 rounded-lg font-black text-[9px] uppercase tracking-wider border transition-all active:scale-95 select-none
+                       ${ p.type === 'weekly' && p.dayOfWeek === i
+                           ? 'bg-brand-500 text-white border-brand-500'
+                           : 'bg-stone-100 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800'}"
+                data-day="${i}">${d}</button>
+        `).join('');
+        const n = p.type === 'weekly' ? countDayOccurrences(p.dayOfWeek ?? 1, yr, currentMonth) : 0;
+        const previewDay = p.type === 'weekly' ? DAY_NAMES_SHORT[p.dayOfWeek ?? 1] : DAY_NAMES_SHORT[1];
+        return `<div id="${containerId}_weekly" class="space-y-2 ${ p.type === 'weekly' ? '' : 'hidden' }">
+            <div class="grid grid-cols-7 gap-1">${days}</div>
+            <div id="${containerId}_weekly_preview" class="font-mono text-[9px] text-brand-500 dark:text-brand-400 text-center font-black">
+                ${n} ${DAY_NAMES_FULL[p.dayOfWeek ?? 1]} dans le mois
+            </div>
+        </div>`;
+    })();
+
+    // Panel mois spécifiques
+    const specificPanel = (() => {
+        const months = MONTH_NAMES_SHORT.map((m, i) => `
+            <label class="flex flex-col items-center gap-0.5 cursor-pointer select-none">
+                <input type="checkbox" class="${hiddenInputId}_month_cb sr-only" value="${i}"
+                    ${ p.type === 'specific_months' && Array.isArray(p.months) && p.months.includes(i) ? 'checked' : '' }
+                    onchange="updateSpecificMonthsPreview('${containerId}','${hiddenInputId}')">
+                <span class="w-8 h-7 rounded-lg font-black text-[9px] flex items-center justify-center border transition-all
+                    month-pill ${ p.type === 'specific_months' && Array.isArray(p.months) && p.months.includes(i)
+                        ? 'bg-brand-500 text-white border-brand-500'
+                        : (i === currentMonth ? 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-600' : 'bg-stone-100 dark:bg-stone-900 text-stone-400 dark:text-stone-500 border-stone-200 dark:border-stone-800')}
+                ">${m}</span>
+            </label>
+        `).join('');
+        return `<div id="${containerId}_specific" class="space-y-2 ${ p.type === 'specific_months' ? '' : 'hidden' }">
+            <div class="grid grid-cols-6 gap-1.5">${months}</div>
+            <div id="${containerId}_specific_preview" class="font-mono text-[9px] text-brand-500 dark:text-brand-400 text-center font-black">
+                ${ p.type === 'specific_months' && Array.isArray(p.months) ? `Actif ${p.months.length} mois/an` : 'Aucun mois sélectionné' }
+            </div>
+        </div>`;
+    })();
+
+    container.innerHTML = `
+        <input type="hidden" id="${hiddenInputId}" value="${p.type}">
+        <div class="flex gap-1.5 mb-2">${typeButtons}</div>
+        ${weeklyPanel}
+        ${specificPanel}
+    `;
+
+    // Appliquer style checkbox checkmark via JS (les inputs sont sr-only)
+    container.querySelectorAll(`.${hiddenInputId}_month_cb`).forEach(cb => {
+        cb.addEventListener('change', () => {
+            const pill = cb.nextElementSibling;
+            if (cb.checked) {
+                pill.classList.add('bg-brand-500','text-white','border-brand-500');
+                pill.classList.remove('bg-stone-100','dark:bg-stone-900','text-stone-400','dark:text-stone-500','border-stone-200','dark:border-stone-800','bg-stone-200','dark:bg-stone-700','text-stone-700','dark:text-stone-300','border-stone-300','dark:border-stone-600');
+            } else {
+                pill.classList.remove('bg-brand-500','text-white','border-brand-500');
+                const isCurrentMonth = parseInt(cb.value) === currentMonth;
+                if (isCurrentMonth) {
+                    pill.classList.add('bg-stone-200','dark:bg-stone-700','text-stone-700','dark:text-stone-300','border-stone-300','dark:border-stone-600');
+                } else {
+                    pill.classList.add('bg-stone-100','dark:bg-stone-900','text-stone-400','dark:text-stone-500','border-stone-200','dark:border-stone-800');
+                }
+            }
+        });
+    });
+}
+
+function selectPeriodicityType(containerId, hiddenInputId, type) {
+    const hiddenInput = document.getElementById(hiddenInputId);
+    if (hiddenInput) hiddenInput.value = type;
+    // Toggle panels
+    const weeklyPanel = document.getElementById(`${containerId}_weekly`);
+    const specificPanel = document.getElementById(`${containerId}_specific`);
+    if (weeklyPanel) weeklyPanel.classList.toggle('hidden', type !== 'weekly');
+    if (specificPanel) specificPanel.classList.toggle('hidden', type !== 'specific_months');
+    // Update button styles
+    document.querySelectorAll(`#${containerId} .periodicity-type-btn`).forEach(btn => {
+        const active = btn.dataset.ptype === type;
+        btn.className = btn.className
+            .replace(/bg-gradient-to-b from-brand-500 to-brand-600 text-white border-brand-600 shadow-\[0_2px_0_theme\(colors\.brand\.700\)\]/g, '')
+            .replace(/bg-stone-100 dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-800/g, '').trim();
+        if (active) {
+            btn.classList.add('bg-gradient-to-b','from-brand-500','to-brand-600','text-white','border-brand-600','shadow-[0_2px_0_theme(colors.brand.700)]');
+            btn.classList.remove('bg-stone-100','dark:bg-stone-900','text-stone-500','dark:text-stone-400','border-stone-200','dark:border-stone-800');
+        } else {
+            btn.classList.add('bg-stone-100','dark:bg-stone-900','text-stone-500','dark:text-stone-400','border-stone-200','dark:border-stone-800');
+            btn.classList.remove('bg-gradient-to-b','from-brand-500','to-brand-600','text-white','border-brand-600','shadow-[0_2px_0_theme(colors.brand.700)]');
+        }
+    });
+    triggerHaptic(10);
+}
+
+function selectPeriodicityDay(containerId, hiddenInputId, dayIndex) {
+    // Update button styles
+    document.querySelectorAll(`#${containerId} .periodicity-day-btn`).forEach(btn => {
+        const active = parseInt(btn.dataset.day) === dayIndex;
+        if (active) {
+            btn.classList.add('bg-brand-500','text-white','border-brand-500');
+            btn.classList.remove('bg-stone-100','dark:bg-stone-900','text-stone-500','dark:text-stone-400','border-stone-200','dark:border-stone-800');
+        } else {
+            btn.classList.add('bg-stone-100','dark:bg-stone-900','text-stone-500','dark:text-stone-400','border-stone-200','dark:border-stone-800');
+            btn.classList.remove('bg-brand-500','text-white','border-brand-500');
+        }
+    });
+    // Mettre à jour le préview
+    const [yr, mo] = state.budgetMonth.split('-').map(Number);
+    const n = countDayOccurrences(dayIndex, yr, mo - 1);
+    const preview = document.getElementById(`${containerId}_weekly_preview`);
+    if (preview) preview.textContent = `${n} ${DAY_NAMES_FULL[dayIndex]} dans le mois`;
+    triggerHaptic(10);
+}
+
+function updateSpecificMonthsPreview(containerId, hiddenInputId) {
+    const checked = document.querySelectorAll(`.${hiddenInputId}_month_cb:checked`).length;
+    const preview = document.getElementById(`${containerId}_specific_preview`);
+    if (preview) preview.textContent = checked > 0 ? `Actif ${checked} mois/an` : 'Aucun mois sélectionné';
+}
+
+function readPeriodicityFromUI(containerId, hiddenInputId) {
+    const type = document.getElementById(hiddenInputId)?.value || 'monthly';
+    if (type === 'weekly') {
+        const activeDay = document.querySelector(`#${containerId} .periodicity-day-btn.bg-brand-500`);
+        const dayOfWeek = activeDay ? parseInt(activeDay.dataset.day) : 1;
+        return { type: 'weekly', dayOfWeek };
+    } else if (type === 'specific_months') {
+        const months = [];
+        document.querySelectorAll(`.${hiddenInputId}_month_cb:checked`).forEach(cb => months.push(parseInt(cb.value)));
+        return { type: 'specific_months', months };
+    }
+    return { type: 'monthly' };
+}
+
+function resetChargePeriodicityUI() {
+    renderPeriodicitySelector('new_charge_periodicity_section', 'new_charge_periodicity_type', { type: 'monthly' });
 }
 
 function closeEditModal() {
@@ -2315,8 +2595,46 @@ function saveEdit(event) {
     } else if (type === "fixedCharge") {
         const item = state.fixedCharges.find(c => c.id === id);
         if (item) {
+            const newPeriodicity = readPeriodicityFromUI('edit_periodicity_section', 'edit_periodicity_type');
+            const wasActive = getEffectiveChargeAmount(item) > 0;
+
             item.title = title;
             item.amount = amount;
+            item.periodicity = newPeriodicity;
+
+            const isNowActive = getEffectiveChargeAmount(item) > 0;
+
+            // Dialog si désactivation en cours de mois
+            if (wasActive && !isNowActive) {
+                const today = new Date();
+                const dayStr = today.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+                saveState();
+                updateUI();
+                closeEditModal();
+                setTimeout(() => {
+                    showGenericConfirm(
+                        `⚠️ Frais peut-être déjà prélevé`,
+                        `Nous sommes le <strong>${dayStr}</strong>. Le frais <strong>« ${title} »</strong> de <strong>${formatCurrency(amount)}</strong> a peut-être déjà été prélevé ce mois-ci.<br><br>Souhaitez-vous le <strong>conserver dans le budget ce mois</strong>, ou le <strong>supprimer de ce mois</strong> ?`,
+                        '💸',
+                        () => { /* Supprimer = déjà fait (inactif = 0) */ },
+                        () => {
+                            // Conserver = on le force actif pour ce mois uniquement en ajoutant une dépense exceptionnelle
+                            state.expenses.push({
+                                id: Date.now().toString(),
+                                title: `[Report] ${title}`,
+                                amount: amount,
+                                date: today.toISOString().split('T')[0],
+                                tag: 'divers'
+                            });
+                            saveState();
+                            updateUI();
+                        },
+                        'Supprimer du budget',
+                        'Conserver ce mois'
+                    );
+                }, 350);
+                return;
+            }
         }
     } else if (type === "revenue") {
         const item = state.revenues.find(r => r.id === id);
@@ -3863,8 +4181,26 @@ function openRecapModal(category) {
             </div>`;
     } else if (category === "fixedCharges") {
         title = "⚙️ FRAIS FIXES";
-        const total = state.fixedCharges.reduce((s, c) => s + c.amount, 0);
-        let rows = state.fixedCharges.map(c => makeRow(c.title.toUpperCase(), `- ${formatCurrency(c.amount)}`, 'text-red-500 dark:text-red-400')).join('');
+        const total = state.fixedCharges.reduce((s, c) => s + getEffectiveChargeAmount(c), 0);
+        let rows = state.fixedCharges.map(c => {
+            const eff = getEffectiveChargeAmount(c);
+            const p = c.periodicity || { type: 'monthly' };
+            let badge = '';
+            if (p.type === 'weekly') {
+                const [yr, mo] = state.budgetMonth.split('-').map(Number);
+                const n = countDayOccurrences(p.dayOfWeek, yr, mo - 1);
+                badge = ` ×${n}`;
+            } else if (p.type === 'specific_months') {
+                const [, mo] = state.budgetMonth.split('-').map(Number);
+                const active = Array.isArray(p.months) && p.months.includes(mo - 1);
+                badge = active ? ' ✓' : ' (inactif)';
+            }
+            const dimmed = eff === 0 ? 'opacity-50' : '';
+            return `<div class="flex justify-between items-baseline px-1 py-0.5 ${dimmed}">
+                        <span class="font-mono text-[11px] ${ticketText} truncate max-w-[55%]">${c.title.toUpperCase()}${badge}</span>
+                        <span class="font-mono font-black text-[11px] text-red-500 dark:text-red-400 tabular-nums">- ${formatCurrency(eff)}</span>
+                    </div>`;
+        }).join('');
         if (!rows) rows = `<div class="text-center py-4 font-mono text-[11px] ${subText}">-- AUCUN FRAIS FIXE --</div>`;
         html = `
             <div class="rounded-2xl border ${ticketBg} overflow-hidden">
@@ -3875,7 +4211,7 @@ function openRecapModal(category) {
                 </div>
                 <div class="px-4 py-3 space-y-0.5">
                     ${makeSep('·')}
-                    <div class="font-mono text-[9px] ${subText} uppercase tracking-widest px-1 py-1">Libellé · · · · · · · Montant</div>
+                    <div class="font-mono text-[9px] ${subText} uppercase tracking-widest px-1 py-1">Libellé · · · · · · · Montant effectif</div>
                     ${makeSep('·')}
                     ${rows}
                     ${makeSep('─')}
@@ -6272,7 +6608,7 @@ function triggerFirstLaunchToleranceCheck() {
 let isTestingRunning = false;
 
 function openCertification() {
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
         updateTestRowStatus(i, "pending");
     }
     document.getElementById("cert_testing_view").classList.remove("hidden");
@@ -6349,7 +6685,8 @@ function runCertificationTests() {
         { name: "Enveloppes classiques", fn: testClassicEnvelopes },
         { name: "Enveloppes amis", fn: testFriendsEnvelopes },
         { name: "Gestion des espèces", fn: testCashManagement },
-        { name: "Garde-fous de date", fn: testPeriodSecurity }
+        { name: "Garde-fous de date", fn: testPeriodSecurity },
+        { name: "Périodicité des frais", fn: testPeriodicityCalculations }
     ];
     
     function runNext() {
@@ -6882,6 +7219,78 @@ function testPeriodSecurity() {
     return true;
 }
 
+function testPeriodicityCalculations() {
+    // Sauvegarde du mois courant
+    const savedMonth = state.budgetMonth;
+
+    // === TEST 1 : Mode mensuel — comportement inchangé ===
+    state.budgetMonth = "2026-06";
+    state.fixedCharges = [
+        { id: "c1", title: "Loyer", amount: 800, periodicity: { type: 'monthly' } }
+    ];
+    state.revenues = [{ id: "r1", title: "Salaire", amount: 2000 }];
+    state.expenses = [];
+    let totals = calculateTotals();
+    if (totals.totalFixed !== 800) throw new Error(`Mensuel: totalFixed attendu 800, obtenu ${totals.totalFixed}`);
+    if (totals.remaining !== 1200) throw new Error(`Mensuel: remaining attendu 1200, obtenu ${totals.remaining}`);
+
+    // === TEST 2 : Mode hebdomadaire — juin 2026 ===
+    // Juin 2026 : lundis = 1, 8, 15, 22, 29 → 5 lundis
+    state.budgetMonth = "2026-06";
+    const lundisJuin = countDayOccurrences(1, 2026, 5); // 5 = juin (0-indexed)
+    if (lundisJuin !== 5) throw new Error(`Comptage lundis juin 2026: attendu 5, obtenu ${lundisJuin}`);
+
+    state.fixedCharges = [
+        { id: "c1", title: "Coach", amount: 60, periodicity: { type: 'weekly', dayOfWeek: 1 } }
+    ];
+    totals = calculateTotals();
+    const expectedWeekly = 60 * lundisJuin;
+    if (totals.totalFixed !== expectedWeekly) throw new Error(`Hebdo: totalFixed attendu ${expectedWeekly}, obtenu ${totals.totalFixed}`);
+
+    // === TEST 3 : Mode hebdomadaire — juillet 2026 ===
+    // Juillet 2026 : lundis = 6, 13, 20, 27 → 4 lundis
+    state.budgetMonth = "2026-07";
+    const lundisJuillet = countDayOccurrences(1, 2026, 6); // 6 = juillet (0-indexed)
+    if (lundisJuillet !== 4) throw new Error(`Comptage lundis juillet 2026: attendu 4, obtenu ${lundisJuillet}`);
+
+    state.fixedCharges = [
+        { id: "c1", title: "Coach", amount: 60, periodicity: { type: 'weekly', dayOfWeek: 1 } }
+    ];
+    totals = calculateTotals();
+    if (totals.totalFixed !== 240) throw new Error(`Hebdo juillet: totalFixed attendu 240, obtenu ${totals.totalFixed}`);
+
+    // === TEST 4 : Mois spécifiques — actif ===
+    state.budgetMonth = "2026-04"; // Avril = index 3
+    state.fixedCharges = [
+        { id: "c1", title: "Assurance auto", amount: 180, periodicity: { type: 'specific_months', months: [3, 6, 9] } }
+    ];
+    totals = calculateTotals();
+    if (totals.totalFixed !== 180) throw new Error(`Mois spéc. actif: totalFixed attendu 180, obtenu ${totals.totalFixed}`);
+
+    // === TEST 5 : Mois spécifiques — inactif ===
+    state.budgetMonth = "2026-05"; // Mai = index 4, pas dans [3,6,9]
+    totals = calculateTotals();
+    if (totals.totalFixed !== 0) throw new Error(`Mois spéc. inactif: totalFixed attendu 0, obtenu ${totals.totalFixed}`);
+
+    // === TEST 6 : Mix mensuel + hebdo + inactif ===
+    state.budgetMonth = "2026-06";
+    state.revenues = [{ id: "r1", title: "Salaire", amount: 3000 }];
+    state.fixedCharges = [
+        { id: "c1", title: "Loyer", amount: 900, periodicity: { type: 'monthly' } },
+        { id: "c2", title: "Coach", amount: 50, periodicity: { type: 'weekly', dayOfWeek: 1 } }, // 5 lundis = 250
+        { id: "c3", title: "Assurance", amount: 200, periodicity: { type: 'specific_months', months: [0, 6] } } // inactif en juin
+    ];
+    state.expenses = [];
+    totals = calculateTotals();
+    // Attendu: 900 + 50*5 + 0 = 1150
+    if (totals.totalFixed !== 1150) throw new Error(`Mix: totalFixed attendu 1150, obtenu ${totals.totalFixed}`);
+    if (totals.remaining !== 1850) throw new Error(`Mix: remaining attendu 1850, obtenu ${totals.remaining}`);
+
+    // Restaurer le mois original
+    state.budgetMonth = savedMonth;
+    return true;
+}
+
 let bannerHeightDiffMax = 0;
 let bannerStickyTop = 0;
 
@@ -6978,6 +7387,54 @@ function updateScrollEffects() {
         bannerContainer.classList.add("is-compact");
     } else {
         bannerContainer.classList.remove("is-compact");
+    }
+}
+
+
+// --- SCROLL AUTOMATIQUE SAISIE RAPIDE (mobile uniquement) ---
+function initQuickEntryScroll() {
+    // Actif uniquement sur appareils touch (clavier virtuel)
+    const isTouchDevice = () =>
+        window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+
+    let quickEntryFocused = false;
+
+    function scrollToQuickEntry() {
+        const banner = document.getElementById('sticky_banner_container');
+        const card = document.getElementById('tour_add_title')?.closest('.glass-card');
+        if (!banner || !card) return;
+
+        const bannerBottom = banner.getBoundingClientRect().bottom;
+        const cardTop = card.getBoundingClientRect().top;
+        const delta = cardTop - bannerBottom - 12; // 12px de respiration
+
+        if (Math.abs(delta) < 4) return; // Déjà bien positionné
+        window.scrollBy({ top: delta, behavior: 'smooth' });
+    }
+
+    // Écouter le focus sur les 2 inputs de saisie rapide
+    ['exp_title', 'exp_amount'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        el.addEventListener('focus', () => {
+            if (!isTouchDevice()) return;
+            quickEntryFocused = true;
+            // Délai court pour laisser le clavier commencer à apparaître
+            setTimeout(scrollToQuickEntry, 120);
+        });
+
+        el.addEventListener('blur', () => {
+            quickEntryFocused = false;
+        });
+    });
+
+    // Réajuster quand le clavier virtuel modifie le viewport (iOS/Android)
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            if (!quickEntryFocused || !isTouchDevice()) return;
+            setTimeout(scrollToQuickEntry, 60);
+        });
     }
 }
 
