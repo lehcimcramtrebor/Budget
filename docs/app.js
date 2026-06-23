@@ -806,6 +806,13 @@ function updateUI() {
     document.getElementById("fixed_charges_disp").innerText = formatCurrency(totalFixed);
     document.getElementById("expenses_disp").innerText = formatCurrency(totalExpenses);
 
+    // Nom gravé style CB
+    const cardHolderEl = document.getElementById("card_holder_name");
+    if (cardHolderEl) {
+        const rawName = state.settings?.username?.trim();
+        cardHolderEl.textContent = rawName ? rawName.toUpperCase() : "BUDGET HMR";
+    }
+
     // Play overdraft sound if transition from non-negative to negative occurs
     if (lastRemaining !== null && lastRemaining >= 0 && remaining < 0) {
         playOverdraftSound();
