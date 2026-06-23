@@ -958,6 +958,22 @@ function generateInstallmentGroupId() {
 }
 
 function openInstallmentModal() {
+    // Vérifier qu'un montant a été saisi
+    const amountInput = document.getElementById('exp_amount');
+    const amount = parseFloat((amountInput?.value || '0').replace(',', '.'));
+    if (!amount || amount <= 0) {
+        if (amountInput) {
+            amountInput.focus();
+            amountInput.classList.add('ring-2', 'ring-red-400');
+            const form = document.getElementById('expense_form');
+            if (form) {
+                form.classList.add('animate-shake');
+                setTimeout(() => form.classList.remove('animate-shake'), 400);
+            }
+            setTimeout(() => amountInput.classList.remove('ring-2', 'ring-red-400'), 1500);
+        }
+        return;
+    }
     // Sauvegarder les valeurs actuelles pour pouvoir annuler
     const modal = document.getElementById('installment_config_modal');
     if (!modal) return;
