@@ -311,15 +311,28 @@
                 border-top: 1px solid rgba(214, 211, 208, 0.32) !important; /* stone-300 à 32% — ligne lumière */
             }
 
-            /* --- Éléments de liste (rows, panneaux internes) --- */
-            .dark .bg-black\/30,
-            .dark [class*="dark:bg-black/30"] {
-                border-color: rgba(168, 162, 158, 0.22) !important;
+            /* ============================================
+               HOMOGÉNÉISATION GLOBALE DES BORDURES DARK MODE
+               Tous les éléments portant une classe Tailwind border-stone-*
+               sont ramenés au même niveau : stone-500 @ 35%
+               (cohérent avec les inputs et glass-cards)
+               ============================================ */
+            .dark [class*="border-stone-7"],
+            .dark [class*="border-stone-8"],
+            .dark [class*="border-stone-9"],
+            .dark [class*="dark:border-stone-7"],
+            .dark [class*="dark:border-stone-8"],
+            .dark [class*="dark:border-stone-9"] {
+                border-color: rgba(120, 113, 108, 0.40) !important; /* stone-500 @ 40% */
             }
-            /* Séparateurs horizontaux plus visibles */
-            .dark hr,
-            .dark [class*="dark:border-stone-800"] {
-                border-color: rgba(168, 162, 158, 0.26) !important;
+            /* Séparateurs <hr> — légèrement plus discrets */
+            .dark hr {
+                border-color: rgba(120, 113, 108, 0.30) !important;
+            }
+            /* Bordures très atténuées (opacity suffixes /30 /40 /60) — on les rehausse un peu */
+            .dark [class*="dark:border-stone-800/"],
+            .dark [class*="dark:border-stone-700/"] {
+                border-color: rgba(120, 113, 108, 0.30) !important;
             }
             .golden-card {
                 @apply p-6 rounded-3xl transition-all duration-300 relative overflow-hidden;
