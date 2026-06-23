@@ -290,8 +290,28 @@
                 border: 1px solid rgba(228, 228, 231, 0.8);
             }
             .dark .glass-card {
-                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-                border: 1px solid rgba(120, 113, 108, 0.25) !important;
+                box-shadow:
+                    /* Ligne de lumière subtile en haut — effet de relief */
+                    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+                    /* Ombre portée profonde */
+                    0 4px 6px rgba(0, 0, 0, 0.4),
+                    0 12px 32px rgba(0, 0, 0, 0.55),
+                    /* Micro-glow périphérique très subtil */
+                    0 0 0 1px rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(168, 162, 158, 0.22) !important; /* stone-400 à 22% */
+                border-top: 1px solid rgba(214, 211, 208, 0.18) !important; /* stone-300 à 18% — ligne lumière */
+            }
+
+            /* --- Éléments de liste (rows, panneaux internes) --- */
+            /* Renforce la lisibilité sur fond AMOLED sans trop charger */
+            .dark .bg-black\/30,
+            .dark [class*="dark:bg-black/30"] {
+                border-color: rgba(168, 162, 158, 0.14) !important;
+            }
+            /* Séparateurs horizontaux plus visibles */
+            .dark hr,
+            .dark [class*="dark:border-stone-800"] {
+                border-color: rgba(168, 162, 158, 0.18) !important;
             }
             .golden-card {
                 @apply p-6 rounded-3xl transition-all duration-300 relative overflow-hidden;
