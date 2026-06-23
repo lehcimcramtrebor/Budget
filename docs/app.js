@@ -256,7 +256,9 @@ function getSuggestedTags(titleVal) {
         });
     }
 
-    let sortedTags = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+    // Filtrer les tags désactivés
+    const disabledSet = new Set(state.disabledTags || []);
+    let sortedTags = Object.keys(counts).filter(k => !disabledSet.has(k)).sort((a, b) => counts[b] - counts[a]);
 
     // 2. Compléter avec les tags les plus utilisés globalement si besoin
     if (sortedTags.length < 2) {
@@ -264,16 +266,16 @@ function getSuggestedTags(titleVal) {
         allOps.forEach(op => {
             if (op.tag && op.tag !== 'divers') globalCounts[op.tag] = (globalCounts[op.tag] || 0) + 1;
         });
-        const globalSorted = Object.keys(globalCounts).sort((a, b) => globalCounts[b] - globalCounts[a]);
+        const globalSorted = Object.keys(globalCounts).filter(k => !disabledSet.has(k)).sort((a, b) => globalCounts[b] - globalCounts[a]);
         globalSorted.forEach(tag => {
             if (!sortedTags.includes(tag) && sortedTags.length < 2) sortedTags.push(tag);
         });
     }
 
-    // 3. Valeurs par défaut de secours
+    // 3. Valeurs par défaut de secours (non désactivés)
     const fallbacks = ['courses', 'auto', 'resto', 'loisirs'];
     fallbacks.forEach(tag => {
-        if (!sortedTags.includes(tag) && sortedTags.length < 2) sortedTags.push(tag);
+        if (!disabledSet.has(tag) && !sortedTags.includes(tag) && sortedTags.length < 2) sortedTags.push(tag);
     });
 
     return sortedTags.slice(0, 2);
@@ -372,7 +374,9 @@ function openTagSelectionModal(inputId, containerId, titleVal, excludedKeys) {
 
     // Helper pour générer un bouton de tag
     const createBtn = (key) => {
-        if (excludedKeys.includes(key)) return null; 
+        if (excludedKeys.includes(key)) return null;
+        // Ne pas afficher les tags désactivés (sauf custom perso)
+        if (!key.startsWith('custom_') && (state.disabledTags || []).includes(key)) return null;
         
         const tag = EXPENSE_TAGS[key];
         if (!tag) return null;
@@ -466,6 +470,18 @@ function openTagSelectionModal(inputId, containerId, titleVal, excludedKeys) {
         container.appendChild(sec);
     });
 
+    // --- 0. SECTION TAGS PERSO (en tête) ---
+    if (state.customTags && state.customTags.length > 0) {
+        const customSec = document.createElement("div");
+        customSec.innerHTML = `<h4 class="text-[10px] font-black text-brand-500 uppercase tracking-tight mb-2 px-1">⭐ Mes Tags Perso</h4><div class="grid grid-cols-3 gap-2"></div>`;
+        const customGrid = customSec.querySelector(".grid");
+        state.customTags.forEach(t => {
+            const btn = createBtn(t.key);
+            if (btn) customGrid.appendChild(btn);
+        });
+        if (customGrid.children.length > 0) container.appendChild(customSec);
+    }
+
     // Affichage de la modale
     const modal = document.getElementById("tag_selection_modal");
     modal.classList.remove("hidden");
@@ -473,6 +489,16 @@ function openTagSelectionModal(inputId, containerId, titleVal, excludedKeys) {
         modal.classList.remove("opacity-0");
         modal.querySelector(".glass-card").classList.remove("scale-95");
     }, 10);
+
+    // Bouton "Créer un tag" en bas
+    setTimeout(() => {
+        const grid = document.getElementById("tag_selection_grid");
+        if (!grid) return;
+        const createBtn_el = document.createElement("div");
+        createBtn_el.className = "pt-2 border-t border-stone-200/60 dark:border-stone-700/60 mt-2";
+        createBtn_el.innerHTML = `<button onclick="closeTagSelectionModal(); setTimeout(openTagManager, 320);" class="w-full py-2.5 rounded-xl border-2 border-dashed border-brand-400/40 text-brand-500 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-brand-50/30 dark:hover:bg-brand-900/20 transition-all active:scale-95">＋ Créer un tag perso</button>`;
+        grid.appendChild(createBtn_el);
+    }, 50);
 }
 
 function closeTagSelectionModal() {
@@ -481,6 +507,219 @@ function closeTagSelectionModal() {
     modal.querySelector(".glass-card").classList.add("scale-95");
     setTimeout(() => modal.classList.add("hidden"), 300);
 }
+
+// ============================================================
+// GESTIONNAIRE DE TAGS — Custom + Activation/Désactivation
+// ============================================================
+
+const TAG_EMOJI_PICKER = [
+    '🏠','🛒','🍽️','🍺','🎁','🏖️','✈️','🚗',
+    '🎮','🎵','🎬','📚','🎯','🏋️','🐶','👶',
+    '💰','🐷','💳','📱','💼','🔧','🌿','⭐',
+    '🎰','✂️','🍕','☕','🧴','💊','🎪','🕯️',
+    '🏊','🚴','⚽','🎾','🏔️','🌊','🎣','🎨',
+    '🍷','🧁','🌺','🦋','✨','🎭','🪴','🦄'
+];
+
+let tagManagerSelectMode = false;
+let tagManagerSelected = new Set();
+
+function mergeCustomTagsIntoExpenseTags() {
+    Object.keys(EXPENSE_TAGS).forEach(k => { if (k.startsWith('custom_')) delete EXPENSE_TAGS[k]; });
+    delete TAG_CATEGORIES['custom'];
+    if (state.customTags && state.customTags.length > 0) {
+        TAG_CATEGORIES['custom'] = { label: '⭐ Mes Tags Perso', keys: state.customTags.map(t => t.key) };
+        state.customTags.forEach(t => { EXPENSE_TAGS[t.key] = { icon: t.icon, label: t.label }; });
+    }
+}
+
+function openTagManager() {
+    tagManagerSelectMode = false;
+    tagManagerSelected = new Set();
+    renderTagManager();
+    const modal = document.getElementById('tag_manager_modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('.glass-card').classList.remove('scale-95'); }, 10);
+}
+
+function closeTagManager() {
+    const modal = document.getElementById('tag_manager_modal');
+    modal.classList.add('opacity-0');
+    modal.querySelector('.glass-card').classList.add('scale-95');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+function renderTagManager() {
+    const body = document.getElementById('tag_manager_body');
+    if (!body) return;
+    const disabled = new Set(state.disabledTags || []);
+    let html = '';
+
+    // Tags Perso
+    html += `<div class="space-y-2"><h4 class="text-[10px] font-black text-brand-500 uppercase tracking-wider">⭐ Mes Tags Perso</h4>`;
+    if (!state.customTags || state.customTags.length === 0) {
+        html += `<p class="text-[10px] text-stone-400 dark:text-stone-500 font-mono px-1">Aucun tag perso — crée-en un ci-dessous.</p>`;
+    } else {
+        html += `<div class="space-y-1.5">`;
+        state.customTags.forEach(t => {
+            html += `<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60">
+                <span class="flex items-center gap-2 text-xs font-bold text-stone-700 dark:text-stone-200"><span class="text-base">${t.icon}</span>${t.label}</span>
+                <button onclick="deleteCustomTag('${t.key}')" class="w-6 h-6 rounded-md bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center text-[10px] font-black border border-red-500/20">✕</button>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+    html += `<button onclick="openCreateTagModal()" class="w-full py-2.5 rounded-xl border-2 border-dashed border-brand-400/40 text-brand-500 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-brand-50/30 dark:hover:bg-brand-900/20 transition-all active:scale-95">＋ Créer un tag</button></div>`;
+    html += `<hr class="border-stone-200 dark:border-stone-800"/>`;
+
+    // Tags Système
+    html += `<div class="space-y-2">
+        <div class="flex items-center justify-between">
+            <h4 class="text-[10px] font-black text-stone-400 uppercase tracking-wider">Tags Système</h4>
+            <button onclick="bulkSetAllSystemTags(true)" class="text-[9px] font-black text-emerald-500 uppercase tracking-wider px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all">Tout activer</button>
+        </div>`;
+
+    Object.keys(TAG_DATA).forEach(catKey => {
+        const cat = TAG_DATA[catKey];
+        const keys = Object.keys(cat.items);
+        const activeCount = keys.filter(k => !disabled.has(k)).length;
+        const allActive = activeCount === keys.length;
+        const countColor = allActive ? 'text-emerald-500' : activeCount === 0 ? 'text-red-400' : 'text-amber-500';
+        html += `<div class="rounded-xl border border-stone-200/60 dark:border-stone-700/60 overflow-hidden">
+            <div class="w-full flex items-center justify-between px-3 py-2.5 bg-stone-50 dark:bg-stone-900">
+                <button onclick="toggleTagCategory_mgr('${catKey}')" class="flex items-center gap-2 flex-1 text-left active:scale-[0.99] transition-transform">
+                    <span class="text-sm">${cat.label.split(' ')[0]}</span>
+                    <span class="text-[10px] font-black text-stone-600 dark:text-stone-300">${cat.label.split(' ').slice(1).join(' ')}</span>
+                    <span class="text-[9px] font-black ${countColor}">${activeCount}/${keys.length}</span>
+                    <span class="text-stone-400 text-[9px] ml-1">▶</span>
+                </button>
+                <button onclick="toggleCategoryAllTags('${catKey}')"
+                    class="text-[9px] font-black px-2 py-0.5 rounded-md border transition-all ${allActive ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 border-emerald-300/50' : 'bg-red-100 dark:bg-red-950/40 text-red-500 border-red-300/50'}">
+                    ${allActive ? 'Tout off' : 'Tout on'}
+                </button>
+            </div>
+            <div id="catblock_${catKey}" class="hidden px-3 pb-2 pt-1 bg-white dark:bg-stone-950 space-y-1">`;
+        keys.forEach(k => {
+            const tag = cat.items[k];
+            const isOn = !disabled.has(k);
+            html += `<div class="flex items-center justify-between py-1.5">
+                <span class="flex items-center gap-2 text-[11px] font-bold text-stone-600 dark:text-stone-300 select-none">
+                    ${tagManagerSelectMode ? `<input type="checkbox" class="accent-brand-500" ${tagManagerSelected.has(k) ? 'checked' : ''} onchange="toggleTagManagerSelect('${k}')">` : ''}
+                    <span class="text-sm">${tag.icon}</span><span>${tag.label}</span>
+                </span>
+                ${!tagManagerSelectMode ? `<button onclick="toggleSingleTag('${k}')" class="relative w-10 h-5 rounded-full transition-all ${isOn ? 'bg-emerald-400' : 'bg-stone-300 dark:bg-stone-600'}">
+                    <span class="absolute top-0.5 ${isOn ? 'left-5' : 'left-0.5'} w-4 h-4 rounded-full bg-white shadow transition-all duration-200"></span>
+                </button>` : ''}
+            </div>`;
+        });
+        html += `</div></div>`;
+    });
+    html += `</div>`;
+    body.innerHTML = html;
+
+    const bulkBar = document.getElementById('tag_manager_bulk_bar');
+    if (bulkBar) {
+        const show = tagManagerSelectMode && tagManagerSelected.size > 0;
+        bulkBar.classList.toggle('hidden', !show);
+        const countEl = document.getElementById('bulk_count');
+        if (countEl) countEl.textContent = `${tagManagerSelected.size} sélectionné(s)`;
+    }
+    const selectBtn = document.getElementById('tag_manager_select_btn');
+    if (selectBtn) selectBtn.textContent = tagManagerSelectMode ? 'Annuler' : 'Sélection multiple';
+}
+
+function toggleTagCategory_mgr(catKey) {
+    const block = document.getElementById(`catblock_${catKey}`);
+    if (block) block.classList.toggle('hidden');
+}
+
+function toggleCategoryAllTags(catKey) {
+    const cat = TAG_DATA[catKey];
+    if (!cat) return;
+    const keys = Object.keys(cat.items);
+    const disabled = new Set(state.disabledTags || []);
+    const allActive = keys.every(k => !disabled.has(k));
+    keys.forEach(k => { if (allActive) disabled.add(k); else disabled.delete(k); });
+    state.disabledTags = Array.from(disabled);
+    saveState(); renderTagManager(); triggerHaptic(10);
+}
+
+function bulkSetAllSystemTags(active) {
+    state.disabledTags = active ? [] : Object.keys(TAG_DATA).flatMap(c => Object.keys(TAG_DATA[c].items));
+    saveState(); renderTagManager(); triggerHaptic(10);
+}
+
+function toggleSingleTag(key) {
+    const disabled = new Set(state.disabledTags || []);
+    if (disabled.has(key)) disabled.delete(key); else disabled.add(key);
+    state.disabledTags = Array.from(disabled);
+    saveState(); renderTagManager(); triggerHaptic(10);
+}
+
+function toggleTagManagerSelect(key) {
+    if (tagManagerSelected.has(key)) tagManagerSelected.delete(key); else tagManagerSelected.add(key);
+    renderTagManager();
+}
+
+function enterTagManagerSelectMode() {
+    tagManagerSelectMode = !tagManagerSelectMode;
+    tagManagerSelected = new Set();
+    renderTagManager();
+}
+
+function bulkSetTags(active) {
+    const disabled = new Set(state.disabledTags || []);
+    tagManagerSelected.forEach(k => { if (active) disabled.delete(k); else disabled.add(k); });
+    state.disabledTags = Array.from(disabled);
+    saveState(); tagManagerSelectMode = false; tagManagerSelected = new Set();
+    renderTagManager(); triggerHaptic(15);
+}
+
+let pendingTagEmoji = '';
+
+function openCreateTagModal() {
+    pendingTagEmoji = '';
+    const modal = document.getElementById('create_tag_modal');
+    if (!modal) return;
+    modal.querySelector('#new_tag_label').value = '';
+    modal.querySelector('#new_tag_emoji_preview').textContent = '?';
+    modal.querySelectorAll('.emoji-picker-btn').forEach(b => b.classList.remove('ring-2','ring-brand-500','scale-110'));
+    modal.classList.remove('hidden');
+    setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('.glass-card').classList.remove('scale-95'); }, 10);
+}
+
+function closeCreateTagModal() {
+    const modal = document.getElementById('create_tag_modal');
+    modal.classList.add('opacity-0');
+    modal.querySelector('.glass-card').classList.add('scale-95');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+function selectTagEmoji(emoji, btn) {
+    pendingTagEmoji = emoji;
+    document.querySelectorAll('.emoji-picker-btn').forEach(b => b.classList.remove('ring-2','ring-brand-500','scale-110'));
+    btn.classList.add('ring-2','ring-brand-500','scale-110');
+    document.getElementById('new_tag_emoji_preview').textContent = emoji;
+}
+
+function saveCustomTag() {
+    const label = (document.getElementById('new_tag_label')?.value || '').trim();
+    if (!pendingTagEmoji) { showGenericAlert('Choisis un emoji !', ''); return; }
+    if (!label) { showGenericAlert('Saisis un libellé !', ''); return; }
+    const key = `custom_${Date.now()}`;
+    if (!state.customTags) state.customTags = [];
+    state.customTags.push({ key, icon: pendingTagEmoji, label });
+    mergeCustomTagsIntoExpenseTags();
+    saveState(); closeCreateTagModal(); renderTagManager(); triggerHaptic(15);
+}
+
+function deleteCustomTag(key) {
+    state.customTags = (state.customTags || []).filter(t => t.key !== key);
+    mergeCustomTagsIntoExpenseTags();
+    saveState(); renderTagManager(); triggerHaptic(10);
+}
+
+
 
 // --- APPLICATION STATE (SIMPLE MODEL) ---
 let state = {
@@ -501,7 +740,9 @@ let state = {
         genderTheme: "masculin",
         warningThreshold: 150
     },
-    ticketArchives: [] // Stockage local des tickets bruts
+    ticketArchives: [], // Stockage local des tickets bruts
+    customTags: [],    // Tags personnalisés de l'utilisateur [{key, icon, label}]
+    disabledTags: []   // Clés de tags système désactivés
 };
 
 let hasUnsavedChanges = false;
@@ -672,6 +913,10 @@ function initDatabase() {
                 state.settings.warningThreshold = 150;
             }
 
+            // Charger les tags personnalisés et désactivés
+            if (Array.isArray(parsed.customTags)) state.customTags = parsed.customTags;
+            if (Array.isArray(parsed.disabledTags)) state.disabledTags = parsed.disabledTags;
+
             if (migrationPerformed) {
                 saveState();
             }
@@ -692,6 +937,8 @@ function initDatabase() {
         }
         saveState();
     }
+    // Fusionner les tags perso dans EXPENSE_TAGS
+    mergeCustomTagsIntoExpenseTags();
 }
 
 // ============================================================

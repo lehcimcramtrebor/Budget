@@ -1432,6 +1432,15 @@
             <hr class="border-stone-200 dark:border-stone-800" />
 
             <div class="space-y-3">
+                <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Tags</h4>
+                <button onclick="openTagManager()" class="w-full py-2.5 px-3 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-xl font-bold text-xs active:scale-95 transition-all border border-stone-200 dark:border-stone-700 flex items-center justify-center gap-1.5 shadow-sm">
+                    🏷️ Gérer les Tags
+                </button>
+            </div>
+
+            <hr class="border-stone-200 dark:border-stone-800" />
+
+            <div class="space-y-3">
                 <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Archives des Tickets</h4>
                 <div id="settings_archives_container" class="space-y-2 max-h-36 overflow-y-auto pr-1 hide-scrollbar font-semibold text-xs text-stone-500">
                     </div>
@@ -2137,6 +2146,117 @@
                     &#x2795; Ajouter le frais fixe
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- TAG MANAGER MODAL -->
+<div id="tag_manager_modal" class="fixed inset-0 z-[70] flex items-end justify-center hidden opacity-0 transition-opacity duration-300 bg-black/50 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-sm rounded-t-3xl scale-95 transition-transform duration-300 flex flex-col max-h-[88vh]">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
+            <h3 class="text-base font-black uppercase tracking-tight text-stone-800 dark:text-stone-100">🏷️ Gestionnaire de Tags</h3>
+            <button onclick="closeTagManager()" class="w-8 h-8 rounded-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-black text-sm">✕</button>
+        </div>
+
+        <!-- Body scrollable -->
+        <div id="tag_manager_body" class="flex-1 overflow-y-auto px-5 pb-4 space-y-4 hide-scrollbar">
+            <!-- Rendered by renderTagManager() -->
+        </div>
+
+        <!-- Footer : sélection multiple + barre bulk -->
+        <div class="shrink-0 px-5 pb-5 pt-3 border-t border-stone-200/60 dark:border-stone-700/60 space-y-2">
+            <button id="tag_manager_select_btn" onclick="enterTagManagerSelectMode()" class="text-[10px] font-black text-stone-400 uppercase tracking-wider w-full text-center py-1">
+                Sélection multiple
+            </button>
+            <div id="tag_manager_bulk_bar" class="hidden flex items-center justify-between gap-2 bg-stone-100 dark:bg-stone-800 rounded-2xl px-3 py-2">
+                <span id="bulk_count" class="text-[10px] font-black text-stone-500 dark:text-stone-400"></span>
+                <div class="flex gap-2">
+                    <button onclick="bulkSetTags(true)" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] rounded-xl active:scale-95 transition-all">Activer</button>
+                    <button onclick="bulkSetTags(false)" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white font-black text-[10px] rounded-xl active:scale-95 transition-all">Désactiver</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CREATE TAG MODAL -->
+<div id="create_tag_modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden opacity-0 transition-opacity duration-300 bg-black/60 backdrop-blur-sm px-4">
+    <div class="glass-card w-full max-w-sm rounded-3xl scale-95 transition-transform duration-300 p-5 space-y-4">
+        <div class="flex items-center justify-between">
+            <h3 class="text-sm font-black uppercase tracking-tight text-stone-800 dark:text-stone-100">✦ Nouveau Tag</h3>
+            <button onclick="closeCreateTagModal()" class="w-8 h-8 rounded-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-black text-sm">✕</button>
+        </div>
+
+        <!-- Emoji picker -->
+        <div>
+            <div class="flex items-center gap-3 mb-3">
+                <span class="text-[10px] font-black text-stone-400 uppercase tracking-wider">Choisis un emoji</span>
+                <span id="new_tag_emoji_preview" class="text-2xl w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center">?</span>
+            </div>
+            <div class="grid grid-cols-8 gap-1.5">
+                <!-- 48 emojis injected here -->
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🏠', this)">🏠</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🛒', this)">🛒</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🍽️', this)">🍽️</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🍺', this)">🍺</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎁', this)">🎁</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🏖️', this)">🏖️</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('✈️', this)">✈️</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🚗', this)">🚗</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎮', this)">🎮</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎵', this)">🎵</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎬', this)">🎬</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('📚', this)">📚</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎯', this)">🎯</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🏋️', this)">🏋️</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🐶', this)">🐶</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('👶', this)">👶</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('💰', this)">💰</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🐷', this)">🐷</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('💳', this)">💳</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('📱', this)">📱</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('💼', this)">💼</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🔧', this)">🔧</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🌿', this)">🌿</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('⭐', this)">⭐</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎰', this)">🎰</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('✂️', this)">✂️</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🍕', this)">🍕</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('☕', this)">☕</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🧴', this)">🧴</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('💊', this)">💊</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎪', this)">🎪</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🕯️', this)">🕯️</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🏊', this)">🏊</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🚴', this)">🚴</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('⚽', this)">⚽</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎾', this)">🎾</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🏔️', this)">🏔️</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🌊', this)">🌊</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎣', this)">🎣</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎨', this)">🎨</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🍷', this)">🍷</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🧁', this)">🧁</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🌺', this)">🌺</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🦋', this)">🦋</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('✨', this)">✨</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🎭', this)">🎭</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🪴', this)">🪴</button>
+                <button class="emoji-picker-btn w-9 h-9 rounded-xl text-lg flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" onclick="selectTagEmoji('🦄', this)">🦄</button>
+            </div>
+        </div>
+
+        <!-- Label -->
+        <div class="space-y-1.5">
+            <label class="text-[10px] font-black text-stone-400 uppercase tracking-wider">Libellé <span class="text-stone-300 dark:text-stone-600">(15 car. max)</span></label>
+            <input type="text" id="new_tag_label" maxlength="15" placeholder="ex: Coiffeur Marie" class="form-input h-10 text-sm font-bold" autocomplete="off" oninput="this.value = this.value.slice(0,15)">
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-1">
+            <button onclick="closeCreateTagModal()" class="flex-1 py-2.5 rounded-2xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 font-bold text-xs border border-stone-200 dark:border-stone-700 active:scale-95 transition-all">Annuler</button>
+            <button onclick="saveCustomTag()" class="flex-1 py-2.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-black text-xs active:scale-95 transition-all shadow-md">✓ Créer</button>
         </div>
     </div>
 </div>
