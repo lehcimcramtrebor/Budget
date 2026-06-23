@@ -951,6 +951,7 @@ function initDatabase() {
 // ============================================================
 
 const INSTALLMENT_OPTIONS = [2, 3, 4, 6, 10, 12];
+let installmentAmounts = []; // montants par échéance, modifiables individuellement
 
 function generateInstallmentGroupId() {
     return 'inst_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
@@ -982,11 +983,22 @@ function cancelInstallmentModal() {
     // Remet à 1/1 et ferme
     document.getElementById('exp_installment_total').value   = '1';
     document.getElementById('exp_installment_current').value = '1';
+    installmentAmounts = [];
     updateInstallmentTriggerLabel();
     closeInstallmentModal();
 }
 
 function confirmInstallmentModal() {
+    // Vérifier que les montants sont cohérents
+    const total = parseInt(document.getElementById('exp_installment_total').value) || 1;
+    if (total > 1 && installmentAmounts.length === total) {
+        // Vérifier qu'aucun montant n'est zéro
+        const hasZero = installmentAmounts.some(a => a <= 0);
+        if (hasZero) {
+            showGenericAlert('Montants invalides', 'Chaque échéance doit avoir un montant supérieur à 0.');
+            return;
+        }
+    }
     updateInstallmentTriggerLabel();
     closeInstallmentModal();
     triggerHaptic('confirm');
@@ -1063,6 +1075,7 @@ function renderInstallmentButtons() {
     }
 
     updateInstallmentPreview();
+    renderInstallmentAmountRows();
 }
 
 function selectInstallmentTotal(n) {
@@ -1070,12 +1083,101 @@ function selectInstallmentTotal(n) {
     // Si l'échéance courante dépasse total-1, la ramener à 1
     const cur = parseInt(document.getElementById('exp_installment_current').value) || 1;
     if (cur >= n) document.getElementById('exp_installment_current').value = 1;
+    // Initialiser les montants égaux
+    const amountRaw = parseFloat((document.getElementById('exp_amount').value || '0').replace(',', '.')) || 0;
+    const mensualite = Math.round((amountRaw / n) * 100) / 100;
+    installmentAmounts = Array.from({ length: n }, () => mensualite);
+    // Ajustement du dernier pour absorber les arrondis
+    const diff = Math.round((amountRaw - mensualite * n) * 100) / 100;
+    if (diff !== 0) installmentAmounts[n - 1] = Math.round((installmentAmounts[n - 1] + diff) * 100) / 100;
     renderInstallmentButtons();
 }
 
 function selectInstallmentCurrent(n) {
     document.getElementById('exp_installment_current').value = n;
     renderInstallmentButtons();
+}
+
+function renderInstallmentAmountRows() {
+    const container = document.getElementById('installment_amounts_container');
+    if (!container) return;
+    const total = installmentAmounts.length;
+    if (total < 2) { container.innerHTML = ''; return; }
+    const currentSel = parseInt(document.getElementById('exp_installment_current').value) || 1;
+
+    container.innerHTML = `
+        <span class="block text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-2 select-none">Montants par échéance</span>
+        <div class="space-y-1.5">
+            ${installmentAmounts.map((amt, i) => `
+                <div class="flex items-center gap-2">
+                    <span class="text-[9px] font-black uppercase tracking-wider w-14 shrink-0 ${
+                        i + 1 === currentSel
+                            ? 'text-violet-500 dark:text-violet-400'
+                            : 'text-stone-400 dark:text-stone-500'
+                    }">N°${i + 1}${ i + 1 === currentSel ? ' ◄' : '' }</span>
+                    <div class="relative flex-1">
+                        <input type="text" inputmode="decimal"
+                            id="inst_amt_${i}"
+                            value="${String(amt.toFixed(2)).replace('.', ',')}"
+                            oninput="onInstallmentAmountChange(${i}, this.value)"
+                            onblur="onInstallmentAmountBlur(${i}, this.value)"
+                            class="form-input h-8 text-right pr-5 text-[11px] font-mono font-black px-2 w-full
+                                   ${ i + 1 === currentSel
+                                       ? 'border-violet-400 dark:border-violet-600 ring-1 ring-violet-400/30'
+                                       : '' }">
+                        <span class="absolute right-1.5 top-1/2 -translate-y-1/2 font-black text-stone-400 pointer-events-none text-[10px]">€</span>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+        <div class="flex justify-between items-center pt-2 border-t border-stone-100 dark:border-stone-800 mt-1">
+            <span class="text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider">Total</span>
+            <span id="installment_amounts_total" class="text-[11px] font-mono font-black text-violet-500 dark:text-violet-400">
+                ${String(installmentAmounts.reduce((s,a) => s+a, 0).toFixed(2)).replace('.', ',')} €
+            </span>
+        </div>
+    `;
+}
+
+function onInstallmentAmountChange(index, rawVal) {
+    const val = parseFloat(rawVal.replace(',', '.')) || 0;
+    const total = installmentAmounts.length;
+    if (total < 2) return;
+
+    if (index === 0) {
+        // Échéance 1 : recalculer les suivantes à égalité sur ce qui reste
+        const amountRaw = parseFloat((document.getElementById('exp_amount').value || '0').replace(',', '.')) || 0;
+        const remaining = Math.max(0, amountRaw - val);
+        const perOther = Math.round((remaining / (total - 1)) * 100) / 100;
+        installmentAmounts[0] = val;
+        for (let i = 1; i < total; i++) installmentAmounts[i] = perOther;
+        // Ajustement arrondi sur le dernier
+        const diff = Math.round((remaining - perOther * (total - 1)) * 100) / 100;
+        if (diff !== 0 && total > 1) installmentAmounts[total - 1] = Math.round((installmentAmounts[total - 1] + diff) * 100) / 100;
+        // Mettre à jour les autres champs
+        for (let i = 1; i < total; i++) {
+            const inp = document.getElementById(`inst_amt_${i}`);
+            if (inp) inp.value = String(installmentAmounts[i].toFixed(2)).replace('.', ',');
+        }
+    } else {
+        // Autre échéance : pas de recalcul automatique
+        installmentAmounts[index] = val;
+    }
+    // Mettre à jour le total affiché
+    const totalSpan = document.getElementById('installment_amounts_total');
+    if (totalSpan) {
+        const sum = installmentAmounts.reduce((s, a) => s + a, 0);
+        totalSpan.textContent = String(sum.toFixed(2)).replace('.', ',') + ' €';
+    }
+}
+
+function onInstallmentAmountBlur(index, rawVal) {
+    // Normaliser l'affichage à la perte de focus
+    const val = parseFloat(rawVal.replace(',', '.')) || 0;
+    installmentAmounts[index] = Math.round(val * 100) / 100;
+    const inp = document.getElementById(`inst_amt_${index}`);
+    if (inp) inp.value = String(installmentAmounts[index].toFixed(2)).replace('.', ',');
+    onInstallmentAmountChange(index, String(installmentAmounts[index]));
 }
 
 function updateInstallmentPreview() {
@@ -1107,6 +1209,7 @@ function updateInstallmentPreview() {
 function resetInstallmentUI() {
     document.getElementById('exp_installment_total').value   = '1';
     document.getElementById('exp_installment_current').value = '1';
+    installmentAmounts = [];
     updateInstallmentTriggerLabel();
     const preview = document.getElementById('installment_preview');
     if (preview) preview.classList.add('hidden');
@@ -1114,6 +1217,8 @@ function resetInstallmentUI() {
     if (curSection) curSection.classList.add('hidden');
     const totalContainer = document.getElementById('installment_total_btns');
     if (totalContainer) totalContainer.innerHTML = '';
+    const amountsContainer = document.getElementById('installment_amounts_container');
+    if (amountsContainer) amountsContainer.innerHTML = '';
 }
 
 // Synchroniser l'aperçu quand le montant change
@@ -1541,15 +1646,20 @@ function addExpense(event) {
     };
 
     // Ajouter les données d'installment si paiement en plusieurs fois
-    // Le montant saisi est le TOTAL — on calcule la mensualité
+    // Utilise le montant de l'échéance courante (personnalisable)
     if (installTotal > 1) {
-        const mensualite = Math.round((amount / installTotal) * 100) / 100;
-        newExpense.amount = mensualite;  // on enregistre la mensualité
+        const groupId = generateInstallmentGroupId();
+        // Montant de l'échéance actuelle (index = installCurrent - 1)
+        const echMontant = (installmentAmounts.length === installTotal)
+            ? (installmentAmounts[installCurrent - 1] || Math.round((amount / installTotal) * 100) / 100)
+            : Math.round((amount / installTotal) * 100) / 100;
+        newExpense.amount = echMontant;
         newExpense.installment = {
-            groupId:  generateInstallmentGroupId(),
-            current:  installCurrent,
-            total:    installTotal,
-            totalAmount: amount       // on conserve le montant total pour référence
+            groupId,
+            current:     installCurrent,
+            total:       installTotal,
+            totalAmount: amount,
+            amounts:     installmentAmounts.length === installTotal ? [...installmentAmounts] : null
         };
     }
 
