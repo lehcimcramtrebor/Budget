@@ -584,18 +584,23 @@ function renderTagManager() {
         const keys = Object.keys(cat.items);
         const activeCount = keys.filter(k => !disabled.has(k)).length;
         const allActive = activeCount === keys.length;
-        const countColor = allActive ? 'text-emerald-500' : activeCount === 0 ? 'text-red-400' : 'text-amber-500';
+        const noneActive = activeCount === 0;
+        const badgeLabel = allActive ? 'COMPLET' : noneActive ? 'AUCUN' : 'PARTIEL';
+        const badgeClass = allActive
+            ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+            : noneActive
+                ? 'bg-red-500/15 text-red-500 border-red-500/30'
+                : 'bg-amber-500/15 text-amber-500 border-amber-500/30';
         html += `<div class="rounded-xl border border-stone-200/60 dark:border-stone-700/60 overflow-hidden">
             <div class="w-full flex items-center justify-between px-3 py-2.5 bg-stone-50 dark:bg-stone-900">
                 <button onclick="toggleTagCategory_mgr('${catKey}')" class="flex items-center gap-2 flex-1 text-left active:scale-[0.99] transition-transform">
                     <span class="text-sm">${cat.label.split(' ')[0]}</span>
                     <span class="text-[10px] font-black text-stone-600 dark:text-stone-300">${cat.label.split(' ').slice(1).join(' ')}</span>
-                    <span class="text-[9px] font-black ${countColor}">${activeCount}/${keys.length}</span>
-                    <span class="text-stone-400 text-[9px] ml-1">▶</span>
+                    <span class="text-stone-400 text-[9px]">▶</span>
                 </button>
                 <button onclick="toggleCategoryAllTags('${catKey}')"
-                    class="text-[9px] font-black px-2 py-0.5 rounded-md border transition-all ${allActive ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 border-emerald-300/50' : 'bg-red-100 dark:bg-red-950/40 text-red-500 border-red-300/50'}">
-                    ${allActive ? 'Tout off' : 'Tout on'}
+                    class="text-[8px] font-black px-2 py-0.5 rounded-full border tracking-wider transition-all ${badgeClass}">
+                    ${badgeLabel}
                 </button>
             </div>
             <div id="catblock_${catKey}" class="hidden px-3 pb-2 pt-1 bg-white dark:bg-stone-950 space-y-1">`;
