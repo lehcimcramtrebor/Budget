@@ -4552,7 +4552,7 @@ function openRecapModal(category) {
             } else if (p.type === 'specific_months') {
                 const [, mo2] = state.budgetMonth.split('-').map(Number);
                 const active = Array.isArray(p.months) && p.months.includes(mo2 - 1);
-                badge = active ? ' ACTIF' : ' (inactif)';
+                badge = active ? '' : ' (inactif)';
             }
             const dimmed = eff === 0 ? 'opacity-50' : '';
             return `<div class="flex justify-between items-baseline px-1 py-0.5 ${dimmed}">
