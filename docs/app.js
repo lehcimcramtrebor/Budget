@@ -5750,8 +5750,12 @@ function confirmCreateBudget() {
             "Une enveloppe est toujours débitée en une seule fois. Le paiement en plusieurs fois a été annulé."
         );
         resetInstallmentUI();
-        const panel = document.getElementById('installment_panel');
-        if (panel) panel.classList.remove('open');
+        // Fermer la modale de config installment si elle était ouverte
+        const configModal = document.getElementById('installment_config_modal');
+        if (configModal) {
+            configModal.classList.add('opacity-0');
+            setTimeout(() => configModal.classList.add('hidden'), 300);
+        }
     }
 
     pendingBudgetTitle = title;
