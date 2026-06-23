@@ -4109,7 +4109,7 @@ const tourSteps = [
     {
         elementId: "tour_recap_charges",
         title: "Récaps Revenus & Frais Fixes 📋",
-        message: "Les récapitulatifs Revenus et Frais Fixes sont purement consultatifs : ils listent le détail de ce qui compose votre budget de base. Vous pouvez modifier chaque élément directement depuis ces récaps.",
+        message: "Les récapitulatifs Revenus et Frais Fixes sont purement consultatifs : ils vous donnent une vue détaillée de ce qui compose votre budget de base, ventilée poste par poste.",
         placement: "bottom"
     },
     {
