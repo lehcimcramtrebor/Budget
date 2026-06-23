@@ -616,7 +616,28 @@ function initDatabase() {
                 });
                 migrationPerformed = true;
             }
-            if (Array.isArray(parsed.expenses)) state.expenses = parsed.expenses;
+            if (Array.isArray(parsed.expenses)) {
+                // Migration silencieuse : normalise les dates au format ISO YYYY-MM-DD
+                const MOIS_NORM = {
+                    'janvier':'01','février':'02','fevrier':'02','mars':'03','avril':'04','mai':'05','juin':'06',
+                    'juillet':'07','août':'08','aout':'08','septembre':'09','octobre':'10','novembre':'11','décembre':'12','decembre':'12'
+                };
+                const [budgYear] = (parsed.budgetMonth || state.budgetMonth).split('-');
+                parsed.expenses = parsed.expenses.map(e => {
+                    if (e.date && !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
+                        const frMatch = e.date.toLowerCase().trim().match(/^(\d{1,2})\s+([a-zéûôèàâùîœ]+)/);
+                        if (frMatch) {
+                            const mo = MOIS_NORM[frMatch[2]];
+                            if (mo) {
+                                e.date = `${budgYear}-${mo}-${frMatch[1].padStart(2,'0')}`;
+                                migrationPerformed = true;
+                            }
+                        }
+                    }
+                    return e;
+                });
+                state.expenses = parsed.expenses;
+            }
             if (typeof parsed.darkMode === 'boolean') state.darkMode = parsed.darkMode;
             
             // Load budgetMonth
@@ -4596,12 +4617,28 @@ function openRecapModal(category) {
         });
         
         // Sort keys reverse chronologically
+        const MOIS_FR = {
+            'janvier':0,'février':1,'fevrier':1,'mars':2,'avril':3,'mai':4,'juin':5,
+            'juillet':6,'août':7,'aout':7,'septembre':8,'octobre':9,'novembre':10,'décembre':11,'decembre':11
+        };
         const getTimestamp = (str) => {
             if (!str || str === "Sans date") return 0;
-            const match = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-            if (match) {
-                return new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10)).getTime();
+            // Format ISO : YYYY-MM-DD ou YYYY-M-D
+            const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (isoMatch) {
+                return new Date(parseInt(isoMatch[1],10), parseInt(isoMatch[2],10)-1, parseInt(isoMatch[3],10)).getTime();
             }
+            // Format français : "7 juin", "12 mars", etc.
+            const frMatch = str.toLowerCase().trim().match(/^(\d{1,2})\s+([a-zéûôèàâùîœ]+)/);
+            if (frMatch) {
+                const day   = parseInt(frMatch[1], 10);
+                const month = MOIS_FR[frMatch[2]];
+                if (month !== undefined) {
+                    const [yr] = state.budgetMonth.split('-').map(Number);
+                    return new Date(yr, month, day).getTime();
+                }
+            }
+            // Dernier recours : Date.parse
             const t = Date.parse(str);
             return isNaN(t) ? 0 : t;
         };
