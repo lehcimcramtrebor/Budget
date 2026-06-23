@@ -683,19 +683,65 @@ function generateInstallmentGroupId() {
     return 'inst_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
 }
 
-function toggleInstallmentPanel() {
-    const panel  = document.getElementById('installment_panel');
-    const arrow  = document.getElementById('installment_toggle_arrow');
-    const isOpen = panel.classList.contains('open');
+function openInstallmentModal() {
+    // Sauvegarder les valeurs actuelles pour pouvoir annuler
+    const modal = document.getElementById('installment_config_modal');
+    if (!modal) return;
+    // Rendre les boutons dans la modale
+    renderInstallmentButtons();
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.glass-card').classList.remove('translate-y-4');
+    }, 10);
+    triggerHaptic(5);
+}
 
-    if (isOpen) {
-        panel.classList.remove('open');
-        arrow.style.transform = '';
-        resetInstallmentUI(false); // reset silent (garde panel fermé)
+function closeInstallmentModal() {
+    const modal = document.getElementById('installment_config_modal');
+    if (!modal) return;
+    modal.classList.add('opacity-0');
+    modal.querySelector('.glass-card').classList.add('translate-y-4');
+    setTimeout(() => modal.classList.add('hidden'), 280);
+}
+
+function cancelInstallmentModal() {
+    // Remet à 1/1 et ferme
+    document.getElementById('exp_installment_total').value   = '1';
+    document.getElementById('exp_installment_current').value = '1';
+    updateInstallmentTriggerLabel();
+    closeInstallmentModal();
+}
+
+function confirmInstallmentModal() {
+    updateInstallmentTriggerLabel();
+    closeInstallmentModal();
+    triggerHaptic('confirm');
+}
+
+function updateInstallmentTriggerLabel() {
+    const total   = parseInt(document.getElementById('exp_installment_total').value)   || 1;
+    const current = parseInt(document.getElementById('exp_installment_current').value) || 1;
+    const label   = document.getElementById('installment_trigger_label');
+    const badge   = document.getElementById('installment_active_badge');
+
+    if (total > 1) {
+        if (label) label.textContent = `×${total}`;
+        if (badge) { badge.textContent = `${current}/${total}`; badge.classList.remove('hidden'); }
+        // Colorer le bouton trigger
+        const btn = document.getElementById('installment_trigger_btn');
+        if (btn) {
+            btn.classList.add('text-violet-500', 'dark:text-violet-400');
+            btn.classList.remove('text-stone-500', 'dark:text-stone-400');
+        }
     } else {
-        panel.classList.add('open');
-        arrow.style.transform = 'rotate(90deg)';
-        renderInstallmentButtons();
+        if (label) label.textContent = '×1';
+        if (badge) badge.classList.add('hidden');
+        const btn = document.getElementById('installment_trigger_btn');
+        if (btn) {
+            btn.classList.remove('text-violet-500', 'dark:text-violet-400');
+            btn.classList.add('text-stone-500', 'dark:text-stone-400');
+        }
     }
 }
 
@@ -773,22 +819,16 @@ function updateInstallmentPreview() {
     }
 }
 
-function resetInstallmentUI(closePanel = true) {
+function resetInstallmentUI() {
     document.getElementById('exp_installment_total').value   = '1';
     document.getElementById('exp_installment_current').value = '1';
-    const panel = document.getElementById('installment_panel');
-    const arrow = document.getElementById('installment_toggle_arrow');
-    const badge = document.getElementById('installment_active_badge');
+    updateInstallmentTriggerLabel();
     const preview = document.getElementById('installment_preview');
-    if (closePanel && panel) { panel.classList.remove('open'); }
-    if (arrow)   arrow.style.transform = '';
-    if (badge)   badge.classList.add('hidden');
     if (preview) preview.classList.add('hidden');
-    // Réinitialiser les boutons si le panel est encore visible
-    const totalContainer = document.getElementById('installment_total_btns');
-    if (totalContainer) totalContainer.innerHTML = '';
     const curSection = document.getElementById('installment_current_section');
     if (curSection) curSection.classList.add('hidden');
+    const totalContainer = document.getElementById('installment_total_btns');
+    if (totalContainer) totalContainer.innerHTML = '';
 }
 
 // Synchroniser l'aperçu quand le montant change
@@ -1289,25 +1329,44 @@ function deleteExpense(id) {
     // --- CAS PAIEMENT EN PLUSIEURS FOIS ---
     if (expense.installment && expense.installment.groupId) {
         const groupId    = expense.installment.groupId;
-        const groupItems = state.expenses.filter(e => e.installment && e.installment.groupId === groupId);
-        const remaining  = groupItems.filter(e => e.installment.current >= expense.installment.current);
-        const hasMore    = remaining.length > 1;
+        const instCur    = expense.installment.current;
+        const instTotal  = expense.installment.total;
+        const perMonth   = Math.abs(expense.amount);
 
-        const absAmount  = Math.abs(expense.amount);
-        const badgeLabel = `${expense.installment.current}/${expense.installment.total}`;
-        const msgSuffix  = hasMore
-            ? `<br><br><strong>Attention :</strong> les échéances restantes de ce paiement (<strong>${remaining.length}</strong> échéance${remaining.length > 1 ? 's' : ''}) seront également annulées.`
-            : '';
+        // Échéances restantes à annuler (current à total)
+        const remaining  = instTotal - instCur + 1;
+        const totalDue   = (perMonth * remaining).toFixed(2).replace('.', ',');
+
+        // Construire le détail des échéances en tableau HTML
+        let rows = '';
+        for (let i = instCur; i <= instTotal; i++) {
+            rows += `<tr>
+                <td style="padding:2px 6px 2px 0;font-weight:900;color:rgb(139,92,246)">${i}/${instTotal}</td>
+                <td style="padding:2px 0;color:#6b7280">− ${perMonth.toFixed(2).replace('.',',')} €</td>
+                <td style="padding:2px 0 2px 8px;font-size:9px;color:#9ca3af">${i === instCur ? '← ce mois' : 'futur'}</td>
+            </tr>`;
+        }
+
+        const detailHTML = `
+            <table style="width:100%;font-family:monospace;font-size:10px;margin-top:8px;border-collapse:collapse">
+                ${rows}
+                <tr style="border-top:1px solid rgba(139,92,246,0.25);margin-top:4px">
+                    <td style="padding:4px 6px 0 0;font-weight:900;font-size:9px;color:#9ca3af">TOTAL</td>
+                    <td style="padding:4px 0 0 0;font-weight:900;color:#ef4444">− ${totalDue} €</td>
+                </tr>
+            </table>`;
 
         showGenericConfirm(
-            `Annuler le paiement ${badgeLabel} ?`,
-            `Voulez-vous supprimer <strong>"${expense.title}"</strong> — échéance <strong>${badgeLabel}</strong> de <strong>${absAmount.toFixed(2).replace('.', ',')} €</strong> ?${msgSuffix}`,
+            `⚠️ Annuler le paiement fractionné ?`,
+            `Vous êtes sur le point de supprimer <strong>"${expense.title}"</strong> — <strong>échéance ${instCur}/${instTotal}</strong>.<br><br>
+            <strong>${remaining} échéance${remaining > 1 ? 's' : ''} seront annulée${remaining > 1 ? 's' : ''}</strong> (dont ${remaining - 1} future${remaining - 1 > 1 ? 's' : ''}) :
+            ${detailHTML}
+            <br><span style="font-size:9px;color:#9ca3af">Cette action est irréversible. Les échéances futures ne seront plus reportées automatiquement.</span>`,
             "💳",
             () => {
-                // Supprimer toutes les échéances du groupe dont la position >= current
                 state.expenses = state.expenses.filter(e =>
                     !(e.installment && e.installment.groupId === groupId &&
-                      e.installment.current >= expense.installment.current)
+                      e.installment.current >= instCur)
                 );
                 saveState();
                 updateUI();
@@ -2509,6 +2568,24 @@ function openEditItem(type, id, parentId = null) {
         }
     }
 
+    // Section remboursement anticipé : visible uniquement pour les dépenses en plusieurs fois
+    const earlyRepaySection = document.getElementById("edit_early_repay_section");
+    if (earlyRepaySection) {
+        if (type === "expense" && item.installment && item.installment.total > 1) {
+            earlyRepaySection.classList.remove("hidden");
+            const inst    = item.installment;
+            const perMonth = Math.abs(item.amount);
+            const remaining = inst.total - inst.current + 1;
+            const totalDue  = (perMonth * remaining).toFixed(2).replace('.', ',');
+            const infoEl   = document.getElementById('edit_installment_info');
+            if (infoEl) {
+                infoEl.innerHTML = `Échéance <strong class="text-violet-500">${inst.current}/${inst.total}</strong> — ${remaining} paiement${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''} à ${perMonth.toFixed(2).replace('.',',')} € = <strong>${totalDue} €</strong> au total`;
+            }
+        } else {
+            earlyRepaySection.classList.add("hidden");
+        }
+    }
+
     const modal = document.getElementById("edit_modal");
     modal.classList.remove("hidden");
     setTimeout(() => {
@@ -2690,6 +2767,68 @@ function closeEditModal() {
         modal.classList.add("hidden");
         currentEditingItem = null;
     }, 300);
+}
+
+function earlyRepayInstallment() {
+    if (!currentEditingItem || currentEditingItem.type !== 'expense') return;
+    const expense = state.expenses.find(e => e.id === currentEditingItem.id);
+    if (!expense || !expense.installment) return;
+
+    const inst      = expense.installment;
+    const perMonth  = Math.abs(expense.amount);
+    const remaining = inst.total - inst.current + 1;
+    const totalDue  = perMonth * remaining;
+    const groupId   = inst.groupId;
+
+    // Construire le tableau récap
+    let rows = '';
+    for (let i = inst.current; i <= inst.total; i++) {
+        rows += `<tr>
+            <td style="padding:2px 6px 2px 0;font-weight:900;color:rgb(139,92,246)">${i}/${inst.total}</td>
+            <td style="padding:2px 0;color:#6b7280">${perMonth.toFixed(2).replace('.',',')} €</td>
+            <td style="padding:2px 0 2px 8px;font-size:9px;color:#9ca3af">${i === inst.current ? '← ce mois' : 'soldé'}</td>
+        </tr>`;
+    }
+    const detailHTML = `<table style="width:100%;font-family:monospace;font-size:10px;margin-top:8px;border-collapse:collapse">
+        ${rows}
+        <tr style="border-top:1px solid rgba(139,92,246,0.25)">
+            <td style="padding:4px 6px 0 0;font-weight:900;font-size:9px;color:#9ca3af">À DÉBITER</td>
+            <td style="padding:4px 0 0 0;font-weight:900;color:#ef4444">− ${totalDue.toFixed(2).replace('.',',')} €</td>
+        </tr>
+    </table>`;
+
+    showGenericConfirm(
+        `💳 Remboursement anticipé ?`,
+        `<strong>${remaining} échéance${remaining > 1 ? 's' : ''}</strong> vont être consolidées en une seule dépense de <strong>${totalDue.toFixed(2).replace('.',',')} €</strong> :
+        ${detailHTML}
+        <br><span style="font-size:9px;color:#9ca3af">Les futures échéances seront supprimées. La dépense de ce mois sera remplacée par le montant total soldé.</span>`,
+        '💰',
+        () => {
+            // 1. Supprimer toutes les échéances du groupe (current et futures)
+            state.expenses = state.expenses.filter(e =>
+                !(e.installment && e.installment.groupId === groupId &&
+                  e.installment.current >= inst.current)
+            );
+            // 2. Créer une dépense unique pour le montant total, sans installment
+            const repaidExpense = {
+                id:     `${Date.now()}_repaid`,
+                title:  expense.title,
+                amount: totalDue,
+                date:   expense.date,
+                tag:    expense.tag || 'divers'
+            };
+            state.expenses.push(repaidExpense);
+            saveState();
+            closeEditModal();
+            updateUI();
+            triggerHaptic('success');
+            showGenericAlert(
+                'Remboursement effectué',
+                `<strong>${expense.title}</strong> soldé pour <strong>${totalDue.toFixed(2).replace('.',',')} €</strong>. Les ${remaining - 1} échéance${remaining - 1 > 1 ? 's' : ''} future${remaining - 1 > 1 ? 's' : ''} ont été supprimée${remaining - 1 > 1 ? 's' : ''}.`,
+                '✅'
+            );
+        }
+    );
 }
 
 function saveEdit(event) {

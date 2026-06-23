@@ -841,39 +841,6 @@
                     <input type="hidden" id="exp_tag" value="divers">
                 </div>
 
-                <!-- Paiement en plusieurs fois -->
-                <div class="py-3 border-b border-stone-200 dark:border-stone-800">
-                    <button type="button" id="installment_toggle_btn"
-                            onclick="toggleInstallmentPanel()"
-                            class="flex items-center gap-2 w-full text-left group">
-                        <span class="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors">💳 En plusieurs fois</span>
-                        <span id="installment_toggle_arrow" class="text-[8px] text-stone-400 dark:text-stone-500 transition-transform duration-200">▶</span>
-                        <span id="installment_active_badge" class="hidden installment-badge">1/1</span>
-                    </button>
-                    <div id="installment_panel">
-                        <div class="pt-3 space-y-2.5">
-                            <!-- Nombre total d'échéances -->
-                            <div>
-                                <span class="block text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1.5 select-none">Nombre total d'échéances</span>
-                                <div class="flex flex-wrap gap-1.5" id="installment_total_btns">
-                                    <!-- Généré par JS -->
-                                </div>
-                            </div>
-                            <!-- Échéance de départ -->
-                            <div id="installment_current_section" class="hidden">
-                                <span class="block text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1.5 select-none">Je suis à l'échéance n°</span>
-                                <div class="flex flex-wrap gap-1.5" id="installment_current_btns">
-                                    <!-- Généré par JS -->
-                                </div>
-                            </div>
-                            <!-- Aperçu -->
-                            <div id="installment_preview" class="text-[9px] font-mono font-bold text-violet-500 dark:text-violet-400 hidden select-none"></div>
-                        </div>
-                    </div>
-                    <input type="hidden" id="exp_installment_total" value="1">
-                    <input type="hidden" id="exp_installment_current" value="1">
-                </div>
-
                 <!-- Date -->
                 <div class="flex items-center justify-between py-3 select-none border-b border-stone-200 dark:border-stone-800">
                     <span class="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider">📅 Date de l'opération</span>
@@ -888,6 +855,29 @@
                                 class="hidden w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-900/30 text-red-500 flex items-center justify-center font-bold text-[10px] active:scale-90 transition-all shadow-sm">✕</button>
                     </div>
                 </div>
+
+                <!-- Paiement en plusieurs fois — icône discrète -->
+                <div class="flex items-center justify-between py-2.5 border-b border-stone-200 dark:border-stone-800">
+                    <span class="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider select-none">Paiement fractionné</span>
+                    <div class="flex items-center gap-2">
+                        <span id="installment_active_badge" class="hidden installment-badge"></span>
+                        <button type="button" onclick="openInstallmentModal()"
+                                id="installment_trigger_btn"
+                                title="Configurer un paiement en plusieurs fois"
+                                class="flex items-center gap-1.5 py-1.5 px-2.5 bg-gradient-to-b from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-850 text-stone-500 dark:text-stone-400 rounded-lg border-t border-white dark:border-stone-700/50 shadow-[0_2px_0_#cbd5e1] dark:shadow-[0_2px_0_#000000] active:translate-y-[2px] active:shadow-none transition-all text-[10px] font-black uppercase tracking-wider select-none hover:text-violet-500 dark:hover:text-violet-400">
+                            <!-- Split-pay SVG icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                <line x1="1" y1="10" x2="23" y2="10"/>
+                                <line x1="12" y1="10" x2="12" y2="20"/>
+                            </svg>
+                            <span id="installment_trigger_label">×1</span>
+                        </button>
+                    </div>
+                    <input type="hidden" id="exp_installment_total" value="1">
+                    <input type="hidden" id="exp_installment_current" value="1">
+                </div>
+
 
                 <!-- Boutons d'action -->
                 <div class="flex flex-col gap-2 pt-3.5">
@@ -1208,6 +1198,43 @@
     </div>
 </div>
 
+<!-- MODALE CONFIGURATION PAIEMENT FRACTIONNÉ -->
+<div id="installment_config_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[70] flex items-end justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-sm rounded-b-none rounded-t-2xl transform translate-y-4 transition-transform duration-300 space-y-4 pb-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center pb-3 border-b border-stone-200 dark:border-stone-800">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-violet-500/15 border border-violet-500/25 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(139,92,246)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                        <line x1="1" y1="10" x2="23" y2="10"/>
+                        <line x1="12" y1="10" x2="12" y2="20"/>
+                    </svg>
+                </div>
+                <h3 class="text-base font-black text-stone-800 dark:text-stone-100 uppercase tracking-tight">Paiement Fractionné</h3>
+            </div>
+            <button onclick="closeInstallmentModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-[10px] shadow-sm">✕</button>
+        </div>
+        <!-- Nombre total d'échéances -->
+        <div>
+            <span class="block text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-2 select-none">Nombre total d'échéances</span>
+            <div class="flex flex-wrap gap-2" id="installment_total_btns"></div>
+        </div>
+        <!-- Échéance de départ -->
+        <div id="installment_current_section" class="hidden">
+            <span class="block text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-2 select-none">Je suis déjà à l'échéance n°</span>
+            <div class="flex flex-wrap gap-2" id="installment_current_btns"></div>
+        </div>
+        <!-- Aperçu -->
+        <div id="installment_preview" class="text-[10px] font-mono font-bold text-violet-500 dark:text-violet-400 hidden bg-violet-50 dark:bg-violet-950/30 rounded-xl px-3 py-2 border border-violet-200/50 dark:border-violet-900/40 select-none"></div>
+        <!-- Actions -->
+        <div class="grid grid-cols-2 gap-2 pt-1">
+            <button type="button" onclick="cancelInstallmentModal()" class="h-10 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-xl font-black text-[10px] uppercase tracking-wider active:scale-95 transition-all border border-stone-200 dark:border-stone-700">Annuler</button>
+            <button type="button" onclick="confirmInstallmentModal()" class="h-10 bg-gradient-to-b from-violet-500 to-violet-600 text-white font-black rounded-xl border-t border-violet-400 shadow-[0_3px_0_#5b21b6] active:translate-y-[3px] active:shadow-none transition-all text-[10px] uppercase tracking-wider select-none">✓ Confirmer</button>
+        </div>
+    </div>
+</div>
+
 <!-- EDIT MODAL -->
 <div id="edit_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
     <div class="glass-card w-full max-w-xs transform scale-95 transition-transform duration-300 flex flex-col space-y-4">
@@ -1250,6 +1277,19 @@
             <div id="edit_periodicity_section" class="hidden space-y-2">
                 <label class="block text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider">&#x23F1; Periodicite</label>
                 <!-- Rendu dynamiquement par renderPeriodicitySelector() -->
+            </div>
+
+            <!-- Remboursement anticipé (paiements fractionnés uniquement) -->
+            <div id="edit_early_repay_section" class="hidden">
+                <div class="bg-violet-50 dark:bg-violet-950/25 border border-violet-200/60 dark:border-violet-800/40 rounded-xl p-3">
+                    <p class="text-[9px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-wider mb-2 select-none">💳 Paiement Fractionné</p>
+                    <p class="text-[10px] text-stone-600 dark:text-stone-400 font-semibold mb-3 leading-snug" id="edit_installment_info">Échéance N/T</p>
+                    <button type="button" onclick="earlyRepayInstallment()" id="edit_early_repay_btn"
+                            class="w-full py-2 bg-gradient-to-b from-violet-500 to-violet-600 text-white font-black rounded-xl border-t border-violet-400 shadow-[0_2px_0_#5b21b6] active:translate-y-[2px] active:shadow-none transition-all text-[9px] uppercase tracking-wider select-none flex items-center justify-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        Remboursement anticipé
+                    </button>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2 pt-2">
