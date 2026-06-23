@@ -4292,7 +4292,7 @@ function setupHapticFeedback() {
                 lastScrollTime = now;
             }
         }
-    }, true);
+    }, { capture: true, passive: true });
 }
 
 
