@@ -1163,12 +1163,12 @@ function renderFixedChargesList() {
         let badgeHtml = '';
         if (p.type === 'weekly') {
             const n = countDayOccurrences(p.dayOfWeek, yr, currentMonth);
-            badgeHtml = `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-md bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 font-mono font-black text-[9px] border border-brand-500/20 select-none">×${n} ${DAY_NAMES_SHORT[p.dayOfWeek]}</span>`;
+            badgeHtml = `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-md bg-sky-500/10 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400 font-mono font-black text-[9px] border border-sky-500/20 select-none">×${n}</span>`;
         } else if (p.type === 'specific_months') {
             if (isInactive) {
-                badgeHtml = `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-md bg-stone-200/60 dark:bg-stone-800 text-stone-400 dark:text-stone-600 font-black text-[9px] border border-stone-200 dark:border-stone-800 select-none">INACTIF</span>`;
+                badgeHtml = `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-md bg-red-500/10 dark:bg-red-500/15 text-red-600 dark:text-red-400 font-black text-[9px] border border-red-500/20 select-none">INACTIF</span>`;
             } else {
-                badgeHtml = `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-black text-[9px] border border-emerald-500/20 select-none">CE MOIS</span>`;
+                badgeHtml = `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-black text-[9px] border border-emerald-500/20 select-none">ACTIF</span>`;
             }
         }
 
@@ -4546,13 +4546,13 @@ function openRecapModal(category) {
             const p = c.periodicity || { type: 'monthly' };
             let badge = '';
             if (p.type === 'weekly') {
-                const [yr, mo] = state.budgetMonth.split('-').map(Number);
-                const n = countDayOccurrences(p.dayOfWeek, yr, mo - 1);
+                const [yr2, mo2] = state.budgetMonth.split('-').map(Number);
+                const n = countDayOccurrences(p.dayOfWeek, yr2, mo2 - 1);
                 badge = ` ×${n}`;
             } else if (p.type === 'specific_months') {
-                const [, mo] = state.budgetMonth.split('-').map(Number);
-                const active = Array.isArray(p.months) && p.months.includes(mo - 1);
-                badge = active ? ' ✓' : ' (inactif)';
+                const [, mo2] = state.budgetMonth.split('-').map(Number);
+                const active = Array.isArray(p.months) && p.months.includes(mo2 - 1);
+                badge = active ? ' ACTIF' : ' (inactif)';
             }
             const dimmed = eff === 0 ? 'opacity-50' : '';
             return `<div class="flex justify-between items-baseline px-1 py-0.5 ${dimmed}">
