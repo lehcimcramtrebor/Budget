@@ -498,6 +498,38 @@
             font-size: calc(12px - var(--scroll-progress) * 2px) !important; /* text-xs (12px) to 10px */
         }
 
+        /* --- BADGE PAIEMENT EN PLUSIEURS FOIS --- */
+        .installment-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 8px;
+            font-weight: 900;
+            font-family: monospace;
+            padding: 1px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+            background: rgba(139, 92, 246, 0.12);
+            color: rgb(139, 92, 246);
+            border: 1px solid rgba(139, 92, 246, 0.28);
+            user-select: none;
+        }
+        .dark .installment-badge {
+            background: rgba(139, 92, 246, 0.18);
+            color: rgb(167, 139, 250);
+            border-color: rgba(139, 92, 246, 0.35);
+        }
+        /* Panel installment — animation d'ouverture */
+        #installment_panel {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.28s ease, opacity 0.22s ease;
+        }
+        #installment_panel.open {
+            max-height: 160px;
+            opacity: 1;
+        }
+
         /* --- VINTAGE TICKET DE CAISSE (RECEIPT PAPER) --- */
         .receipt-card {
             position: relative;
@@ -666,9 +698,9 @@
         <!-- Center: Logo -->
         <h1 id="app_logo" class="flex-1 min-w-0 flex flex-col items-center justify-center text-center cursor-pointer select-none">
             <span class="flex items-baseline gap-0 select-none" style="font-family:'Outfit',sans-serif; letter-spacing:-0.03em; line-height:1;">
-                <span style="font-size:1.25rem; font-weight:900; color:white;">BUDGET</span>
-                <span style="font-size:1rem; font-weight:300; color:rgba(255,255,255,0.35); margin:0 0.18em;">·</span>
-                <span id="logo_suffix" style="font-size:1.25rem; font-weight:600;" class="text-brand-400 dark:text-brand-400 drop-shadow-[0_0_12px_rgba(var(--brand-500)/0.4)]">HMR</span>
+                <span class="text-stone-900 dark:text-white" style="font-size:1.25rem; font-weight:900;">BUDGET</span>
+                <span class="text-stone-400 dark:text-white/35" style="font-size:1rem; font-weight:300; margin:0 0.18em;">·</span>
+                <span id="logo_suffix" style="font-size:1.25rem; font-weight:600;" class="text-brand-500 dark:text-brand-400 drop-shadow-[0_0_12px_rgba(var(--brand-500)/0.4)]">HMR</span>
             </span>
             <span class="text-[8px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-[0.3em] mt-1 font-display select-none whitespace-nowrap">
                 Gestion Mensuelle
@@ -807,6 +839,39 @@
                         <div class="grid grid-cols-3 gap-1.5" id="tag_selector_container"></div>
                     </div>
                     <input type="hidden" id="exp_tag" value="divers">
+                </div>
+
+                <!-- Paiement en plusieurs fois -->
+                <div class="py-3 border-b border-stone-200 dark:border-stone-800">
+                    <button type="button" id="installment_toggle_btn"
+                            onclick="toggleInstallmentPanel()"
+                            class="flex items-center gap-2 w-full text-left group">
+                        <span class="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors">💳 En plusieurs fois</span>
+                        <span id="installment_toggle_arrow" class="text-[8px] text-stone-400 dark:text-stone-500 transition-transform duration-200">▶</span>
+                        <span id="installment_active_badge" class="hidden installment-badge">1/1</span>
+                    </button>
+                    <div id="installment_panel">
+                        <div class="pt-3 space-y-2.5">
+                            <!-- Nombre total d'échéances -->
+                            <div>
+                                <span class="block text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1.5 select-none">Nombre total d'échéances</span>
+                                <div class="flex flex-wrap gap-1.5" id="installment_total_btns">
+                                    <!-- Généré par JS -->
+                                </div>
+                            </div>
+                            <!-- Échéance de départ -->
+                            <div id="installment_current_section" class="hidden">
+                                <span class="block text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1.5 select-none">Je suis à l'échéance n°</span>
+                                <div class="flex flex-wrap gap-1.5" id="installment_current_btns">
+                                    <!-- Généré par JS -->
+                                </div>
+                            </div>
+                            <!-- Aperçu -->
+                            <div id="installment_preview" class="text-[9px] font-mono font-bold text-violet-500 dark:text-violet-400 hidden select-none"></div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="exp_installment_total" value="1">
+                    <input type="hidden" id="exp_installment_current" value="1">
                 </div>
 
                 <!-- Date -->

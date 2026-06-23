@@ -673,6 +673,132 @@ function initDatabase() {
     }
 }
 
+// ============================================================
+// --- PAIEMENTS EN PLUSIEURS FOIS — UTILITAIRES UI ---
+// ============================================================
+
+const INSTALLMENT_OPTIONS = [2, 3, 4, 6, 10, 12];
+
+function generateInstallmentGroupId() {
+    return 'inst_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+}
+
+function toggleInstallmentPanel() {
+    const panel  = document.getElementById('installment_panel');
+    const arrow  = document.getElementById('installment_toggle_arrow');
+    const isOpen = panel.classList.contains('open');
+
+    if (isOpen) {
+        panel.classList.remove('open');
+        arrow.style.transform = '';
+        resetInstallmentUI(false); // reset silent (garde panel fermé)
+    } else {
+        panel.classList.add('open');
+        arrow.style.transform = 'rotate(90deg)';
+        renderInstallmentButtons();
+    }
+}
+
+function renderInstallmentButtons() {
+    const totalSelected   = parseInt(document.getElementById('exp_installment_total').value) || 1;
+    const currentSelected = parseInt(document.getElementById('exp_installment_current').value) || 1;
+
+    // Boutons nombre total d'échéances
+    const totalContainer = document.getElementById('installment_total_btns');
+    if (totalContainer) {
+        totalContainer.innerHTML = INSTALLMENT_OPTIONS.map(n => {
+            const active = n === totalSelected;
+            return `<button type="button" onclick="selectInstallmentTotal(${n})"
+                class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border select-none
+                ${active
+                    ? 'bg-violet-500 text-white border-violet-600 shadow-[0_2px_0_#6d28d9]'
+                    : 'bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-700 hover:border-violet-400 hover:text-violet-500'
+                }">×${n}</button>`;
+        }).join('');
+    }
+
+    // Boutons échéance de départ (1 à total-1)
+    const currentSection   = document.getElementById('installment_current_section');
+    const currentContainer = document.getElementById('installment_current_btns');
+    if (totalSelected > 1 && currentSection && currentContainer) {
+        currentSection.classList.remove('hidden');
+        const opts = Array.from({ length: totalSelected - 1 }, (_, i) => i + 1);
+        currentContainer.innerHTML = opts.map(n => {
+            const active = n === currentSelected;
+            return `<button type="button" onclick="selectInstallmentCurrent(${n})"
+                class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border select-none
+                ${active
+                    ? 'bg-violet-500 text-white border-violet-600 shadow-[0_2px_0_#6d28d9]'
+                    : 'bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-700 hover:border-violet-400 hover:text-violet-500'
+                }">N°${n}</button>`;
+        }).join('');
+    } else if (currentSection) {
+        currentSection.classList.add('hidden');
+    }
+
+    updateInstallmentPreview();
+}
+
+function selectInstallmentTotal(n) {
+    document.getElementById('exp_installment_total').value = n;
+    // Si l'échéance courante dépasse total-1, la ramener à 1
+    const cur = parseInt(document.getElementById('exp_installment_current').value) || 1;
+    if (cur >= n) document.getElementById('exp_installment_current').value = 1;
+    renderInstallmentButtons();
+}
+
+function selectInstallmentCurrent(n) {
+    document.getElementById('exp_installment_current').value = n;
+    renderInstallmentButtons();
+}
+
+function updateInstallmentPreview() {
+    const preview   = document.getElementById('installment_preview');
+    const total     = parseInt(document.getElementById('exp_installment_total').value) || 1;
+    const current   = parseInt(document.getElementById('exp_installment_current').value) || 1;
+    const amountRaw = parseFloat((document.getElementById('exp_amount').value || '0').replace(',', '.')) || 0;
+    const badge     = document.getElementById('installment_active_badge');
+
+    if (!preview) return;
+
+    if (total > 1) {
+        const remaining = total - current + 1;
+        const totalEur  = (amountRaw * total).toFixed(2).replace('.', ',');
+        preview.textContent = `Éch. ${current}/${total} — ${remaining} paiement${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''} · Total estimé ${totalEur} €`;
+        preview.classList.remove('hidden');
+        if (badge) { badge.textContent = `${current}/${total}`; badge.classList.remove('hidden'); }
+    } else {
+        preview.classList.add('hidden');
+        if (badge) badge.classList.add('hidden');
+    }
+}
+
+function resetInstallmentUI(closePanel = true) {
+    document.getElementById('exp_installment_total').value   = '1';
+    document.getElementById('exp_installment_current').value = '1';
+    const panel = document.getElementById('installment_panel');
+    const arrow = document.getElementById('installment_toggle_arrow');
+    const badge = document.getElementById('installment_active_badge');
+    const preview = document.getElementById('installment_preview');
+    if (closePanel && panel) { panel.classList.remove('open'); }
+    if (arrow)   arrow.style.transform = '';
+    if (badge)   badge.classList.add('hidden');
+    if (preview) preview.classList.add('hidden');
+    // Réinitialiser les boutons si le panel est encore visible
+    const totalContainer = document.getElementById('installment_total_btns');
+    if (totalContainer) totalContainer.innerHTML = '';
+    const curSection = document.getElementById('installment_current_section');
+    if (curSection) curSection.classList.add('hidden');
+}
+
+// Synchroniser l'aperçu quand le montant change
+document.addEventListener('DOMContentLoaded', () => {
+    const amtInput = document.getElementById('exp_amount');
+    if (amtInput) amtInput.addEventListener('input', updateInstallmentPreview);
+});
+
+// ============================================================
+
 function initUI() {
     // Apply dark mode
     if (state.darkMode) {
@@ -911,6 +1037,12 @@ function renderExpensesList() {
         const dateDisplay = formatExpenseDate(e.date, state.budgetMonth);
         const displayTitle = isBudget ? (e.isCashDepositPending ? `🏦 ${e.title}` : `🎯 ${e.title}`) : e.title;
         
+        // Badge installment si paiement en plusieurs fois
+        let installmentBadgeHTML = "";
+        if (e.installment && e.installment.total > 1) {
+            installmentBadgeHTML = `<span class="installment-badge">${e.installment.current}/${e.installment.total}</span>`;
+        }
+
         let badgeHTML = "";
 		const tagData = EXPENSE_TAGS[e.tag] || EXPENSE_TAGS['divers'];
 		const tagBadge = `
@@ -947,6 +1079,7 @@ function renderExpensesList() {
                 <div class="flex items-center gap-2 mt-1 flex-wrap">
                     <span class="text-[9px] font-mono font-bold text-stone-400 dark:text-stone-500">${dateDisplay}</span>
                     ${tagBadge}
+                    ${installmentBadgeHTML}
 					${badgeHTML}
                     ${depositButtonHTML}
                     <span class="text-[8px] font-black text-brand-500 uppercase tracking-wider opacity-0 group-hover/item-click:opacity-100 transition-all">${indicatorEmoji} ${modifierText}</span>
@@ -1046,7 +1179,7 @@ function renderRevenuesList() {
 function addExpense(event) {
     event.preventDefault();
 
-    const titleInput = document.getElementById("exp_title");
+    const titleInput  = document.getElementById("exp_title");
     const amountInput = document.getElementById("exp_amount");
 
     const title = toTitleCase(titleInput.value.trim());
@@ -1069,28 +1202,41 @@ function addExpense(event) {
         const d = String(now.getDate()).padStart(2, '0');
         selectedDate = `${y}-${m}-${d}`;
     }
-	
-	const tag = document.getElementById("exp_tag").value || "divers"; // <-- NOUVEAU
+
+    const tag              = document.getElementById("exp_tag").value || "divers";
+    const installTotal     = parseInt(document.getElementById("exp_installment_total").value) || 1;
+    const installCurrent   = parseInt(document.getElementById("exp_installment_current").value) || 1;
+
     const newExpense = {
         id: Date.now().toString(),
         title,
         amount,
         date: selectedDate,
-        tag: tag
+        tag
     };
+
+    // Ajouter les données d'installment si paiement en plusieurs fois
+    if (installTotal > 1) {
+        newExpense.installment = {
+            groupId:  generateInstallmentGroupId(),
+            current:  installCurrent,
+            total:    installTotal
+        };
+    }
 
     state.expenses.push(newExpense);
     saveState();
-    expensesCollapsed = false; // Auto-expand when adding new
+    expensesCollapsed = false;
     updateUI();
     showSuccessAnimation();
 
-    // Clear Inputs & Reset date
-    titleInput.value = "";
+    // Reset du formulaire
+    titleInput.value  = "";
     amountInput.value = "";
     clearExpenseDate();
-	document.getElementById("exp_tag").value = "divers";
+    document.getElementById("exp_tag").value = "divers";
     renderCompactTags("tag_selector_container", "exp_tag", "");
+    resetInstallmentUI();
     titleInput.focus();
 }
 
@@ -1109,11 +1255,9 @@ function deleteExpense(id) {
             );
             return;
         }
-        
-        // If the budget is closed, allow deleting it with a double confirmation sequence
+
         const titleWord = "l'enveloppe clôturée";
         const emoji = "🗑️";
-        
         showGenericConfirm(
             "Supprimer l'enveloppe clôturée ? (1/2)",
             `Voulez-vous vraiment supprimer l'enveloppe clôturée <strong>"${expense.title}"</strong> ? Cela supprimera également son historique d'opérations.`,
@@ -1127,7 +1271,7 @@ function deleteExpense(id) {
                         () => {
                              if (budget) {
                                  state.expenses = state.expenses.filter(e => e.budgetId !== budget.id && e.id !== id);
-                                 state.budgets = state.budgets.filter(b => b.id !== budget.id);
+                                 state.budgets  = state.budgets.filter(b => b.id !== budget.id);
                              } else {
                                  state.expenses = state.expenses.filter(e => e.id !== id);
                              }
@@ -1142,12 +1286,43 @@ function deleteExpense(id) {
         return;
     }
 
-    const isRefund = expense.amount < 0;
-    const absAmount = Math.abs(expense.amount);
-    const titleWord = isRefund ? "le remboursement" : "la dépense";
-    const emoji = isRefund ? "💵" : "🗑️";
+    // --- CAS PAIEMENT EN PLUSIEURS FOIS ---
+    if (expense.installment && expense.installment.groupId) {
+        const groupId    = expense.installment.groupId;
+        const groupItems = state.expenses.filter(e => e.installment && e.installment.groupId === groupId);
+        const remaining  = groupItems.filter(e => e.installment.current >= expense.installment.current);
+        const hasMore    = remaining.length > 1;
 
-    // Double confirmation sequence
+        const absAmount  = Math.abs(expense.amount);
+        const badgeLabel = `${expense.installment.current}/${expense.installment.total}`;
+        const msgSuffix  = hasMore
+            ? `<br><br><strong>Attention :</strong> les échéances restantes de ce paiement (<strong>${remaining.length}</strong> échéance${remaining.length > 1 ? 's' : ''}) seront également annulées.`
+            : '';
+
+        showGenericConfirm(
+            `Annuler le paiement ${badgeLabel} ?`,
+            `Voulez-vous supprimer <strong>"${expense.title}"</strong> — échéance <strong>${badgeLabel}</strong> de <strong>${absAmount.toFixed(2).replace('.', ',')} €</strong> ?${msgSuffix}`,
+            "💳",
+            () => {
+                // Supprimer toutes les échéances du groupe dont la position >= current
+                state.expenses = state.expenses.filter(e =>
+                    !(e.installment && e.installment.groupId === groupId &&
+                      e.installment.current >= expense.installment.current)
+                );
+                saveState();
+                updateUI();
+                triggerHaptic('confirm');
+            }
+        );
+        return;
+    }
+
+    // --- CAS NORMAL ---
+    const isRefund   = expense.amount < 0;
+    const absAmount  = Math.abs(expense.amount);
+    const titleWord  = isRefund ? "le remboursement" : "la dépense";
+    const emoji      = isRefund ? "💵" : "🗑️";
+
     showGenericConfirm(
         isRefund ? "Supprimer le remboursement ? (1/2)" : "Supprimer la dépense ? (1/2)",
         `Voulez-vous vraiment supprimer ${titleWord} <strong>"${expense.title}"</strong> de <strong>${absAmount.toFixed(2).replace('.', ',')} €</strong> ?`,
@@ -1885,14 +2060,36 @@ function executeRenewal() {
     });
     
     // 3. Bascule des données vers le mois suivant
+    // --- REPORT DES PAIEMENTS EN PLUSIEURS FOIS ---
+    const pendingInstallments = (state.expenses || []).filter(
+        e => e.installment && e.installment.current < e.installment.total
+    );
     const pendingDeposits = state.expenses ? state.expenses.filter(e => e.isCashDepositPending && !e.isDeposited) : [];
     state.expenses = [];
-    state.budgets = []; 
+    state.budgets  = [];
     state.budgetMonth = selectedRenewalMonth;
-    
+
+    // Reporter les dépôts en attente
     pendingDeposits.forEach(d => {
         d.date = `${selectedRenewalMonth}-01`;
         state.expenses.push(d);
+    });
+
+    // Créer la prochaine échéance pour chaque paiement en cours
+    pendingInstallments.forEach(e => {
+        const nextInstallment = {
+            id:    `${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+            title: e.title,
+            amount: e.amount,
+            date:  `${selectedRenewalMonth}-01`,
+            tag:   e.tag || 'divers',
+            installment: {
+                groupId: e.installment.groupId,
+                current: e.installment.current + 1,
+                total:   e.installment.total
+            }
+        };
+        state.expenses.push(nextInstallment);
     });
     
     if (budgetsToCarryForward && budgetsToCarryForward.length > 0) {
