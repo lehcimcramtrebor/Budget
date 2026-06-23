@@ -1088,14 +1088,15 @@ function updateInstallmentPreview() {
     if (!preview) return;
 
     if (total > 1) {
+        const mensualite = (amountRaw / total);
+        const mensualiteStr = mensualite.toFixed(2).replace('.', ',');
         const remaining = total - current + 1;
-        const totalEur  = (amountRaw * total).toFixed(2).replace('.', ',');
-        preview.textContent = `Éch. ${current}/${total} — ${remaining} paiement${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''} · Total estimé ${totalEur} €`;
+        preview.textContent = `Éch. ${current}/${total} — ${mensualiteStr} € / mois · ${remaining} paiement${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''}`;
         preview.classList.remove('hidden');
-        if (badge) { 
-            badge.textContent = `${current}/${total}`; 
-            badge.classList.add('visible'); 
-            badge.classList.remove('hidden'); 
+        if (badge) {
+            badge.textContent = `${current}/${total}`;
+            badge.classList.add('visible');
+            badge.classList.remove('hidden');
         }
     } else {
         preview.classList.add('hidden');
@@ -1540,11 +1541,15 @@ function addExpense(event) {
     };
 
     // Ajouter les données d'installment si paiement en plusieurs fois
+    // Le montant saisi est le TOTAL — on calcule la mensualité
     if (installTotal > 1) {
+        const mensualite = Math.round((amount / installTotal) * 100) / 100;
+        newExpense.amount = mensualite;  // on enregistre la mensualité
         newExpense.installment = {
             groupId:  generateInstallmentGroupId(),
             current:  installCurrent,
-            total:    installTotal
+            total:    installTotal,
+            totalAmount: amount       // on conserve le montant total pour référence
         };
     }
 
@@ -4133,7 +4138,7 @@ const tourSteps = [
     {
         elementId: "installment_trigger_btn",
         title: "Paiement en Plusieurs Fois 🔢",
-        message: "Ce bouton permet de fractionner une dépense en 2, 3, 4, 6, 10 ou 12 mensualités. Vous indiquez aussi le numéro de l'échéance actuelle — utile si vous êtes déjà au 3e versement sur 6, par exemple. Chaque mois, l'app reporte automatiquement la mensualité suivante avec le bon numéro d'échéance.",
+        message: "Ce bouton permet de fractionner une dépense en 2, 3, 4, 6, 10 ou 12 mensualités. Saisissez le montant total de l'achat — l'app calcule automatiquement la mensualité. Indiquez aussi le numéro de l'échéance actuelle si vous n'en êtes pas à la première. Chaque mois, l'app reporte automatiquement la suivante avec le bon numéro.",
         placement: "top"
     },
     {
@@ -5735,6 +5740,18 @@ function confirmCreateBudget() {
             setTimeout(() => form.classList.remove("animate-shake"), 400);
         }
         return;
+    }
+
+    // Si un paiement en plusieurs fois est actif, ce n'est pas compatible avec une enveloppe
+    const installmentTotal = parseInt(document.getElementById('exp_installment_total')?.value) || 1;
+    if (installmentTotal > 1) {
+        showGenericAlert(
+            'Paiement fractionné désactivé',
+            "Une enveloppe est toujours débitée en une seule fois. Le paiement en plusieurs fois a été annulé."
+        );
+        resetInstallmentUI();
+        const panel = document.getElementById('installment_panel');
+        if (panel) panel.classList.remove('open');
     }
 
     pendingBudgetTitle = title;
