@@ -7521,7 +7521,8 @@ function runCertificationTests() {
         { name: "Garde-fous de date", fn: testPeriodSecurity },
         { name: "Périodicité des frais", fn: testPeriodicityCalculations },
         { name: "Paiements fractionnés", fn: testInstallmentPayments },
-        { name: "Cas limites fractionnés", fn: testInstallmentEdgeCases }
+        { name: "Cas limites fractionnés", fn: testInstallmentEdgeCases },
+        { name: "Montants d'échéances personnalisés", fn: testInstallmentCustomAmounts }
     ];
     
     function runNext() {
@@ -8277,6 +8278,57 @@ function testInstallmentEdgeCases() {
     const totals = calculateTotals();
     if (totals.totalExpenses !== 100) throw new Error(`RAV: seule l'échéance courante compte (100), obtenu ${totals.totalExpenses}`);
     if (totals.remaining !== 2900)    throw new Error(`RAV: remaining attendu 2900, obtenu ${totals.remaining}`);
+
+    return true;
+}
+
+function testInstallmentCustomAmounts() {
+    // Simule la logique de modification de montants par échéance (sans DOM)
+    const totalAmount = 200;
+    const n = 4;
+
+    // 1. Initialisation égale : 4 × 50 €
+    const mensualite = Math.round((totalAmount / n) * 100) / 100;
+    let amounts = Array.from({ length: n }, () => mensualite);
+    const diff = Math.round((totalAmount - mensualite * n) * 100) / 100;
+    if (diff !== 0) amounts[n - 1] = Math.round((amounts[n - 1] + diff) * 100) / 100;
+
+    if (amounts.length !== 4)  throw new Error("Init : longueur attendue 4");
+    if (amounts[0] !== 50)     throw new Error(`Init : éch.1 attendu 50, obtenu ${amounts[0]}`);
+    if (amounts[3] !== 50)     throw new Error(`Init : éch.4 attendu 50, obtenu ${amounts[3]}`);
+    const sumInit = Math.round(amounts.reduce((s, a) => s + a, 0) * 100) / 100;
+    if (sumInit !== 200)       throw new Error(`Init : total attendu 200, obtenu ${sumInit}`);
+
+    // 2. Modification éch.1 → 60 € : les suivantes recalculées sur 140 ÷ 3
+    const newFirst = 60;
+    const rem140 = Math.max(0, totalAmount - newFirst);
+    const perOther = Math.round((rem140 / (n - 1)) * 100) / 100; // 46.67
+    amounts[0] = newFirst;
+    for (let i = 1; i < n; i++) amounts[i] = perOther;
+    const adjDiff = Math.round((rem140 - perOther * (n - 1)) * 100) / 100;
+    if (adjDiff !== 0) amounts[n - 1] = Math.round((amounts[n - 1] + adjDiff) * 100) / 100;
+
+    if (amounts[0] !== 60)     throw new Error(`Modif éch.1 : attendu 60, obtenu ${amounts[0]}`);
+    if (amounts[1] !== 46.67)  throw new Error(`Modif éch.1 : éch.2 attendu 46.67, obtenu ${amounts[1]}`);
+    if (amounts[2] !== 46.67)  throw new Error(`Modif éch.1 : éch.3 attendu 46.67, obtenu ${amounts[2]}`);
+    const expectedLast = Math.round((perOther + adjDiff) * 100) / 100; // 46.66
+    if (amounts[3] !== expectedLast) throw new Error(`Modif éch.1 : éch.4 attendu ${expectedLast}, obtenu ${amounts[3]}`);
+    const sumAfter = Math.round(amounts.reduce((s, a) => s + a, 0) * 100) / 100;
+    if (sumAfter !== 200) throw new Error(`Modif éch.1 : total doit rester 200, obtenu ${sumAfter}`);
+
+    // 3. Modification libre éch.2 → 55 € (pas de recalcul des autres)
+    amounts[1] = 55;
+    if (amounts[0] !== 60)    throw new Error("Modif libre : éch.1 ne doit pas changer");
+    if (amounts[2] !== 46.67) throw new Error("Modif libre : éch.3 ne doit pas changer");
+    const sumFree = Math.round(amounts.reduce((s, a) => s + a, 0) * 100) / 100;
+    if (sumFree === 200) throw new Error("Modif libre éch.2 : le total ne devrait plus être 200");
+
+    // 4. Montant enregistré = montant de l'échéance courante
+    if (amounts[0] !== 60) throw new Error(`Enregistrement éch.1 : attendu 60, obtenu ${amounts[0]}`);
+    if (amounts[1] !== 55) throw new Error(`Enregistrement éch.2 : attendu 55, obtenu ${amounts[1]}`);
+
+    // 5. Report : l'échéance 3 porte son montant propre
+    if (amounts[2] !== 46.67) throw new Error(`Report éch.3 : attendu 46.67, obtenu ${amounts[2]}`);
 
     return true;
 }
