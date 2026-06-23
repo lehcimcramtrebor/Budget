@@ -1091,7 +1091,7 @@ function renderExpensesList() {
         // Badge installment si paiement en plusieurs fois
         let installmentBadgeHTML = "";
         if (e.installment && e.installment.total > 1) {
-            installmentBadgeHTML = `<span class="installment-badge">${e.installment.current}/${e.installment.total}</span>`;
+            installmentBadgeHTML = `<span class="installment-badge visible">${e.installment.current}/${e.installment.total}</span>`;
         }
 
         let badgeHTML = "";
