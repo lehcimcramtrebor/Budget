@@ -8491,7 +8491,7 @@ function measureBannerHeights() {
             if (_cssScrollDrivenStyle) _cssScrollDrivenStyle.remove();
 
             const rangeStart = Math.round(bannerStickyTop);
-            const rangeEnd   = rangeStart + 100;
+            const rangeEnd = rangeStart + bannerHeightDiffMax;
 
             _cssScrollDrivenStyle = document.createElement('style');
             _cssScrollDrivenStyle.id = '_scroll_driven_anim';
@@ -8522,7 +8522,7 @@ function updateScrollEffects() {
     if (!bannerContainer) return;
 
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const collapseDistance = 100;
+    const collapseDistance = bannerHeightDiffMax;
 
     let progress = 0;
     if (scrollTop > bannerStickyTop) {
