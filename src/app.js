@@ -1070,6 +1070,7 @@ function updateInstallmentIncompatibleButtons(total) {
     const btnRefund   = document.getElementById('btn_refund');
     const btnEnvelope = document.getElementById('tour_new_envelope');
     const btnCancel   = document.getElementById('installment_cancel_btn');
+    const amountInput = document.getElementById('exp_amount');
     const tip = isActive ? 'Non disponible avec un paiement fractionné' : '';
 
     [btnRefund, btnEnvelope].forEach(btn => {
@@ -1087,6 +1088,20 @@ function updateInstallmentIncompatibleButtons(total) {
         }
     });
 
+    // Verrouillage du champ montant
+    if (amountInput) {
+        if (isActive) {
+            amountInput.readOnly = true;
+            amountInput.classList.add('opacity-60', 'cursor-not-allowed', 'bg-violet-50/50', 'dark:bg-violet-950/20', 'border-violet-300/50', 'dark:border-violet-800/40');
+        } else {
+            amountInput.readOnly = false;
+            amountInput.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-violet-50/50', 'dark:bg-violet-950/20', 'border-violet-300/50', 'dark:border-violet-800/40');
+            // Masquer le hint si visible
+            const hint = document.getElementById('amount_locked_hint');
+            if (hint) hint.classList.add('hidden');
+        }
+    }
+
     // Bouton d'annulation rapide
     if (btnCancel) {
         if (isActive) {
@@ -1097,6 +1112,19 @@ function updateInstallmentIncompatibleButtons(total) {
             btnCancel.classList.remove('flex');
         }
     }
+}
+
+let _amountHintTimer = null;
+function onAmountClickWhenLocked(event) {
+    const amountInput = document.getElementById('exp_amount');
+    if (!amountInput?.readOnly) return;
+    event.preventDefault();
+    amountInput.blur();
+    const hint = document.getElementById('amount_locked_hint');
+    if (!hint) return;
+    hint.classList.remove('hidden');
+    clearTimeout(_amountHintTimer);
+    _amountHintTimer = setTimeout(() => hint.classList.add('hidden'), 2500);
 }
 
 function renderInstallmentButtons() {

@@ -873,9 +873,13 @@
                         <div class="relative">
                             <input type="text" id="exp_amount" inputmode="decimal" placeholder="0,00"
                                    class="form-input h-11 text-right pr-5 text-[11px] font-mono font-black bg-stone-950/[0.03] dark:bg-black/40 text-stone-800 dark:text-stone-100 border border-stone-300 dark:border-stone-800/80 rounded-xl shadow-[inset_0_2.5px_5px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)] focus:ring-1 focus:ring-brand-500 placeholder-stone-400 dark:placeholder-stone-600 px-1.5"
-                                   required oninput="normalizeAmountInput(event)">
+                                   required oninput="normalizeAmountInput(event)" onclick="onAmountClickWhenLocked(event)">
                             <span class="absolute right-1 top-1/2 -translate-y-1/2 font-mono font-bold text-stone-400 dark:text-stone-600 text-[10px] pointer-events-none">€</span>
                         </div>
+                        <!-- Message verrouillage montant -->
+                        <p id="amount_locked_hint" class="hidden text-[9px] font-black text-violet-500 dark:text-violet-400 uppercase tracking-wider mt-1 select-none">
+                            🔒 Montant verrouillé — annulez d'abord le paiement fractionné
+                        </p>
                     </div>
 
                     <!-- Sélecteur de tags -->
