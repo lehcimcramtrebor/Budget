@@ -4084,52 +4084,62 @@ let currentTourStep = 0;
 const tourSteps = [
     {
         elementId: "app_logo",
-        title: "Logo Dynamique",
-        message: "BUDGETHMR affiche votre prénom directement dans le logo dès que vous le renseignez dans les réglages !",
+        title: "Bienvenue dans BudgetHMR 👋",
+        message: "L'application affiche votre prénom directement dans le logo dès que vous le renseignez dans les réglages. Personnalisez-la à votre image !",
         placement: "bottom"
     },
     {
         elementId: "remaining_balance_disp",
-        title: "Le Reste à Vivre",
-        message: "C'est l'indicateur central de l'application. Il s'ajuste en couleur : Vert (sain), Orange (vigilance) ou Rouge (alerte) pour vous guider en temps réel.",
-        placement: "bottom"
-    },
-    {
-        elementId: "btn_settings",
-        title: "Réglages & Sauvegarde ⚙️",
-        message: ('showSaveFilePicker' in window)
-            ? "Cette roue crantée s'anime d'une pulsation et tourne lentement dès que vous modifiez votre budget. Cliquez dessus pour accéder aux réglages et sauvegarder vos changements !"
-            : "Cette roue crantée s'anime d'une pulsation et tourne lentement dès que vous modifiez votre budget. Cliquez dessus pour accéder aux réglages et télécharger votre sauvegarde BUDGET-BACKUP.json !",
+        title: "Le Reste à Vivre 💰",
+        message: "C'est l'indicateur central. Il change de couleur en temps réel : 🟢 Vert (budget sain), 🟠 Orange (vigilance), 🔴 Rouge (alerte). Il est calculé après déduction de tous vos frais fixes et dépenses.",
         placement: "bottom"
     },
     {
         elementId: "tour_add_title",
-        title: "Saisie Rapide",
-        message: "Enregistrez vos dépenses ou vos remboursements (calcul inverse). La saisie est simplifiée : que vous tapiez un point ou une virgule, elle normalise automatiquement !",
+        title: "Saisie Rapide ✏️",
+        message: "Saisissez le libellé de votre dépense ici. L'application normalise automatiquement la ponctuation (virgule ou point acceptés). Vous pouvez aussi enregistrer un remboursement en mettant un montant négatif.",
         placement: "bottom"
     },
     {
-        elementId: "expenses_content",
-        title: "Opérations en cours",
-        message: "Retrouvez ici l'ensemble de vos opérations du mois. La liste est pliable pour garder une vue d'ensemble compacte et propre.",
+        elementId: "tag_selector_container",
+        title: "Tags Intelligents 🏷️",
+        message: "Les deux premiers boutons de tag se mettent à jour automatiquement selon ce que vous tapez et votre historique. Plus vous utilisez l'app, plus les suggestions sont pertinentes ! Le troisième bouton ouvre la liste complète des tags.",
+        placement: "bottom"
+    },
+    {
+        elementId: "expense_date_label",
+        title: "Date de la Dépense 📅",
+        message: "Par défaut, la date du jour est utilisée. Tap sur ce bouton pour sélectionner une date différente dans le calendrier. La date choisie servira au classement dans le récapitulatif mensuel.",
+        placement: "bottom"
+    },
+    {
+        elementId: "tour_expenses_btn",
+        title: "Opérations en Cours 🛒",
+        message: "Tap sur cette carte pour ouvrir la liste de toutes vos dépenses du mois. Elles sont affichées dans l'ordre de saisie. Maintenez un appui long pour modifier ou supprimer une opération.",
         placement: "top"
     },
     {
         elementId: "revenues_container",
-        title: "Revenus Mensuels",
-        message: "Gérez plusieurs revenus récurrents. Le cumul de ces revenus forme votre budget de base global du mois.",
+        title: "Revenus Mensuels 💵",
+        message: "Gérez ici plusieurs sources de revenus récurrents. Le cumul forme votre budget de base du mois. Tap sur ➕ pour en ajouter, ou sur un revenu existant pour le modifier.",
         placement: "top"
     },
     {
         elementId: "fixed_charges_container",
-        title: "Frais Fixes",
-        message: "Ajoutez ici vos charges récurrentes mensuelles (Loyer, abonnements...). Ces frais sont déduits en priorité.",
+        title: "Frais Fixes 📋",
+        message: "Vos charges récurrentes (loyer, abonnements...) sont listées ici et déduites en priorité. Vous pouvez configurer des fréquences variées : mensuel, hebdomadaire, bimensuel, et bien plus. Tap sur une charge pour la modifier.",
         placement: "top"
     },
     {
         elementId: "btn_settings",
-        title: "Réglages & Données",
-        message: "Accédez à ce menu pour changer votre prénom, importer une sauvegarde JSON, réinitialiser l'application ou relancer ce guide !",
+        title: "Tags Personnalisés 🏷️",
+        message: "Dans les Réglages, vous trouverez le Gestionnaire de Tags. Créez vos propres catégories avec l'emoji de votre choix, désactivez les tags système qui ne vous sont pas utiles, ou désactivez des catégories entières en un tap !",
+        placement: "left"
+    },
+    {
+        elementId: "btn_settings",
+        title: "Réglages & Données ⚙️",
+        message: "Cet icône s'anime quand des changements non sauvegardés sont en attente. Depuis les réglages : changez votre prénom, importez ou exportez une sauvegarde JSON, certifiez les calculs de l'app, ou relancez ce guide à tout moment !",
         placement: "left"
     }
 ];
