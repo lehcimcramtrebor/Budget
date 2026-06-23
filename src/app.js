@@ -7400,26 +7400,52 @@ function updateScrollEffects() {
 
 // --- SCROLL AUTOMATIQUE SAISIE RAPIDE (mobile uniquement) ---
 function initQuickEntryScroll() {
-    // Actif uniquement sur appareils touch (clavier virtuel)
     const isTouchDevice = () =>
         window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 
     let quickEntryFocused = false;
+    const COLLAPSE_DISTANCE = 100; // identique à updateScrollEffects
 
-    function scrollToQuickEntry() {
+    // Centre le bloc de saisie dans l'espace visible entre golden card et clavier
+    function centerCard() {
         const banner = document.getElementById('sticky_banner_container');
-        const card = document.getElementById('tour_add_title')?.closest('.glass-card');
+        const card   = document.getElementById('tour_add_title')?.closest('.glass-card');
         if (!banner || !card) return;
 
         const bannerBottom = banner.getBoundingClientRect().bottom;
-        const cardTop = card.getBoundingClientRect().top;
-        const delta = cardTop - bannerBottom - 12; // 12px de respiration
+        const vvHeight     = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const availableH   = vvHeight - bannerBottom;
+        const cardRect     = card.getBoundingClientRect();
+        const cardH        = cardRect.height;
 
-        if (Math.abs(delta) < 4) return; // Déjà bien positionné
+        // Centrer dans l'espace dispo, ou coller sous la carte si pas assez de place
+        const idealTop = availableH > cardH
+            ? bannerBottom + (availableH - cardH) / 2
+            : bannerBottom + 8;
+
+        const delta = cardRect.top - idealTop;
+        if (Math.abs(delta) < 3) return;
         window.scrollBy({ top: delta, behavior: 'smooth' });
     }
 
-    // Écouter le focus sur les 2 inputs de saisie rapide
+    // Garantit que la golden card est compactée avant de centrer
+    function compactThenCenter() {
+        const targetScrollY  = bannerStickyTop + COLLAPSE_DISTANCE;
+        const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+
+        if (currentScrollY < targetScrollY) {
+            // Scroller jusqu'à la position de compaction complète
+            window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+            // Après stabilisation du scroll + du clavier, centrer
+            setTimeout(() => { updateScrollEffects(); centerCard(); }, 380);
+        } else {
+            // Déjà assez scrollé : juste centrer
+            updateScrollEffects();
+            centerCard();
+            setTimeout(centerCard, 200);
+        }
+    }
+
     ['exp_title', 'exp_amount'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -7427,8 +7453,7 @@ function initQuickEntryScroll() {
         el.addEventListener('focus', () => {
             if (!isTouchDevice()) return;
             quickEntryFocused = true;
-            // Délai court pour laisser le clavier commencer à apparaître
-            setTimeout(scrollToQuickEntry, 120);
+            setTimeout(compactThenCenter, 80);
         });
 
         el.addEventListener('blur', () => {
@@ -7436,11 +7461,11 @@ function initQuickEntryScroll() {
         });
     });
 
-    // Réajuster quand le clavier virtuel modifie le viewport (iOS/Android)
+    // Réajuster si le clavier change de taille
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
             if (!quickEntryFocused || !isTouchDevice()) return;
-            setTimeout(scrollToQuickEntry, 60);
+            setTimeout(centerCard, 60);
         });
     }
 }
