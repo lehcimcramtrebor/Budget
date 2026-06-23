@@ -1035,6 +1035,29 @@ function updateInstallmentTriggerLabel() {
             btn.classList.add('text-stone-500', 'dark:text-stone-400');
         }
     }
+    updateInstallmentIncompatibleButtons(total);
+}
+
+function updateInstallmentIncompatibleButtons(total) {
+    const isActive = (total || parseInt(document.getElementById('exp_installment_total')?.value) || 1) > 1;
+    const btnRefund   = document.getElementById('btn_refund');
+    const btnEnvelope = document.getElementById('tour_new_envelope');
+    const tip = isActive ? 'Non disponible avec un paiement fractionné' : '';
+
+    [btnRefund, btnEnvelope].forEach(btn => {
+        if (!btn) return;
+        if (isActive) {
+            btn.disabled = true;
+            btn.title = tip;
+            btn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+            btn.classList.remove('active:translate-y-[3px]', 'active:shadow-none');
+        } else {
+            btn.disabled = false;
+            btn.title = '';
+            btn.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+            btn.classList.add('active:translate-y-[3px]', 'active:shadow-none');
+        }
+    });
 }
 
 function renderInstallmentButtons() {
@@ -1211,6 +1234,7 @@ function resetInstallmentUI() {
     document.getElementById('exp_installment_current').value = '1';
     installmentAmounts = [];
     updateInstallmentTriggerLabel();
+    updateInstallmentIncompatibleButtons(1);
     const preview = document.getElementById('installment_preview');
     if (preview) preview.classList.add('hidden');
     const curSection = document.getElementById('installment_current_section');
@@ -1819,21 +1843,6 @@ function confirmAddRefund() {
 
     if (isNaN(amount) || amount <= 0) {
         return;
-    }
-
-    // Si un paiement en plusieurs fois est actif, incompatible avec un remboursement
-    const installmentTotal = parseInt(document.getElementById('exp_installment_total')?.value) || 1;
-    if (installmentTotal > 1) {
-        showGenericAlert(
-            'Paiement fractionné désactivé',
-            "Un remboursement est toujours enregistré en une seule fois. Le paiement en plusieurs fois a été annulé."
-        );
-        resetInstallmentUI();
-        const configModal = document.getElementById('installment_config_modal');
-        if (configModal) {
-            configModal.classList.add('opacity-0');
-            setTimeout(() => configModal.classList.add('hidden'), 300);
-        }
     }
 
     // Read date from custom date input or fallback to today
@@ -5866,22 +5875,6 @@ function confirmCreateBudget() {
             setTimeout(() => form.classList.remove("animate-shake"), 400);
         }
         return;
-    }
-
-    // Si un paiement en plusieurs fois est actif, ce n'est pas compatible avec une enveloppe
-    const installmentTotal = parseInt(document.getElementById('exp_installment_total')?.value) || 1;
-    if (installmentTotal > 1) {
-        showGenericAlert(
-            'Paiement fractionné désactivé',
-            "Une enveloppe est toujours débitée en une seule fois. Le paiement en plusieurs fois a été annulé."
-        );
-        resetInstallmentUI();
-        // Fermer la modale de config installment si elle était ouverte
-        const configModal = document.getElementById('installment_config_modal');
-        if (configModal) {
-            configModal.classList.add('opacity-0');
-            setTimeout(() => configModal.classList.add('hidden'), 300);
-        }
     }
 
     pendingBudgetTitle = title;
