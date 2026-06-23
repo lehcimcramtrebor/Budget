@@ -1821,6 +1821,21 @@ function confirmAddRefund() {
         return;
     }
 
+    // Si un paiement en plusieurs fois est actif, incompatible avec un remboursement
+    const installmentTotal = parseInt(document.getElementById('exp_installment_total')?.value) || 1;
+    if (installmentTotal > 1) {
+        showGenericAlert(
+            'Paiement fractionné désactivé',
+            "Un remboursement est toujours enregistré en une seule fois. Le paiement en plusieurs fois a été annulé."
+        );
+        resetInstallmentUI();
+        const configModal = document.getElementById('installment_config_modal');
+        if (configModal) {
+            configModal.classList.add('opacity-0');
+            setTimeout(() => configModal.classList.add('hidden'), 300);
+        }
+    }
+
     // Read date from custom date input or fallback to today
     let selectedDate = document.getElementById("expense_date_value").value;
     if (!selectedDate) {
@@ -1855,7 +1870,8 @@ function confirmAddRefund() {
             amountInput.value = "";
             clearExpenseDate();
 			document.getElementById("exp_tag").value = "divers";
-    renderCompactTags("tag_selector_container", "exp_tag", "");
+            renderCompactTags("tag_selector_container", "exp_tag", "");
+            resetInstallmentUI();
             titleInput.focus();
         }
     );
