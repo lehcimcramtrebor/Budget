@@ -1042,6 +1042,7 @@ function updateInstallmentIncompatibleButtons(total) {
     const isActive = (total || parseInt(document.getElementById('exp_installment_total')?.value) || 1) > 1;
     const btnRefund   = document.getElementById('btn_refund');
     const btnEnvelope = document.getElementById('tour_new_envelope');
+    const btnCancel   = document.getElementById('installment_cancel_btn');
     const tip = isActive ? 'Non disponible avec un paiement fractionné' : '';
 
     [btnRefund, btnEnvelope].forEach(btn => {
@@ -1058,6 +1059,17 @@ function updateInstallmentIncompatibleButtons(total) {
             btn.classList.add('active:translate-y-[3px]', 'active:shadow-none');
         }
     });
+
+    // Bouton d'annulation rapide
+    if (btnCancel) {
+        if (isActive) {
+            btnCancel.classList.remove('hidden');
+            btnCancel.classList.add('flex');
+        } else {
+            btnCancel.classList.add('hidden');
+            btnCancel.classList.remove('flex');
+        }
+    }
 }
 
 function renderInstallmentButtons() {
