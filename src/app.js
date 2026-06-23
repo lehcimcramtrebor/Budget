@@ -4310,9 +4310,9 @@ function openRecapModal(category) {
                     <div class="grid grid-cols-2 gap-1 mb-1">
                         ${Object.keys(tagTotals).sort((a,b) => tagTotals[b]-tagTotals[a]).filter(k => tagTotals[k] !== 0).map(key => {
                             const td = EXPENSE_TAGS[key] || EXPENSE_TAGS['divers'];
-                            return `<div class="flex items-center justify-between ${isDark ? 'bg-[#2a2618]' : 'bg-[#f0e8d8]'} px-2 py-1 rounded-lg border ${isDark ? 'border-[#4d4433]' : 'border-[#d8cdb0]'}">
-                                <span class="font-mono text-[9px] ${subText} uppercase">${td.icon} ${td.label}</span>
-                                <span class="font-mono font-black text-[10px] ${ticketText}">${formatCurrency(tagTotals[key])}</span>
+                            return `<div class="flex items-center justify-between gap-1.5 overflow-hidden ${isDark ? 'bg-[#2a2618]' : 'bg-[#f0e8d8]'} px-2 py-1 rounded-lg border ${isDark ? 'border-[#4d4433]' : 'border-[#d8cdb0]'}">
+                                <span class="font-mono text-[9px] ${subText} uppercase truncate min-w-0">${td.icon} ${td.label}</span>
+                                <span class="font-mono font-black text-[10px] ${ticketText} shrink-0 ml-1">${formatCurrency(tagTotals[key])}</span>
                             </div>`;
                         }).join('')}
                     </div>
@@ -7301,6 +7301,11 @@ function testPeriodicityCalculations() {
 let bannerHeightDiffMax = 0;
 let bannerStickyTop = 0;
 
+
+// Vrai si le navigateur supporte les CSS Scroll-driven Animations
+const _cssScrollDrivenSupported = CSS.supports('animation-timeline', 'scroll()');
+let _cssScrollDrivenStyle = null; // <style> injecté dynamiquement
+
 function measureBannerHeights() {
     requestAnimationFrame(() => {
         const bannerContainer = document.getElementById("sticky_banner_container");
@@ -7322,7 +7327,7 @@ function measureBannerHeights() {
         
         bannerHeightDiffMax = H_expanded - H_compact;
         
-        // Mesurer le point de blocage absolu du conteneur sticky (via le sentinel non-sticky si disponible)
+        // Mesurer le point de blocage absolu du conteneur sticky
         const sentinel = document.getElementById("sticky_banner_sentinel");
         if (sentinel) {
             const rect = sentinel.getBoundingClientRect();
@@ -7337,18 +7342,18 @@ function measureBannerHeights() {
             bannerContainer.style.position = originalPositionStyle;
         }
 
-        // Assurer que la hauteur de page est suffisante pour permettre une transition complète de 100px past bannerStickyTop
+        // Assurer que la hauteur de page est suffisante
         const mainAppContainer = document.getElementById("main_app_container");
         const scrollSpacer = document.getElementById("scroll_spacer");
         if (mainAppContainer) {
-            mainAppContainer.style.paddingBottom = ""; // Réinitialiser pour mesurer la hauteur naturelle
-            if (scrollSpacer) scrollSpacer.style.height = "0px"; // Réinitialiser le spacer
+            mainAppContainer.style.paddingBottom = "";
+            if (scrollSpacer) scrollSpacer.style.height = "0px";
 
             const computedStyle = window.getComputedStyle(mainAppContainer);
             const defaultPb = parseFloat(computedStyle.paddingBottom) || 32;
             
             const currentScrollHeight = document.documentElement.scrollHeight;
-            const collapseDistance = 100; // Distance en px pour réaliser le pliage complet
+            const collapseDistance = 100;
             const neededScrollHeight = bannerStickyTop + collapseDistance + window.innerHeight;
             if (currentScrollHeight < neededScrollHeight) {
                 const deficit = neededScrollHeight - currentScrollHeight;
@@ -7356,19 +7361,44 @@ function measureBannerHeights() {
             }
         }
 
-        // Mettre à jour immédiatement
+        // --- CSS SCROLL-DRIVEN ANIMATION (compositor thread, ultra-fluide) ---
+        if (_cssScrollDrivenSupported) {
+            // Supprimer l'ancien style injecté si besoin
+            if (_cssScrollDrivenStyle) _cssScrollDrivenStyle.remove();
+
+            const rangeStart = Math.round(bannerStickyTop);
+            const rangeEnd   = rangeStart + 100;
+
+            _cssScrollDrivenStyle = document.createElement('style');
+            _cssScrollDrivenStyle.id = '_scroll_driven_anim';
+            _cssScrollDrivenStyle.textContent = `
+                @keyframes _compactCard { to { --scroll-progress: 1; } }
+                #sticky_banner_container {
+                    animation: _compactCard linear both;
+                    animation-timeline: scroll(root block);
+                    animation-range: ${rangeStart}px ${rangeEnd}px;
+                }
+            `;
+            document.head.appendChild(_cssScrollDrivenStyle);
+
+            // Désactiver la mise à jour JS inline pour éviter le conflit
+            bannerContainer.style.removeProperty('--scroll-progress');
+        }
+
+        // Mettre à jour immédiatement (JS fallback ou effets secondaires)
         updateScrollEffects();
     });
 }
 
+
 function updateScrollEffects() {
     const bannerContainer = document.getElementById("sticky_banner_container");
-    const scrollSpacer = document.getElementById("scroll_spacer");
-    const cardBottomGrid = document.getElementById("card_bottom_grid");
+    const scrollSpacer    = document.getElementById("scroll_spacer");
+    const cardBottomGrid  = document.getElementById("card_bottom_grid");
     if (!bannerContainer) return;
 
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const collapseDistance = 100; // Distance en px pour réaliser le pliage complet
+    const collapseDistance = 100;
 
     let progress = 0;
     if (scrollTop > bannerStickyTop) {
@@ -7376,10 +7406,12 @@ function updateScrollEffects() {
         progress = Math.max(0, Math.min(1, progress));
     }
 
-    // Appliquer la progression sur la variable CSS
-    bannerContainer.style.setProperty("--scroll-progress", progress);
+    // Mise à jour JS de --scroll-progress uniquement si CSS scroll-driven non actif
+    if (!_cssScrollDrivenSupported) {
+        bannerContainer.style.setProperty("--scroll-progress", progress);
+    }
 
-    // Ajuster le spacer pour compenser exactement la hauteur perdue par la carte
+    // Ajuster le spacer (reste en JS dans tous les cas)
     if (scrollSpacer) {
         scrollSpacer.style.height = `${progress * bannerHeightDiffMax}px`;
     }
@@ -7389,13 +7421,14 @@ function updateScrollEffects() {
         cardBottomGrid.style.pointerEvents = progress > 0.5 ? "none" : "auto";
     }
 
-    // Gestion de la classe sémantique compacte
+    // Classe sémantique compacte
     if (progress >= 0.95) {
         bannerContainer.classList.add("is-compact");
     } else {
         bannerContainer.classList.remove("is-compact");
     }
 }
+
 
 
 // --- SCROLL AUTOMATIQUE SAISIE RAPIDE (mobile uniquement) ---
@@ -7471,9 +7504,28 @@ function initQuickEntryScroll() {
 }
 
 function initScrollEffects() {
-    window.addEventListener("scroll", updateScrollEffects, { passive: true });
+    if (!_cssScrollDrivenSupported) {
+        // Fallback JS avec rAF pour éviter plusieurs updates par frame
+        let _rafId = null;
+        window.addEventListener("scroll", () => {
+            if (_rafId) return;
+            _rafId = requestAnimationFrame(() => {
+                updateScrollEffects();
+                _rafId = null;
+            });
+        }, { passive: true });
+    } else {
+        // CSS scroll-driven gère --scroll-progress → juste les effets secondaires en JS
+        let _rafId = null;
+        window.addEventListener("scroll", () => {
+            if (_rafId) return;
+            _rafId = requestAnimationFrame(() => {
+                updateScrollEffects(); // spacer + pointerEvents + is-compact
+                _rafId = null;
+            });
+        }, { passive: true });
+    }
     window.addEventListener("resize", measureBannerHeights);
-    
     measureBannerHeights();
 }
 

@@ -436,6 +436,14 @@
             animation: slow-spin 8s infinite linear !important;
         }
 
+        /* Enregistrement de --scroll-progress comme propriété CSS animable
+           Permet l'interpolation native par le moteur CSS (compositor thread) */
+        @property --scroll-progress {
+            syntax: '<number>';
+            inherits: true;
+            initial-value: 0;
+        }
+
         /* Dynamic scroll compact layout for Golden Card (linked to --scroll-progress) */
         #sticky_banner_container {
             --scroll-progress: 0;
