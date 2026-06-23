@@ -8589,7 +8589,7 @@ function initQuickEntryScroll() {
 
     // Garantit que la golden card est compactée avant de centrer
     function compactThenCenter() {
-        const targetScrollY  = bannerStickyTop + COLLAPSE_DISTANCE;
+        const targetScrollY  = bannerStickyTop + COLLAPSE_DISTANCE + 200;
         const currentScrollY = window.scrollY || document.documentElement.scrollTop;
 
         if (currentScrollY < targetScrollY) {
