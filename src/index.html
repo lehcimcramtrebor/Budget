@@ -295,18 +295,18 @@
             }
             .golden-card {
                 @apply p-6 rounded-3xl transition-all duration-300 relative overflow-hidden;
-                /* Gradient directionnel : clair haut-gauche, profond bas-droite */
+                /* Gradient directionnel basé sur les vars CSS — répond aux thèmes dynamiques */
                 background: linear-gradient(
                     145deg,
-                    hsl(168, 58%, 36%) 0%,
-                    hsl(165, 62%, 30%) 40%,
-                    hsl(162, 65%, 24%) 75%,
-                    hsl(168, 60%, 18%) 100%
+                    rgb(var(--brand-500)) 0%,
+                    rgb(var(--brand-600)) 42%,
+                    rgb(var(--brand-700)) 72%,
+                    rgb(var(--brand-700)) 100%
                 ) !important;
                 border: 1px solid rgba(255, 255, 255, 0.18) !important;
                 border-top: 1px solid rgba(255, 255, 255, 0.40) !important;
                 border-left: 1px solid rgba(255, 255, 255, 0.25) !important;
-                /* Ombre neutre profonde — sans lueur verte */
+                /* Ombre neutre profonde — sans lueur colorée */
                 box-shadow:
                     0 1px 0 rgba(255,255,255,0.22) inset,
                     0 -1px 0 rgba(0,0,0,0.25) inset,
