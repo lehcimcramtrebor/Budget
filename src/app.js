@@ -4149,6 +4149,18 @@ const tourSteps = [
         placement: "top"
     },
     {
+        elementId: "tour_new_envelope",
+        title: "Enveloppes Entre Amis 👥",
+        message: "Créez une enveloppe de type « Entre Amis » pour gérer un pot commun avec d'autres personnes. Chacun peut rembourser sa part — en espèces ou par virement — et l'app suit l'avancement des remboursements en temps réel jusqu'à ce que l'enveloppe soit soldée.",
+        placement: "top"
+    },
+    {
+        elementId: "budgets_dashboard_content",
+        title: "Enveloppes Budget 🎯",
+        message: "Les enveloppes Budget sont personnelles : elles vous permettent de réserver une somme pour un projet précis (voyage, appareil électro...) et de suivre ce qu'il reste à dépenser sur ce projet, indépendamment de votre budget mensuel courant.",
+        placement: "top"
+    },
+    {
         elementId: "btn_settings",
         title: "Tags Personnalisés 🏷️",
         message: "Dans les Réglages, vous trouverez le Gestionnaire de Tags. Créez vos propres catégories avec l'emoji de votre choix, désactivez les tags système qui ne vous sont pas utiles, ou désactivez des catégories entières en un tap !",
