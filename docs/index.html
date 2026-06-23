@@ -291,27 +291,26 @@
             }
             .dark .glass-card {
                 box-shadow:
-                    /* Ligne de lumière subtile en haut — effet de relief */
-                    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+                    /* Ligne de lumière en haut — relief marqué */
+                    0 1px 0 rgba(255, 255, 255, 0.10) inset,
                     /* Ombre portée profonde */
-                    0 4px 6px rgba(0, 0, 0, 0.4),
-                    0 12px 32px rgba(0, 0, 0, 0.55),
-                    /* Micro-glow périphérique très subtil */
-                    0 0 0 1px rgba(255, 255, 255, 0.05);
-                border: 1px solid rgba(168, 162, 158, 0.22) !important; /* stone-400 à 22% */
-                border-top: 1px solid rgba(214, 211, 208, 0.18) !important; /* stone-300 à 18% — ligne lumière */
+                    0 4px 8px rgba(0, 0, 0, 0.5),
+                    0 16px 40px rgba(0, 0, 0, 0.65),
+                    /* Outline périphérique visible */
+                    0 0 0 1px rgba(255, 255, 255, 0.09);
+                border: 1px solid rgba(168, 162, 158, 0.38) !important; /* stone-400 à 38% */
+                border-top: 1px solid rgba(214, 211, 208, 0.32) !important; /* stone-300 à 32% — ligne lumière */
             }
 
             /* --- Éléments de liste (rows, panneaux internes) --- */
-            /* Renforce la lisibilité sur fond AMOLED sans trop charger */
             .dark .bg-black\/30,
             .dark [class*="dark:bg-black/30"] {
-                border-color: rgba(168, 162, 158, 0.14) !important;
+                border-color: rgba(168, 162, 158, 0.22) !important;
             }
             /* Séparateurs horizontaux plus visibles */
             .dark hr,
             .dark [class*="dark:border-stone-800"] {
-                border-color: rgba(168, 162, 158, 0.18) !important;
+                border-color: rgba(168, 162, 158, 0.26) !important;
             }
             .golden-card {
                 @apply p-6 rounded-3xl transition-all duration-300 relative overflow-hidden;
