@@ -4095,9 +4095,27 @@ const tourSteps = [
         placement: "bottom"
     },
     {
+        elementId: "tour_recap_revenues",
+        title: "La Carte Principale 💳",
+        message: "Cette carte est votre tableau de bord instantané. En bas, trois chiffres clés : vos Revenus, vos Frais Fixes et vos Dépenses du mois. Tap sur l'un d'eux pour ouvrir son récapitulatif détaillé.",
+        placement: "bottom"
+    },
+    {
+        elementId: "tour_recap_expenses",
+        title: "Récap Dépenses 📊",
+        message: "Le récapitulatif des dépenses est un outil de consultation. Les dépenses y sont classées par date que vous avez déclarée — pas par date de saisie. Ainsi, une dépense datée du 1er juin apparaît toujours en bas, même si vous l'avez enregistrée le 20.",
+        placement: "bottom"
+    },
+    {
+        elementId: "tour_recap_charges",
+        title: "Récaps Revenus & Frais Fixes 📋",
+        message: "Les récapitulatifs Revenus et Frais Fixes sont purement consultatifs : ils listent le détail de ce qui compose votre budget de base. Vous pouvez modifier chaque élément directement depuis ces récaps.",
+        placement: "bottom"
+    },
+    {
         elementId: "tour_add_title",
         title: "Saisie Rapide ✏️",
-        message: "Saisissez le libellé de votre dépense ici. L'application normalise automatiquement la ponctuation (virgule ou point acceptés). Vous pouvez aussi enregistrer un remboursement en mettant un montant négatif.",
+        message: "Saisissez le libellé de votre dépense ici. L'application normalise automatiquement la ponctuation (virgule ou point acceptés). Pour enregistrer un remboursement, utilisez le bouton dédié dans le formulaire.",
         placement: "bottom"
     },
     {
@@ -4115,7 +4133,7 @@ const tourSteps = [
     {
         elementId: "tour_expenses_btn",
         title: "Opérations en Cours 🛒",
-        message: "Tap sur cette carte pour ouvrir la liste de toutes vos dépenses du mois. Elles sont affichées dans l'ordre de saisie. Maintenez un appui long pour modifier ou supprimer une opération.",
+        message: "Tap sur cette carte pour ouvrir la liste de toutes vos dépenses du mois. Elles sont affichées dans l'ordre de saisie — contrairement au récap qui lui trie par date déclarée. Maintenez un appui long pour modifier ou supprimer une opération.",
         placement: "top"
     },
     {

@@ -828,15 +828,15 @@
             </div>
 
             <div id="card_bottom_grid" class="relative z-10 grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/15 text-[11px] leading-tight select-none">
-                <button type="button" onclick="openRecapModal('revenues')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-white/20">
+                <button type="button" id="tour_recap_revenues" onclick="openRecapModal('revenues')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-white/20">
                     <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Revenus (+)</span>
                     <span class="text-sm font-black text-white" id="base_budget_disp">0.00 €</span>
                 </button>
-                <button type="button" onclick="openRecapModal('fixedCharges')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl border-l border-white/15 pl-4 focus:outline-none focus:ring-1 focus:ring-white/20">
+                <button type="button" id="tour_recap_charges" onclick="openRecapModal('fixedCharges')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl border-l border-white/15 pl-4 focus:outline-none focus:ring-1 focus:ring-white/20">
                     <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Frais Fixes (-)</span>
                     <span class="text-sm font-black text-white" id="fixed_charges_disp">0.00 €</span>
                 </button>
-                <button type="button" onclick="openRecapModal('expenses')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl border-l border-white/15 pl-4 focus:outline-none focus:ring-1 focus:ring-white/20">
+                <button type="button" id="tour_recap_expenses" onclick="openRecapModal('expenses')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl border-l border-white/15 pl-4 focus:outline-none focus:ring-1 focus:ring-white/20">
                     <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Dépenses (-)</span>
                     <span class="text-sm font-black text-white" id="expenses_disp">0.00 €</span>
                 </button>
