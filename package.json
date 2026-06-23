@@ -1,6 +1,6 @@
 {
   "name": "budgethmr",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Suivi de budget mensuel simple, rapide et gratuit",
   "main": "index.html",
   "scripts": {

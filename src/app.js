@@ -1096,9 +1096,7 @@ function updateInstallmentIncompatibleButtons(total) {
         } else {
             amountInput.readOnly = false;
             amountInput.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-violet-50/50', 'dark:bg-violet-950/20', 'border-violet-300/50', 'dark:border-violet-800/40');
-            // Masquer le hint si visible
-            const hint = document.getElementById('amount_locked_hint');
-            if (hint) hint.classList.add('hidden');
+
         }
     }
 
@@ -1114,17 +1112,32 @@ function updateInstallmentIncompatibleButtons(total) {
     }
 }
 
-let _amountHintTimer = null;
 function onAmountClickWhenLocked(event) {
     const amountInput = document.getElementById('exp_amount');
     if (!amountInput?.readOnly) return;
+    
     event.preventDefault();
     amountInput.blur();
-    const hint = document.getElementById('amount_locked_hint');
-    if (!hint) return;
-    hint.classList.remove('hidden');
-    clearTimeout(_amountHintTimer);
-    _amountHintTimer = setTimeout(() => hint.classList.add('hidden'), 2500);
+    
+    // Ouvre la modale
+    const modal = document.getElementById('locked_amount_modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.glass-card').classList.remove('scale-95');
+        }, 10);
+        triggerHaptic(10);
+    }
+}
+
+function closeLockedAmountModal() {
+    const modal = document.getElementById('locked_amount_modal');
+    if (!modal) return;
+    
+    modal.classList.add('opacity-0');
+    modal.querySelector('.glass-card').classList.add('scale-95');
+    setTimeout(() => modal.classList.add('hidden'), 300);
 }
 
 function renderInstallmentButtons() {
