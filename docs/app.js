@@ -1,5 +1,15 @@
 // --- BLOC UNIQUE DE CONFIGURATION DES TAGS ---
 const TAG_DATA = {
+    revenus: {
+        label: "💰 Revenus",
+        items: {
+            salaire: { icon: "💶", label: "Salaire" },
+            aides: { icon: "🏛️", label: "Aides/CAF" },
+            remboursement: { icon: "🔄", label: "Remboursement" },
+            ventes: { icon: "📦", label: "Ventes" },
+            divers: { icon: "➕", label: "Divers" }
+        }
+    },
     alimentation: {
         label: "🍔 Alimentation",
         items: {
@@ -10,113 +20,152 @@ const TAG_DATA = {
             boucherie: { icon: "🥩", label: "Boucherie" },
             marche: { icon: "🍎", label: "Marché" },
             cantine: { icon: "🍱", label: "Cantine" },
-            bar: { icon: "🍺", label: "Bar/Café" },
+            bar: { icon: "🍺", label: "Bar" },
             livraison: { icon: "🛵", label: "Livraison" }
         }
     },
     vehicule: {
-        label: "🚗 Véhicules & Transports",
+        label: "🚗 Véhicules",
         items: {
-            auto: { icon: "⛽", label: "Auto" },
-            moto: { icon: "🏍️", label: "Moto" },
-            garage: { icon: "🔧", label: "Garage" },
+            carburant: { icon: "⛽", label: "Carburant" },
+            entretien_auto: { icon: "🔧", label: "Entretien Auto" },
+            entretien_moto: { icon: "🏍️", label: "Entretien Moto" },
             transport: { icon: "🚌", label: "Transports" },
             train: { icon: "🚆", label: "Train" },
             avion: { icon: "✈️", label: "Avion" },
-            taxi: { icon: "🚕", label: "Taxi/VTC" },
+            taxi: { icon: "🚕", label: "Taxi" },
             peage: { icon: "🎫", label: "Péage" },
             parking: { icon: "🅿️", label: "Parking" },
             velo: { icon: "🚲", label: "Vélo/Trot" }
         }
     },
     maison: {
-        label: "🏠 Maison & Quotidien",
+        label: "🏠 Maison",
         items: {
-            logement: { icon: "🏠", label: "Logement" },
-            factures: { icon: "⚡", label: "Factures" },
+            loyer_credit: { icon: "🏠", label: "Loyer/Crédit" },
+            energie: { icon: "⚡", label: "Élec/Gaz" },
+            eau: { icon: "💧", label: "Eau" },
             assurance: { icon: "🛡️", label: "Assurance" },
-            internet: { icon: "🌐", label: "Internet" },
-            electro: { icon: "📺", label: "Équipement" },
-            menage: { icon: "🧹", label: "Entretien" },
-            deco: { icon: "🛋️", label: "Déco" },
-            jardin: { icon: "🌱", label: "Jardin" },
-            brico: { icon: "🛠️", label: "Matos" },
-            travaux: { icon: "🏗️", label: "Gros Travaux" }
+            internet: { icon: "🌐", label: "Internet/Forfait" },
+            equipement: { icon: "📺", label: "Équipement" },
+            entretien: { icon: "🧹", label: "Entretien" },
+            decoration: { icon: "🛋️", label: "Décoration" },
+            brico_jardin: { icon: "🛠️", label: "Brico/Jardin" },
+            travaux: { icon: "🏗️", label: "Travaux" }
+        }
+    },
+    shopping: {
+        label: "🛍️ Shopping & Perso",
+        items: {
+            vetements: { icon: "👕", label: "Vêtements" },
+            chaussures: { icon: "👟", label: "Chaussures" },
+            accessoires: { icon: "⌚", label: "Accessoires" },
+            cadeaux: { icon: "🎁", label: "Cadeaux" }
         }
     },
     loisirs: {
-        label: "🍿 Loisirs & Culture",
+        label: "🍿 Loisirs",
         items: {
-            loisirs: { icon: "🔫", label: "Loisirs" },
+            activite: { icon: "🔫", label: "Activités" },
             vape: { icon: "💨", label: "Vape" },
-            cine: { icon: "🍿", label: "Cinéma" },
-            jeuxvideo: { icon: "🎮", label: "Gaming" },
+            cinema: { icon: "🍿", label: "Cinéma" },
+            gaming: { icon: "🎮", label: "Gaming" },
             musique: { icon: "🎵", label: "Musique" },
             streaming: { icon: "📺", label: "Streaming" },
-            livres: { icon: "📚", label: "Lecture" },
+            lecture: { icon: "📚", label: "Lecture" },
             presse: { icon: "📰", label: "Presse" },
             sorties: { icon: "🎟️", label: "Sorties" },
             voyage: { icon: "🏖️", label: "Voyage" },
             tabac: { icon: "🚬", label: "Tabac" },
-            numerique: { icon: "📱", label: "Numérique" },
-            abonnement: { icon: "💳", label: "Abos divers" }
+            numerique: { icon: "📱", label: "Logiciels/Apps" },
+            abonnements: { icon: "💳", label: "Abonnements" }
         }
     },
     sante: {
-        label: "💊 Santé & Beauté",
+        label: "💊 Santé",
         items: {
-            medical: { icon: "👨‍⚕️", label: "Généraliste" }, // Icone ajustée
-            specialiste: { icon: "🩺", label: "Spécialiste" }, // Ajout (Cardio, ophtalmo, etc.)
+            generaliste: { icon: "👨‍⚕️", label: "Généraliste" },
+            hopital: { icon: "🏥", label: "Hôpital" },
+            cpam: { icon: "📂", label: "CPAM" },
+            mutuelle: { icon: "🏥", label: "Mutuelle" },
             pharmacie: { icon: "⚕️", label: "Pharmacie" },
-            labo: { icon: "🔬", label: "Analyses/Labo" }, // Ajout (Prises de sang, examens)
-            mutuelle: { icon: "🏥", label: "Mutuelle" }, // Ajout (Cotisations ou reste à charge)
-            complements: { icon: "🌿", label: "Compléments" }, // Ajout (Vitamines, nutrition spécifique)
-            therapie: { icon: "🧘", label: "Kiné/Ostéo" },
+            laboratoire: { icon: "🔬", label: "Laboratoire" },
+            complements: { icon: "🌿", label: "Compléments" },
+            therapie: { icon: "🧘", label: "Thérapie" }
+        }
+    },
+    specialistes: {
+        label: "🩺 Spécialistes",
+        items: {
+            cardiologue: { icon: "❤️", label: "Cardiologue" },
             dentiste: { icon: "🦷", label: "Dentiste" },
-            opticien: { icon: "👓", label: "Opticien" },
+            ophtalmologue: { icon: "👁️", label: "Ophtalmo" },
+            dermatologue: { icon: "🩺", label: "Dermatologue" },
+            orl: { icon: "👂", label: "ORL" },
+            pneumologue: { icon: "🫁", label: "Pneumologue" },
+            gastro: { icon: "🥨", label: "Gastro-entéro" },
+            radiologue: { icon: "☢️", label: "Radiologue" },
+            kine: { icon: "🧘", label: "Kiné" },
+            osteo: { icon: "🦴", label: "Ostéo" },
+            podologue: { icon: "🦶", label: "Podologue" }
+        }
+    },
+    beaute: {
+        label: "💄 Beauté",
+        items: {
             coiffeur: { icon: "✂️", label: "Coiffeur" },
-            beaute: { icon: "🧴", label: "Beauté/Soin" }
+            hygiene: { icon: "🧴", label: "Hygiène" },
+            cosmetique: { icon: "💅", label: "Cosmétique" }
         }
     },
     sport: {
         label: "🏋️ Sports",
         items: {
-            club: { icon: "💳", label: "Abo/Licence" }, // Ajout (Inscriptions, cotisations club)
-            matos_sport: { icon: "👟", label: "Équipement" }, // Ajout (Chaussures, fringues, accessoires)
-            evenement: { icon: "🏅", label: "Dossard/Tournoi" }, // Ajout (Frais de compète ou d'inscription aux courses)
+            licence: { icon: "💳", label: "Licence" },
+            equipement: { icon: "👟", label: "Équipement" },
+            competition: { icon: "🏅", label: "Compétition" },
+            piscine: { icon: "🏊", label: "Piscine" },
             running: { icon: "🏃", label: "Running" },
-            muscu: { icon: "💪", label: "Muscu/Fitness" },
+            musculation: { icon: "💪", label: "Musculation" },
             cyclisme: { icon: "🚴", label: "Cyclisme" },
-            rando: { icon: "🏔️", label: "Rando/Ski" },
-            natation: { icon: "🏊", label: "Natation" },
+            randonnee: { icon: "🏔️", label: "Randonnée" },
             combat: { icon: "🥊", label: "Combat" },
             raquette: { icon: "🎾", label: "Raquette" },
-            foot: { icon: "⚽", label: "Collectif" }
+            collectif: { icon: "⚽", label: "Collectif" }
         }
     },
     famille: {
-        label: "👧 Famille & Animaux",
+        label: "👧 Famille",
         items: {
-            enfant: { icon: "👧", label: "Enfants" },
-            ecole: { icon: "🎒", label: "École" },
+            enfants: { icon: "👧", label: "Enfants" },
+            ecole: { icon: "🎒", label: "École/Périscolaire" },
             jouets: { icon: "🧸", label: "Jouets" },
-            nounou: { icon: "🍼", label: "Garde" },
+            garde: { icon: "🍼", label: "Garde/Nounou" },
             animaux: { icon: "🐶", label: "Animaux" },
-            veto: { icon: "🩺", label: "Véto" },
-            vetements: { icon: "👕", label: "Fringues" },
-            cadeaux: { icon: "🎁", label: "Cadeaux" },
-            poche: { icon: "🪙", label: "Argent de poche" }
+            veterinaire: { icon: "🩺", label: "Vétérinaire" },
+            argent_poche: { icon: "🪙", label: "Argent de poche" }
         }
     },
-    admin: {
-        label: "🏦 Admin & Finances",
+    pro: {
+        label: "💼 Frais Pro",
         items: {
-            banque: { icon: "🏦", label: "Banque" },
+            repas: { icon: "🍽️", label: "Repas Pro" },
+            deplacement: { icon: "🚗", label: "Déplacement" },
+            hotel: { icon: "🏨", label: "Hôtel" },
+            materiel: { icon: "💻", label: "Matériel Pro" },
+            fournitures: { icon: "📎", label: "Fournitures" }
+        }
+    },
+    finance: {
+        label: "🏦 Finances & Admin",
+        items: {
+            frais_bancaires: { icon: "🏦", label: "Frais Bancaires" },
             epargne: { icon: "🐷", label: "Épargne" },
-            impots: { icon: "📄", label: "Impôts" },
-            juridique: { icon: "⚖️", label: "Justice/Notaire" },
+            impots: { icon: "📄", label: "Impôts/Taxes" },
+            justice: { icon: "⚖️", label: "Justice" },
+            notaire: { icon: "✒️", label: "Notaire" },
             amende: { icon: "👮", label: "Amende" },
-            dons: { icon: "🤝", label: "Dons/Asso" },
+            dons: { icon: "🤝", label: "Dons" },
             poste: { icon: "📮", label: "Poste" },
             divers: { icon: "📝", label: "Divers" }
         }
@@ -330,8 +379,8 @@ function openTagSelectionModal(inputId, containerId, titleVal, excludedKeys) {
 
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "py-2.5 px-1 rounded-xl text-[10px] font-bold border transition-all flex flex-col items-center justify-center gap-1 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-800 hover:border-brand-400 select-none";
-        btn.innerHTML = `<span class="text-xl">${tag.icon}</span> <span class="truncate w-full text-center">${tag.label}</span>`;
+        btn.className = "py-2.5 px-1 rounded-xl text-[10px] font-mono font-black border transition-all flex flex-col items-center justify-center gap-1 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-700 dark:text-stone-200 border-stone-200 dark:border-stone-800 hover:border-brand-400 hover:bg-brand-50/40 dark:hover:bg-brand-900/20 select-none";
+        btn.innerHTML = `<span class="text-xl">${tag.icon}</span> <span class="truncate w-full text-center uppercase tracking-tight">${tag.label}</span>`;
 
         btn.onclick = () => {
             const input = document.getElementById(activeTagInputId);
@@ -360,7 +409,7 @@ function openTagSelectionModal(inputId, containerId, titleVal, excludedKeys) {
     // --- 1. SECTION DYNAMIQUE (FAVORIS) ---
     const topTags = getTopUsedTags(12);
     const dynSection = document.createElement("div");
-    dynSection.innerHTML = `<h4 class="text-[9px] font-black text-brand-500 uppercase tracking-widest mb-2 px-1">⭐ Les plus utilisés</h4><div class="grid grid-cols-3 gap-2"></div>`;
+    dynSection.innerHTML = `<h4 class="text-[10px] font-black text-brand-500 uppercase tracking-tight mb-2 px-1 flex items-center gap-1">⭐ Les plus utilisés</h4><div class="grid grid-cols-3 gap-2"></div>`;
     const dynGrid = dynSection.querySelector(".grid");
     
     topTags.forEach(key => {
@@ -396,7 +445,7 @@ function openTagSelectionModal(inputId, containerId, titleVal, excludedKeys) {
         };
         
         header.innerHTML = `
-            <h4 class="text-[9px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">${cat.label}</h4>
+            <h4 class="text-[10px] font-black text-stone-500 dark:text-stone-400 uppercase tracking-tight">${cat.label}</h4>
             <span class="text-stone-500 dark:text-stone-400 bg-stone-200/50 dark:bg-stone-800 rounded-full w-6 h-6 flex items-center justify-center transition-transform duration-300 ${isCollapsed ? '-rotate-90' : 'rotate-0'}">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
             </span>
@@ -835,18 +884,18 @@ function renderExpensesList() {
         
         item.innerHTML = `
             <div onclick="openEditItem('expense', '${e.id}')" class="min-w-0 pr-2 flex-1 cursor-pointer group/item-click">
-                <div class="font-bold text-sm text-stone-800 dark:text-stone-100 truncate group-hover/item-click:text-brand-500 transition-colors">${displayTitle}</div>
+                <div class="font-mono font-bold text-xs text-stone-800 dark:text-stone-100 truncate group-hover/item-click:text-brand-500 transition-colors">${displayTitle}</div>
                 <div class="flex items-center gap-2 mt-1 flex-wrap">
-                    <span class="text-[9px] font-semibold text-stone-400 dark:text-stone-500">${dateDisplay}</span>
+                    <span class="text-[9px] font-mono font-bold text-stone-400 dark:text-stone-500">${dateDisplay}</span>
                     ${tagBadge}
 					${badgeHTML}
                     ${depositButtonHTML}
-                    <span class="text-[8px] font-bold text-brand-500 opacity-0 group-hover/item-click:opacity-100 transition-all">${indicatorEmoji} ${modifierText}</span>
+                    <span class="text-[8px] font-black text-brand-500 uppercase tracking-wider opacity-0 group-hover/item-click:opacity-100 transition-all">${indicatorEmoji} ${modifierText}</span>
                 </div>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-                <span class="font-black text-sm ${amountColor}">${amountSign} ${absAmount.toFixed(2).replace('.', ',')} €</span>
-                <button onclick="deleteExpense('${e.id}')" class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all flex items-center justify-center font-bold text-xs shadow-sm active:scale-90" title="Supprimer">
+                <span class="font-mono font-black text-xs ${amountColor}">${amountSign} ${absAmount.toFixed(2).replace('.', ',')} €</span>
+                <button onclick="deleteExpense('${e.id}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-bold text-[9px] active:scale-90 border border-red-500/20" title="Supprimer">
                     ✕
                 </button>
             </div>
@@ -861,14 +910,14 @@ function renderFixedChargesList() {
 
     state.fixedCharges.forEach(c => {
         const item = document.createElement("div");
-        item.className = "flex items-center justify-between p-2.5 bg-stone-50 dark:bg-stone-900 rounded-xl border border-stone-200/40 dark:border-stone-800/40";
+        item.className = "flex items-center justify-between px-3 py-2 bg-stone-950/[0.03] dark:bg-black/30 rounded-xl border border-stone-200/60 dark:border-stone-800/60 group/charge";
         item.innerHTML = `
-            <div onclick="openEditItem('fixedCharge', '${c.id}')" class="min-w-0 pr-2 flex-1 cursor-pointer group/item-click">
-                <span class="font-semibold text-xs text-stone-700 dark:text-stone-300 truncate block group-hover/item-click:text-brand-500 transition-colors">${c.title} <span class="text-[8px] font-bold text-brand-500 opacity-0 group-hover/item-click:opacity-100 transition-all ml-1">✏️</span></span>
+            <div onclick="openEditItem('fixedCharge', '${c.id}')" class="min-w-0 pr-2 flex-1 cursor-pointer">
+                <span class="font-mono font-bold text-xs text-stone-800 dark:text-stone-200 truncate block group-hover/charge:text-brand-500 transition-colors">${c.title}</span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-                <span class="font-bold text-xs text-stone-600 dark:text-stone-400">${c.amount.toFixed(2).replace('.', ',')} €</span>
-                <button onclick="deleteFixedCharge('${c.id}')" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all flex items-center justify-center font-bold text-[9px] shadow-sm active:scale-90" title="Supprimer">
+                <span class="font-mono font-black text-[11px] text-red-500 dark:text-red-400">- ${c.amount.toFixed(2).replace('.', ',')} €</span>
+                <button onclick="deleteFixedCharge('${c.id}')" class="w-6 h-6 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-bold text-[9px] active:scale-90 border border-red-500/20" title="Supprimer">
                     ✕
                 </button>
             </div>
@@ -884,14 +933,14 @@ function renderRevenuesList() {
 
     state.revenues.forEach(r => {
         const item = document.createElement("div");
-        item.className = "flex items-center justify-between p-2.5 bg-stone-50 dark:bg-stone-900 rounded-xl border border-stone-200/40 dark:border-stone-800/40";
+        item.className = "flex items-center justify-between px-3 py-2 bg-stone-950/[0.03] dark:bg-black/30 rounded-xl border border-stone-200/60 dark:border-stone-800/60 group/rev";
         item.innerHTML = `
-            <div onclick="openEditItem('revenue', '${r.id}')" class="min-w-0 pr-2 flex-1 cursor-pointer group/item-click">
-                <span class="font-semibold text-xs text-stone-700 dark:text-stone-300 truncate block group-hover/item-click:text-brand-500 transition-colors">${r.title} <span class="text-[8px] font-bold text-brand-500 opacity-0 group-hover/item-click:opacity-100 transition-all ml-1">✏️</span></span>
+            <div onclick="openEditItem('revenue', '${r.id}')" class="min-w-0 pr-2 flex-1 cursor-pointer">
+                <span class="font-mono font-bold text-xs text-stone-800 dark:text-stone-200 truncate block group-hover/rev:text-brand-500 transition-colors">${r.title}</span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-                <span class="font-bold text-xs text-stone-600 dark:text-stone-400">${r.amount.toFixed(2).replace('.', ',')} €</span>
-                <button onclick="deleteRevenue('${r.id}')" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all flex items-center justify-center font-bold text-[9px] shadow-sm active:scale-90" title="Supprimer">
+                <span class="font-mono font-black text-[11px] text-emerald-600 dark:text-emerald-400">+ ${r.amount.toFixed(2).replace('.', ',')} €</span>
+                <button onclick="deleteRevenue('${r.id}')" class="w-6 h-6 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-bold text-[9px] active:scale-90 border border-red-500/20" title="Supprimer">
                     ✕
                 </button>
             </div>
@@ -1859,55 +1908,36 @@ let expensesCollapsed = true;
 let fixedChargesCollapsed = true;
 
 function updateCollapsibleUI() {
-    const revContent = document.getElementById("revenues_content");
-    const revChevron = document.getElementById("revenues_chevron");
-    const revSummary = document.getElementById("revenues_summary");
-
-    if (revContent && revChevron && revSummary) {
-        if (revenuesCollapsed) {
-            revContent.classList.add("hidden");
-            revChevron.classList.remove("rotate-180");
-            const total = state.revenues.reduce((sum, r) => sum + r.amount, 0);
-            revSummary.innerText = `${state.revenues.length} revenu${state.revenues.length > 1 ? 's' : ''} (${formatCurrency(total)})`;
-        } else {
-            revContent.classList.remove("hidden");
-            revChevron.classList.add("rotate-180");
-            revSummary.innerText = "";
-        }
-    }
-
-    const expContent = document.getElementById("expenses_content");
-    const expChevron = document.getElementById("expenses_chevron");
+    // Mise à jour des 3 cartes façade (Opérations / Revenus / Frais Fixes)
     const expSummary = document.getElementById("expenses_summary");
-
-    if (expContent && expChevron && expSummary) {
-        if (expensesCollapsed) {
-            expContent.classList.add("hidden");
-            expChevron.classList.remove("rotate-180");
-            const total = state.expenses.reduce((sum, e) => sum + e.amount, 0);
-            expSummary.innerText = `${state.expenses.length} opération${state.expenses.length > 1 ? 's' : ''} (${formatCurrency(total)})`;
+    if (expSummary) {
+        const n = state.expenses.length;
+        const totalNet = state.expenses.reduce((s, e) => s + e.amount, 0);
+        // Reset color classes
+        expSummary.className = expSummary.className
+            .replace(/text-(?:red|emerald|stone|green)-\d+(?:\s+dark:text-(?:red|emerald|stone|green)-\d+)?/g, '').trim();
+        if (n === 0) {
+            expSummary.textContent = "0 opération";
+            expSummary.classList.add("text-stone-400", "dark:text-stone-500");
         } else {
-            expContent.classList.remove("hidden");
-            expChevron.classList.add("rotate-180");
-            expSummary.innerText = "";
+            const sign = totalNet <= 0 ? "+" : "-";
+            const colorClass = totalNet <= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400";
+            expSummary.textContent = `${n} opération${n > 1 ? 's' : ''} · ${sign} ${formatCurrency(Math.abs(totalNet))}`;
+            expSummary.classList.add(...colorClass.split(' '));
         }
     }
 
-    const fcContent = document.getElementById("fixed_charges_content");
-    const fcChevron = document.getElementById("fixed_charges_chevron");
-    const fcSummary = document.getElementById("fixed_charges_summary");
 
-    if (fcContent && fcChevron && fcSummary) {
-        if (fixedChargesCollapsed) {
-            fcContent.classList.add("hidden");
-            fcChevron.classList.remove("rotate-180");
-            const total = state.fixedCharges.reduce((sum, c) => sum + c.amount, 0);
-            fcSummary.innerText = `${state.fixedCharges.length} frais (${formatCurrency(total)})`;
-        } else {
-            fcContent.classList.remove("hidden");
-            fcChevron.classList.add("rotate-180");
-            fcSummary.innerText = "";
-        }
+    const revSummary = document.getElementById("revenues_summary");
+    if (revSummary) {
+        const total = state.revenues.reduce((s, r) => s + r.amount, 0);
+        revSummary.textContent = formatCurrency(total);
+    }
+
+    const fcSummary = document.getElementById("fixed_charges_summary");
+    if (fcSummary) {
+        const total = state.fixedCharges.reduce((s, c) => s + c.amount, 0);
+        fcSummary.textContent = formatCurrency(total);
     }
 }
 
@@ -2109,7 +2139,7 @@ function openEditItem(type, id, parentId = null) {
 
     currentEditingItem = { type, id, parentId };
 
-    document.getElementById("edit_modal_title").innerText = modalTitle;
+    document.getElementById("edit_modal_title").innerHTML = `✏️ ${modalTitle}`;
     document.getElementById("edit_title").value = item.title;
     
     const absAmount = Math.abs(item.amount);
@@ -3789,34 +3819,78 @@ function openRecapModal(category) {
     let title = "";
     let html = "";
     
+    const isDark = document.documentElement.classList.contains('dark');
+    const ticketBg = isDark ? 'bg-[#1a1712] border-[#3d3929]' : 'bg-[#faf6ee] border-[#e8e0cc]';
+    const ticketText = isDark ? 'text-[#d4c9a8]' : 'text-[#2a2315]';
+    const sepColor = isDark ? 'text-[#4d4433]' : 'text-[#c8b99a]';
+    const subText = isDark ? 'text-[#7a6e55]' : 'text-[#a89070]';
+    const lineHover = isDark ? 'hover:bg-[#2a2618]' : 'hover:bg-[#f0e8d8]';
+
+    const makeSep = (char = '─') => `<div class="font-mono text-[10px] ${sepColor} tracking-tighter overflow-hidden whitespace-nowrap select-none">${char.repeat(36)}</div>`;
+    const makeRow = (left, right, rightClass = '') => `
+        <div class="${lineHover} flex justify-between items-baseline px-1 py-0.5 rounded transition-colors">
+            <span class="font-mono text-[11px] ${ticketText} truncate max-w-[60%]">${left}</span>
+            <span class="font-mono font-black text-[11px] ${rightClass || ticketText} tabular-nums">${right}</span>
+        </div>`;
+
     if (category === "revenues") {
-        title = "💰 Revenus";
-        state.revenues.forEach(r => {
-            html += `
-                <div class="flex justify-between items-center p-3 bg-stone-50 dark:bg-stone-900 rounded-2xl border border-stone-200/40 dark:border-stone-800/40">
-                    <span class="font-bold text-xs text-stone-800 dark:text-stone-300">${r.title}</span>
-                    <span class="font-black text-xs text-green-600 dark:text-green-400">+ ${formatCurrency(r.amount)}</span>
+        title = "💰 REVENUS";
+        const total = state.revenues.reduce((s, r) => s + r.amount, 0);
+        let rows = state.revenues.map(r => makeRow(r.title.toUpperCase(), `+ ${formatCurrency(r.amount)}`, 'text-emerald-600 dark:text-emerald-400')).join('');
+        if (!rows) rows = `<div class="text-center py-4 font-mono text-[11px] ${subText}">-- AUCUN REVENU --</div>`;
+        html = `
+            <div class="rounded-2xl border ${ticketBg} overflow-hidden">
+                <div class="px-4 pt-4 pb-2 text-center border-b border-dashed ${isDark ? 'border-[#4d4433]' : 'border-[#c8b99a]'}">
+                    <div class="font-mono font-black text-[13px] ${ticketText} uppercase tracking-widest mb-0.5">BUDGETHMR</div>
+                    <div class="font-mono text-[9px] ${subText} uppercase tracking-widest">Récapitulatif — Revenus</div>
+                    <div class="font-mono text-[9px] ${subText} mt-0.5">${new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'})}</div>
                 </div>
-            `;
-        });
-        if (state.revenues.length === 0) {
-            html = `<div class="text-center py-6 text-xs text-stone-400 font-bold">Aucun revenu enregistré</div>`;
-        }
+                <div class="px-4 py-3 space-y-0.5">
+                    ${makeSep('·')}
+                    <div class="font-mono text-[9px] ${subText} uppercase tracking-widest px-1 py-1">Libellé · · · · · · · Montant</div>
+                    ${makeSep('·')}
+                    ${rows}
+                    ${makeSep('─')}
+                    <div class="flex justify-between items-baseline px-1 py-1">
+                        <span class="font-mono font-black text-[11px] ${ticketText} uppercase tracking-wider">TOTAL REVENUS</span>
+                        <span class="font-mono font-black text-[13px] text-emerald-600 dark:text-emerald-400 tabular-nums">+ ${formatCurrency(total)}</span>
+                    </div>
+                    ${makeSep('=')}
+                </div>
+                <div class="px-4 pb-3 text-center">
+                    <div class="font-mono text-[8px] ${subText} uppercase tracking-widest">*** Merci et bonne gestion ***</div>
+                </div>
+            </div>`;
     } else if (category === "fixedCharges") {
-        title = "⚙️ Frais Fixes";
-        state.fixedCharges.forEach(c => {
-            html += `
-                <div class="flex justify-between items-center p-3 bg-stone-50 dark:bg-stone-900 rounded-2xl border border-stone-200/40 dark:border-stone-800/40">
-                    <span class="font-bold text-xs text-stone-800 dark:text-stone-300">${c.title}</span>
-                    <span class="font-black text-xs text-red-500 dark:text-red-400">- ${formatCurrency(c.amount)}</span>
+        title = "⚙️ FRAIS FIXES";
+        const total = state.fixedCharges.reduce((s, c) => s + c.amount, 0);
+        let rows = state.fixedCharges.map(c => makeRow(c.title.toUpperCase(), `- ${formatCurrency(c.amount)}`, 'text-red-500 dark:text-red-400')).join('');
+        if (!rows) rows = `<div class="text-center py-4 font-mono text-[11px] ${subText}">-- AUCUN FRAIS FIXE --</div>`;
+        html = `
+            <div class="rounded-2xl border ${ticketBg} overflow-hidden">
+                <div class="px-4 pt-4 pb-2 text-center border-b border-dashed ${isDark ? 'border-[#4d4433]' : 'border-[#c8b99a]'}">
+                    <div class="font-mono font-black text-[13px] ${ticketText} uppercase tracking-widest mb-0.5">BUDGETHMR</div>
+                    <div class="font-mono text-[9px] ${subText} uppercase tracking-widest">Récapitulatif — Frais Fixes</div>
+                    <div class="font-mono text-[9px] ${subText} mt-0.5">${new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'})}</div>
                 </div>
-            `;
-        });
-        if (state.fixedCharges.length === 0) {
-            html = `<div class="text-center py-6 text-xs text-stone-400 font-bold">Aucun frais fixe enregistré</div>`;
-        }
+                <div class="px-4 py-3 space-y-0.5">
+                    ${makeSep('·')}
+                    <div class="font-mono text-[9px] ${subText} uppercase tracking-widest px-1 py-1">Libellé · · · · · · · Montant</div>
+                    ${makeSep('·')}
+                    ${rows}
+                    ${makeSep('─')}
+                    <div class="flex justify-between items-baseline px-1 py-1">
+                        <span class="font-mono font-black text-[11px] ${ticketText} uppercase tracking-wider">TOTAL CHARGES</span>
+                        <span class="font-mono font-black text-[13px] text-red-500 dark:text-red-400 tabular-nums">- ${formatCurrency(total)}</span>
+                    </div>
+                    ${makeSep('=')}
+                </div>
+                <div class="px-4 pb-3 text-center">
+                    <div class="font-mono text-[8px] ${subText} uppercase tracking-widest">*** Merci et bonne gestion ***</div>
+                </div>
+            </div>`;
     } else if (category === "expenses") {
-        title = "💸 Dépenses en Cours";
+        title = "💸 DÉPENSES EN COURS";
         
         // Group expenses by date key
         const groups = {};
@@ -3838,111 +3912,107 @@ function openRecapModal(category) {
         };
         const sortedKeys = Object.keys(groups).sort((a, b) => getTimestamp(b) - getTimestamp(a));
         
+        let bodyHTML = '';
         sortedKeys.forEach(key => {
             const exps = groups[key];
-            let dayText = "";
-            let monthText = "";
             let dateLong = key;
             let isNegative = false;
             
             if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
                 const [year, month, day] = key.split("-").map(Number);
                 const dateObj = new Date(year, month - 1, day);
-                
                 const [bYear, bMonth] = state.budgetMonth.split("-").map(Number);
                 const utcBudget = Date.UTC(bYear, bMonth - 1, 1);
                 const utcExpense = Date.UTC(year, month - 1, day);
-                const diffTime = utcExpense - utcBudget;
-                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-                
+                const diffDays = Math.round((utcExpense - utcBudget) / (1000 * 60 * 60 * 24));
                 if (diffDays < 0) {
-                    dayText = `${diffDays}`;
-                    monthText = "Ant.";
-                    dateLong = `Dépense anticipée (${dateObj.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })})`;
+                    dateLong = `ANTICIPÉ — ${dateObj.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }).toUpperCase()}`;
                     isNegative = true;
                 } else {
-                    dayText = `${day}`;
-                    monthText = dateObj.toLocaleDateString("fr-FR", { month: "short" }).replace('.', '');
-                    dateLong = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-                    dateLong = dateLong.charAt(0).toUpperCase() + dateLong.slice(1);
+                    dateLong = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
                 }
-            } else {
-                dayText = key.split(" ")[0] || "?";
-                monthText = key.split(" ")[1] || "Mois";
-                dateLong = key;
             }
             
-            const isFem = state.settings.genderTheme === "feminin";
-            const headerColorClass = isNegative 
-                ? "bg-amber-500 text-white" 
-                : (isFem ? "bg-pink-500 text-white" : "bg-brand-500 text-white");
-                
-            html += `
-                <div class="space-y-2 mb-4">
-                    <div class="flex items-center gap-3 border-b border-stone-100 dark:border-stone-800/60 pb-1.5 mt-2 select-none">
-                        <div class="w-10 h-10 border border-stone-300 dark:border-stone-700 rounded-xl overflow-hidden flex flex-col text-center shadow-sm shrink-0">
-                            <div class="${headerColorClass} text-[7px] font-black py-0.5 uppercase tracking-wider">${monthText}</div>
-                            <div class="text-stone-800 dark:text-stone-200 text-xs font-black flex-1 flex items-center justify-center bg-stone-50 dark:bg-stone-900">${dayText}</div>
-                        </div>
-                        <div class="text-xs font-bold text-stone-600 dark:text-stone-400 capitalize-first">${dateLong}</div>
-                    </div>
-                    <div class="space-y-1.5 pl-2">
-            `;
-            
+            bodyHTML += `<div class="font-mono text-[9px] ${isNegative ? 'text-amber-500' : subText} uppercase tracking-widest px-1 pt-2 pb-0.5">— ${dateLong} —</div>`;
             exps.forEach(e => {
                 const isRefund = e.amount < 0;
                 const absAmt = Math.abs(e.amount);
-                const amtColor = isRefund ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400";
-                const amtSign = isRefund ? "+" : "-";
-                
-                html += `
-                    <div class="flex justify-between items-center text-xs py-1 hover:bg-stone-50 dark:hover:bg-stone-800 px-2 rounded-lg transition-colors">
-                        <span class="text-stone-700 dark:text-stone-300 font-semibold truncate max-w-[200px]">${e.title}</span>
-                        <span class="font-black ${amtColor}">${amtSign} ${formatCurrency(absAmt)}</span>
-                    </div>
-                `;
+                const amtColor = isRefund ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400';
+                const amtSign = isRefund ? '+' : '-';
+                bodyHTML += makeRow(e.title.toUpperCase(), `${amtSign} ${formatCurrency(absAmt)}`, amtColor);
             });
-            
-            html += `
-                    </div>
-                </div>
-            `;
         });
+        
         if (state.expenses.length === 0) {
-            html = `<div class="text-center py-6 text-xs text-stone-400 font-bold">Aucune dépense enregistrée</div>`;
-        } else {
-            // --- NOUVEAU : CALCUL ET AFFICHAGE DES TOTAUX PAR TAG ---
+            bodyHTML = `<div class="text-center py-4 font-mono text-[11px] ${subText}">-- AUCUNE DÉPENSE --</div>`;
+        }
+
+        const totalDep = state.expenses.filter(e => e.amount > 0).reduce((s, e) => s + e.amount, 0);
+        const totalRef = state.expenses.filter(e => e.amount < 0).reduce((s, e) => s + Math.abs(e.amount), 0);
+
+        // Tag totals block
+        let tagBlock = '';
+        if (state.expenses.length > 0) {
             const tagTotals = {};
             state.expenses.forEach(e => {
-                if (e.isCashDepositPending && !e.isDeposited) return; // Ignore les espèces en transit
+                if (e.isCashDepositPending && !e.isDeposited) return;
                 const tagKey = e.tag || 'divers';
                 if (!tagTotals[tagKey]) tagTotals[tagKey] = 0;
                 tagTotals[tagKey] += e.amount;
             });
-
-            let summaryHTML = `<div class="grid grid-cols-2 gap-2 mb-4 bg-stone-100 dark:bg-stone-800/40 p-2.5 rounded-2xl border border-stone-200/50 dark:border-stone-800">`;
-            let hasSummary = false;
-            
-            // Tri décroissant pour afficher les plus grosses dépenses en premier
-            Object.keys(tagTotals).sort((a, b) => tagTotals[b] - tagTotals[a]).forEach(key => {
-                if (tagTotals[key] === 0) return; // On masque les catégories à zéro
-                hasSummary = true;
-                const tagData = EXPENSE_TAGS[key] || EXPENSE_TAGS['divers'];
-                summaryHTML += `
-                    <div class="flex items-center justify-between bg-white dark:bg-stone-900 px-2.5 py-2 rounded-xl shadow-sm border border-stone-100 dark:border-stone-800">
-                        <span class="text-[9px] font-black text-stone-500 uppercase tracking-wider flex items-center gap-1">${tagData.icon} ${tagData.label}</span>
-                        <span class="text-[11px] font-black text-stone-800 dark:text-stone-200">${formatCurrency(tagTotals[key])}</span>
+            const hasTags = Object.values(tagTotals).some(v => v !== 0);
+            if (hasTags) {
+                tagBlock = `
+                    <div class="font-mono text-[9px] ${subText} uppercase tracking-widest px-1 py-1">Par catégorie</div>
+                    <div class="grid grid-cols-2 gap-1 mb-1">
+                        ${Object.keys(tagTotals).sort((a,b) => tagTotals[b]-tagTotals[a]).filter(k => tagTotals[k] !== 0).map(key => {
+                            const td = EXPENSE_TAGS[key] || EXPENSE_TAGS['divers'];
+                            return `<div class="flex items-center justify-between ${isDark ? 'bg-[#2a2618]' : 'bg-[#f0e8d8]'} px-2 py-1 rounded-lg border ${isDark ? 'border-[#4d4433]' : 'border-[#d8cdb0]'}">
+                                <span class="font-mono text-[9px] ${subText} uppercase">${td.icon} ${td.label}</span>
+                                <span class="font-mono font-black text-[10px] ${ticketText}">${formatCurrency(tagTotals[key])}</span>
+                            </div>`;
+                        }).join('')}
                     </div>
-                `;
-            });
-            summaryHTML += `</div>`;
-            
-            if (hasSummary) {
-                html = summaryHTML + html; // On place le résumé AU-DESSUS de la liste chronologique
+                    ${makeSep('─')}`;
             }
         }
+
+        html = `
+            <div class="rounded-2xl border ${ticketBg} overflow-hidden">
+                <div class="px-4 pt-4 pb-2 text-center border-b border-dashed ${isDark ? 'border-[#4d4433]' : 'border-[#c8b99a]'}">
+                    <div class="font-mono font-black text-[13px] ${ticketText} uppercase tracking-widest mb-0.5">BUDGETHMR</div>
+                    <div class="font-mono text-[9px] ${subText} uppercase tracking-widest">Récapitulatif — Dépenses</div>
+                    <div class="font-mono text-[9px] ${subText} mt-0.5">${new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'})}</div>
+                </div>
+                <div class="px-4 py-3 space-y-0.5">
+                    ${tagBlock}
+                    ${makeSep('·')}
+                    <div class="font-mono text-[9px] ${subText} uppercase tracking-widest px-1 py-1">Libellé · · · · · · · Montant</div>
+                    ${makeSep('·')}
+                    ${bodyHTML}
+                    ${makeSep('─')}
+                    <div class="flex justify-between items-baseline px-1 py-0.5">
+                        <span class="font-mono text-[10px] ${subText} uppercase">DÉPENSES</span>
+                        <span class="font-mono font-black text-[11px] text-red-500 dark:text-red-400 tabular-nums">- ${formatCurrency(totalDep)}</span>
+                    </div>
+                    ${totalRef > 0 ? `<div class="flex justify-between items-baseline px-1 py-0.5">
+                        <span class="font-mono text-[10px] ${subText} uppercase">REMBOURSEMENTS</span>
+                        <span class="font-mono font-black text-[11px] text-emerald-600 dark:text-emerald-400 tabular-nums">+ ${formatCurrency(totalRef)}</span>
+                    </div>` : ''}
+                    ${makeSep('=')}
+                    <div class="flex justify-between items-baseline px-1 py-1">
+                        <span class="font-mono font-black text-[11px] ${ticketText} uppercase tracking-wider">NET DÉPENSES</span>
+                        <span class="font-mono font-black text-[13px] text-red-500 dark:text-red-400 tabular-nums">- ${formatCurrency(Math.max(0, totalDep - totalRef))}</span>
+                    </div>
+                    ${makeSep('=')}
+                </div>
+                <div class="px-4 pb-3 text-center">
+                    <div class="font-mono text-[8px] ${subText} uppercase tracking-widest">*** Merci et bonne gestion ***</div>
+                </div>
+            </div>`;
     }
     
+
     titleEl.innerText = title;
     contentEl.innerHTML = html;
     
