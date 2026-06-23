@@ -727,7 +727,11 @@ function updateInstallmentTriggerLabel() {
 
     if (total > 1) {
         if (label) label.textContent = `×${total}`;
-        if (badge) { badge.textContent = `${current}/${total}`; badge.classList.remove('hidden'); }
+        if (badge) {
+            badge.textContent = `${current}/${total}`;
+            badge.classList.add('visible');
+            badge.classList.remove('hidden');
+        }
         // Colorer le bouton trigger
         const btn = document.getElementById('installment_trigger_btn');
         if (btn) {
@@ -736,7 +740,10 @@ function updateInstallmentTriggerLabel() {
         }
     } else {
         if (label) label.textContent = '×1';
-        if (badge) badge.classList.add('hidden');
+        if (badge) {
+            badge.classList.remove('visible');
+            badge.classList.add('hidden');
+        }
         const btn = document.getElementById('installment_trigger_btn');
         if (btn) {
             btn.classList.remove('text-violet-500', 'dark:text-violet-400');
@@ -812,7 +819,11 @@ function updateInstallmentPreview() {
         const totalEur  = (amountRaw * total).toFixed(2).replace('.', ',');
         preview.textContent = `Éch. ${current}/${total} — ${remaining} paiement${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''} · Total estimé ${totalEur} €`;
         preview.classList.remove('hidden');
-        if (badge) { badge.textContent = `${current}/${total}`; badge.classList.remove('hidden'); }
+        if (badge) { 
+            badge.textContent = `${current}/${total}`; 
+            badge.classList.add('visible'); 
+            badge.classList.remove('hidden'); 
+        }
     } else {
         preview.classList.add('hidden');
         if (badge) badge.classList.add('hidden');

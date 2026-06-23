@@ -500,7 +500,7 @@
 
         /* --- BADGE PAIEMENT EN PLUSIEURS FOIS --- */
         .installment-badge {
-            display: inline-flex;
+            display: none; /* Caché par défaut — la classe .visible force l'affichage */
             align-items: center;
             font-size: 8px;
             font-weight: 900;
@@ -512,6 +512,9 @@
             color: rgb(139, 92, 246);
             border: 1px solid rgba(139, 92, 246, 0.28);
             user-select: none;
+        }
+        .installment-badge.visible {
+            display: inline-flex;
         }
         .dark .installment-badge {
             background: rgba(139, 92, 246, 0.18);
