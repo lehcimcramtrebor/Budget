@@ -6755,7 +6755,7 @@ function acceptVersionUpdateCertify() {
 
 // --- INTERACTIVE GUIDE SLIDER ---
 let currentGuideSlideIndex = 0;
-const totalGuideSlides = 6;
+const totalGuideSlides = 7;
 
 function openAppGuide() {
     currentGuideSlideIndex = 0;
