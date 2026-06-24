@@ -4292,7 +4292,7 @@ function setupHapticFeedback() {
                 lastScrollTime = now;
             }
         }
-    }, { capture: true, passive: true });
+    }, true);
 }
 
 
@@ -8431,7 +8431,6 @@ const _cssScrollDrivenSupported = CSS.supports('animation-timeline', 'scroll()')
 let _cssScrollDrivenStyle = null; // <style> injecté dynamiquement
 
 function measureBannerHeights() {
-	return; //GOLDEN CARD EFFECTS DEACTIVATE
     requestAnimationFrame(() => {
         const bannerContainer = document.getElementById("sticky_banner_container");
         if (!bannerContainer) return;
@@ -8492,7 +8491,7 @@ function measureBannerHeights() {
             if (_cssScrollDrivenStyle) _cssScrollDrivenStyle.remove();
 
             const rangeStart = Math.round(bannerStickyTop);
-            const rangeEnd = rangeStart + bannerHeightDiffMax;
+            const rangeEnd   = rangeStart + 100;
 
             _cssScrollDrivenStyle = document.createElement('style');
             _cssScrollDrivenStyle.id = '_scroll_driven_anim';
@@ -8517,14 +8516,13 @@ function measureBannerHeights() {
 
 
 function updateScrollEffects() {
-	return;	//GOLDEN CARD EFFECTS DEACTIVATE
     const bannerContainer = document.getElementById("sticky_banner_container");
     const scrollSpacer    = document.getElementById("scroll_spacer");
     const cardBottomGrid  = document.getElementById("card_bottom_grid");
     if (!bannerContainer) return;
 
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const collapseDistance = bannerHeightDiffMax;
+    const collapseDistance = 100;
 
     let progress = 0;
     if (scrollTop > bannerStickyTop) {
@@ -8589,7 +8587,7 @@ function initQuickEntryScroll() {
 
     // Garantit que la golden card est compactée avant de centrer
     function compactThenCenter() {
-        const targetScrollY  = bannerStickyTop + COLLAPSE_DISTANCE + 200;
+        const targetScrollY  = bannerStickyTop + COLLAPSE_DISTANCE;
         const currentScrollY = window.scrollY || document.documentElement.scrollTop;
 
         if (currentScrollY < targetScrollY) {
