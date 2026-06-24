@@ -477,67 +477,6 @@
             animation: slow-spin 8s infinite linear !important;
         }
 
-        /* Enregistrement de --scroll-progress comme propriété CSS animable
-           Permet l'interpolation native par le moteur CSS (compositor thread) */
-        @property --scroll-progress {
-            syntax: '<number>';
-            inherits: true;
-            initial-value: 0;
-        }
-
-        /* Dynamic scroll compact layout for Golden Card (linked to --scroll-progress) */
-        #sticky_banner_container {
-            --scroll-progress: 0;
-            padding-top: calc(0.5rem - var(--scroll-progress) * 0.25rem) !important; /* pt-2 (8px) to pt-1 (4px) */
-            padding-bottom: calc(0.75rem - var(--scroll-progress) * 0.5rem) !important; /* pb-3 (12px) to pb-1 (4px) */
-        }
-        #sticky_banner_container .golden-card {
-            padding-top: calc(1.25rem - var(--scroll-progress) * 0.4rem) !important; /* 20px to 13.6px */
-            padding-bottom: calc(1.25rem - var(--scroll-progress) * 0.4rem) !important; /* 20px to 13.6px */
-            border-radius: calc(1.5rem - var(--scroll-progress) * 0.25rem) !important; /* rounded-3xl to rounded-2xl */
-            transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-        }
-        #card_chip_block {
-            max-height: calc((1 - var(--scroll-progress)) * 40px) !important;
-            opacity: calc(1 - var(--scroll-progress)) !important;
-            margin-top: calc((1 - var(--scroll-progress)) * 0.75rem) !important;
-            margin-bottom: calc((1 - var(--scroll-progress)) * 0.75rem) !important;
-            transform: scaleY(calc(1 - var(--scroll-progress))) !important;
-            transform-origin: top;
-            overflow: hidden;
-        }
-        #card_holder_block {
-            max-height: calc((1 - var(--scroll-progress)) * 36px) !important;
-            opacity: calc(1 - var(--scroll-progress)) !important;
-            margin-bottom: calc((1 - var(--scroll-progress)) * 0.5rem) !important;
-            transform: scaleY(calc(1 - var(--scroll-progress))) !important;
-            transform-origin: bottom;
-            overflow: hidden;
-        }
-        #card_bottom_grid {
-            max-height: calc((1 - var(--scroll-progress)) * 80px) !important;
-            opacity: calc(1 - var(--scroll-progress)) !important;
-            margin-top: calc((1 - var(--scroll-progress)) * 1.25rem) !important;
-            padding-top: calc((1 - var(--scroll-progress)) * 1rem) !important;
-            border-top-color: rgba(255, 255, 255, calc((1 - var(--scroll-progress)) * 0.15)) !important;
-            transform: scaleY(calc(1 - var(--scroll-progress))) !important;
-            transform-origin: bottom;
-            overflow: hidden;
-        }
-        #remaining_balance_disp {
-            font-size: calc(2.25rem - var(--scroll-progress) * 0.375rem) !important; /* text-4xl (36px) to text-3xl (30px) */
-            margin-top: calc((1 - var(--scroll-progress)) * 0.25rem) !important;
-        }
-        #current_date_label {
-            transform: scale(calc(1 - var(--scroll-progress) * 0.15)) !important;
-            transform-origin: right center;
-        }
-        #dashboard_tabs_container {
-            margin-bottom: calc(0.75rem - var(--scroll-progress) * 0.25rem) !important; /* mb-3 to mb-2 */
-        }
-        #sticky_banner_container .golden-card p {
-            font-size: calc(12px - var(--scroll-progress) * 2px) !important; /* text-xs (12px) to 10px */
-        }
 
         /* --- BADGE PAIEMENT EN PLUSIEURS FOIS --- */
         .installment-badge {
@@ -759,11 +698,9 @@
         </div>
     </div>
 
-    <!-- Sentinel to measure absolute top offset of the sticky banner container -->
-    <div id="sticky_banner_sentinel" class="h-0 w-0 pointer-events-none" style="visibility: hidden;"></div>
 
     <!-- MAIN BANNER: RESTE A VIVRE -->
-    <div id="sticky_banner_container" class="sticky top-0 z-30 bg-stone-100/90 dark:bg-stone-950/90 backdrop-blur-md pt-2 pb-3 -mx-4 px-4 transition-colors duration-300 sticky-gpu">
+    <div id="sticky_banner_container" class="z-30 bg-stone-100/90 dark:bg-stone-950/90 backdrop-blur-md pt-2 pb-3 -mx-4 px-4 transition-colors duration-300">
         <div class="golden-card text-white transition-none">
             <!-- Card Vector Waves -->
             <svg class="absolute right-0 bottom-0 w-2/3 h-full text-white/5 pointer-events-none select-none z-0" viewBox="0 0 100 100" preserveAspectRatio="none" fill="currentColor">
@@ -844,8 +781,6 @@
         </div>
     </div>
 
-    <!-- Spacer structure to compensate height when golden card is compact -->
-    <div id="scroll_spacer" style="height: 0px;"></div>
 
     <!-- MAIN INTERFACE -->
     <div id="main_dashboard_content" class="space-y-4 mt-2">
