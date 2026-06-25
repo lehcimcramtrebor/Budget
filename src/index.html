@@ -375,14 +375,14 @@
                 content: "";
                 position: absolute;
                 inset: 0;
-                /* Vernis plastique : bande de reflet forte en haut-gauche */
+                /* Vernis plastique : bande de reflet forte en haut-gauche uniquement */
                 background:
-                    /* Bande de reflet diagonale (comme un vernis CB) */
+                    /* Bande de reflet diagonale (comme un vernis CB) — cantonnée au tiers gauche */
                     linear-gradient(
-                        118deg,
-                        rgba(255,255,255,0.28) 0%,
-                        rgba(255,255,255,0.12) 28%,
-                        rgba(255,255,255,0.0) 48%,
+                        108deg,
+                        rgba(255,255,255,0.26) 0%,
+                        rgba(255,255,255,0.10) 22%,
+                        rgba(255,255,255,0.0) 38%,
                         rgba(0,0,0,0.0) 60%,
                         rgba(0,0,0,0.18) 100%
                     );
@@ -511,6 +511,502 @@
         #installment_panel.open {
             max-height: 160px;
             opacity: 1;
+        }
+
+        /* --- COCHON (CAGNOTTE) --- Badge dans la rangée nom, gauche aligné sur la puce */
+        #cochon_badge_container {
+            transition: opacity 0.4s cubic-bezier(0.34,1.56,0.64,1), transform 0.4s cubic-bezier(0.34,1.56,0.64,1), max-height 0.4s cubic-bezier(0.34,1.56,0.64,1), margin-top 0.4s cubic-bezier(0.34,1.56,0.64,1);
+            max-height: 50px;
+        }
+        #cochon_badge_container.cochon-hidden {
+            opacity: 0;
+            transform: scale(0.75);
+            pointer-events: none;
+            max-height: 0px;
+            margin-top: 0px;
+        }
+        #cochon_badge_container button {
+            display: flex;
+            align-items: center;
+            /* Pas de fond ni cadre : juste le cochon SVG flottant */
+            background: none;
+            border: none;
+            box-shadow: none;
+            padding: 4px;
+            cursor: pointer;
+            transition: transform 0.15s;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        #cochon_badge_container button:hover {
+            background: none;
+            box-shadow: none;
+            transform: scale(1.08);
+        }
+        #cochon_badge_container button:active {
+            transform: scale(0.93);
+        }
+        #cochon_badge_label {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.1;
+        }
+        #cochon_badge_title {
+            font-size: 7.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.38);
+        }
+        #cochon_badge {
+            font-size: 12px;
+            font-weight: 900;
+            color: rgba(255,255,255,0.92);
+            letter-spacing: 0.02em;
+            font-variant-numeric: tabular-nums;
+        }
+        /* ================================================ */
+        /* MODALE COCHON — PREMIUM DARK GLASS               */
+        /* ================================================ */
+        #cochon_modal .cochon-panel {
+            background: linear-gradient(160deg, rgba(18,12,35,0.97) 0%, rgba(8,6,18,0.99) 100%);
+            border: 1.5px solid transparent;
+            box-shadow:
+                0 0 0 1.5px rgba(255,255,255,0.04),
+                0 32px 80px rgba(0,0,0,0.75),
+                0 8px 32px rgba(0,0,0,0.5),
+                inset 0 1px 0 rgba(255,255,255,0.07);
+            color: #f1f5f9;
+            position: relative;
+            overflow: hidden;
+        }
+        /* Bordure multicolore tout autour via mask-composite */
+        #cochon_modal .cochon-panel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1.5px;
+            background: linear-gradient(135deg,
+                rgba(244,63,94,0.7)  0%,
+                rgba(139,92,246,0.8) 35%,
+                rgba(251,191,36,0.6) 65%,
+                rgba(244,63,94,0.5)  100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+            z-index: 20;
+        }
+        /* Subtle grain overlay on the panel */
+        #cochon_modal .cochon-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.4;
+        }
+        /* Glowing orb behind the pig SVG */
+        #cochon_svg_container {
+            position: relative;
+        }
+        #cochon_svg_container::before {
+            content: '';
+            position: absolute;
+            inset: -20px;
+            background: radial-gradient(ellipse at center, rgba(244,63,94,0.18) 0%, rgba(139,92,246,0.08) 50%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        #cochon_svg_container > * {
+            position: relative;
+            z-index: 1;
+        }
+        /* Header label */
+        .cochon-header-label {
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.65);
+        }
+        /* Balance display */
+        .cochon-balance-amount {
+            font-size: 2.75rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            background: linear-gradient(135deg, #ffffff 30%, rgba(255,255,255,0.65) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .cochon-balance-amount.goal-reached {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 40%, #fde68a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .cochon-balance-label {
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.62);
+            margin-top: 4px;
+        }
+        /* Progress bar — épaisse et bariolée */
+        .cochon-progress-track {
+            height: 12px;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.07);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .cochon-progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            background: linear-gradient(90deg, #f43f5e 0%, #fb7185 25%, #8b5cf6 55%, #34d399 80%, #fbbf24 100%);
+            background-size: 200% 100%;
+            transition: width 0.7s cubic-bezier(0.34,1.56,0.64,1);
+            animation: cochonBarShimmer 3s linear infinite;
+        }
+        @keyframes cochonBarShimmer {
+            0%   { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .cochon-progress-fill.goal-reached {
+            background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 40%, #fde68a 70%, #f59e0b 100%);
+            background-size: 200% 100%;
+            box-shadow: 0 0 10px rgba(251,191,36,0.6);
+        }
+        /* Animation pièce de monnaie dans le SVG cochon
+           ViewBox: 0 0 150 150 | Corps cochon: cx=75 cy=75 r=38 (y=37→113)
+           Slot: y=35 | Pièce r=9 → doit atteindre y=75 pour être totalement cachée
+           IMPORTANT: départ à y=10 pour rester dans les bounds SVG (pas de clip) */
+        @keyframes coinPopAndFall {
+            /* Phase 0 : invisible, départ dans les bounds SVG */
+            0%   { opacity: 0; transform: translate(75px, 10px) scale(0.05);
+                   animation-timing-function: ease-out; }
+            /* Phase 1 : pop-in avec rebond — pièce apparaît juste au-dessus du slot */
+            10%  { opacity: 1; transform: translate(75px, 25px) scale(1.22);
+                   animation-timing-function: ease-in-out; }
+            15%  { opacity: 1; transform: translate(75px, 19px) scale(0.91);
+                   animation-timing-function: ease-out; }
+            19%  { opacity: 1; transform: translate(75px, 23px) scale(1.05);
+                   animation-timing-function: ease-out; }
+            23%  { opacity: 1; transform: translate(75px, 21px) scale(1.00);
+                   animation-timing-function: linear; }
+            /* Phase 2 : pause bien visible au-dessus du slot */
+            56%  { opacity: 1; transform: translate(75px, 21px) scale(1.00);
+                   animation-timing-function: cubic-bezier(0.42, 0, 1.0, 1.0); }
+            /* Phase 3 : chute rapide ease-in jusqu'au CENTRE du corps (y=75)
+               À ce stade la pièce est rendue derrière le corps du cochon → invisible */
+            76%  { opacity: 1; transform: translate(75px, 75px) scale(1.00);
+                   animation-timing-function: step-start; }
+            /* Snap instantané retour position de départ pour boucle propre */
+            77%  { opacity: 0; transform: translate(75px, 10px) scale(0.05);
+                   animation-timing-function: linear; }
+            100% { opacity: 0; transform: translate(75px, 10px) scale(0.05); }
+        }
+        .coin-anim-group {
+            animation: coinPopAndFall 3.6s linear infinite;
+            transform-origin: 0px 0px;
+            transform-box: view-box;
+        }
+        /* Slider cochon -- thumb en pièce de monnaie */
+        #cochon_action_slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.10);
+            outline: none;
+        }
+        #cochon_action_slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            /* Pièce de monnaie : or radial */
+            background: radial-gradient(circle at 38% 35%,
+                #fff9c4 0%,
+                #fde047 28%,
+                #f59e0b 60%,
+                #b45309 100%);
+            border: 2px solid #d97706;
+            box-shadow:
+                0 0 0 2px rgba(251,191,36,0.3),
+                0 3px 10px rgba(0,0,0,0.55),
+                inset 0 1px 0 rgba(255,255,255,0.5),
+                inset 0 -1px 0 rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: box-shadow 0.2s, transform 0.15s;
+            position: relative;
+        }
+        #cochon_action_slider::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+            box-shadow:
+                0 0 0 4px rgba(251,191,36,0.4),
+                0 4px 14px rgba(0,0,0,0.6),
+                inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+        #cochon_action_slider::-moz-range-thumb {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 38% 35%,
+                #fff9c4 0%,
+                #fde047 28%,
+                #f59e0b 60%,
+                #b45309 100%);
+            border: 2px solid #d97706;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.55);
+        }
+        /* Bouton Mode Cochon -- pill enfonçable */
+        .cochon-mode-pill {
+            padding: 0.6rem 0.9rem;
+            border-radius: 0.75rem;
+            font-size: 9.5px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: rgba(var(--brand-500), 0.9);
+            background: rgba(var(--brand-500), 0.06);
+            border: 1px solid rgba(var(--brand-500), 0.25);
+            transition: all 0.18s;
+            cursor: pointer;
+            user-select: none;
+        }
+        .dark .cochon-mode-pill {
+            color: rgba(var(--brand-300), 0.9);
+            background: rgba(var(--brand-500), 0.08);
+            border-color: rgba(var(--brand-500), 0.2);
+        }
+        .cochon-mode-pill.cochon-btn-active {
+            background: rgba(var(--brand-500), 0.18);
+            border-color: rgba(var(--brand-500), 0.6);
+            box-shadow: 0 0 0 2px rgba(var(--brand-500), 0.15), inset 0 2px 4px rgba(0,0,0,0.1);
+            transform: translateY(1px);
+        }
+        .cochon-mode-pill:active { transform: translateY(2px); }
+        /* Boutons d'action cochon -- bordure complète, relief bas/droite */
+        .cochon-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 0.875rem;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.13em;
+            transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+            cursor: pointer;
+            background: rgba(255,255,255,0.03);
+            color: rgba(255,255,255,0.82);
+            position: relative;
+            overflow: hidden;
+        }
+        .cochon-action-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .cochon-action-btn:hover::before { opacity: 1; }
+        .cochon-action-btn:active { transform: scale(0.97); }
+        .cochon-action-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.78);
+        }
+        .cochon-action-btn .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+        /* Variantes: bordure complète, top/left clairs, bottom/right légèrement plus sombres */
+        /* Bouton remettre en budget : bordure or comme la pièce de monnaie */
+        .cochon-action-btn.btn-budget {
+            border: 1px solid rgba(245,158,11,0.55);
+            border-bottom-color: rgba(180,83,9,0.30);
+            border-right-color:  rgba(180,83,9,0.30);
+            color: rgba(253,224,71,0.95);
+            box-shadow: 0 0 8px rgba(251,191,36,0.08), inset 0 0 0 0 transparent;
+        }
+        .cochon-action-btn.btn-budget .btn-icon { background: rgba(245,158,11,0.15); }
+        .cochon-action-btn.btn-budget:hover {
+            background: rgba(245,158,11,0.09);
+            border-color: rgba(245,158,11,0.75);
+            box-shadow: 0 0 16px rgba(251,191,36,0.18);
+        }
+        .cochon-action-btn.btn-savings {
+            border: 1px solid rgba(16,185,129,0.35);
+            border-bottom-color: rgba(16,185,129,0.16);
+            border-right-color:  rgba(16,185,129,0.16);
+            color: rgba(110,231,183,0.9);
+        }
+        .cochon-action-btn.btn-savings .btn-icon { background: rgba(16,185,129,0.12); }
+        .cochon-action-btn.btn-savings:hover {
+            background: rgba(16,185,129,0.06);
+            border-color: rgba(16,185,129,0.45);
+        }
+        .cochon-action-btn.btn-floor {
+            border: 1px solid rgba(59,130,246,0.35);
+            border-bottom-color: rgba(59,130,246,0.16);
+            border-right-color:  rgba(59,130,246,0.16);
+            color: rgba(147,197,253,0.9);
+        }
+        .cochon-action-btn.btn-floor .btn-icon { background: rgba(59,130,246,0.12); }
+        .cochon-action-btn.btn-floor:hover {
+            background: rgba(59,130,246,0.06);
+            border-color: rgba(59,130,246,0.45);
+        }
+        .cochon-action-btn.btn-gap {
+            border: 1px solid rgba(239,68,68,0.35);
+            border-bottom-color: rgba(239,68,68,0.16);
+            border-right-color:  rgba(239,68,68,0.16);
+            color: rgba(252,165,165,0.9);
+        }
+        .cochon-action-btn.btn-gap .btn-icon { background: rgba(239,68,68,0.12); }
+        .cochon-action-btn.btn-gap:hover {
+            background: rgba(239,68,68,0.06);
+            border-color: rgba(239,68,68,0.45);
+        }
+        /* Barre de progression cochon -- épaisse et bariolée */
+        .cochon-progress-track {
+            height: 12px;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.07);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .cochon-progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            background: linear-gradient(90deg, #f43f5e 0%, #fb7185 25%, #8b5cf6 55%, #34d399 80%, #fbbf24 100%);
+            background-size: 200% 100%;
+            transition: width 0.7s cubic-bezier(0.34,1.56,0.64,1);
+            animation: cochonBarShimmer 3s linear infinite;
+        }
+        @keyframes cochonBarShimmer {
+            0%   { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .cochon-progress-fill.goal-reached {
+            background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 40%, #fde68a 70%, #f59e0b 100%);
+            background-size: 200% 100%;
+            box-shadow: 0 0 10px rgba(251,191,36,0.6);
+        }
+
+        /* Cochon-toggle (garde pour compatibilité si jamais réutilisé) */
+        .cochon-toggle {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 36px;
+            height: 20px;
+            border-radius: 10px;
+            background: #475569;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.2s;
+        }
+        .cochon-toggle:checked {
+            background: linear-gradient(135deg, #f43f5e, #8b5cf6);
+        }
+        .cochon-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .cochon-toggle:checked::after {
+            transform: translateX(16px);
+        }
+        /* Confetti cochon */
+        #cochon_confetti_canvas {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            border-radius: 1.5rem;
+        }
+        #cochon_bravo {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            text-align: center;
+            pointer-events: none;
+            animation: bravoPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        @keyframes bravoPop {
+            from { opacity: 0; transform: translateX(-50%) scale(0.5); }
+            to   { opacity: 1; transform: translateX(-50%) scale(1); }
+        }
+        #cochon_bravo .bravo-text {
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #fde68a, #fbbf24);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: goldShimmer 2s linear infinite;
+            text-shadow: none;
+        }
+        @keyframes goldShimmer {
+            from { background-position: 0% center; }
+            to   { background-position: 200% center; }
+        }
+        #cochon_bravo .bravo-stars {
+            font-size: 18px;
+            display: block;
+            margin-bottom: 2px;
+            animation: starSpin 3s linear infinite;
+        }
+        @keyframes starSpin {
+            0%,100% { transform: scale(1) rotate(0deg); }
+            50%      { transform: scale(1.15) rotate(8deg); }
+        }
+        /* Cochon 3D — animation de succès objectif atteint */
+        @keyframes cochonGoldenPulse {
+            0%, 100% { 
+                filter: drop-shadow(0 0 4px rgba(234, 179, 8, 0.4)) drop-shadow(0 0 10px rgba(251, 113, 133, 0.2));
+                transform: scale(1);
+            }
+            50% { 
+                filter: drop-shadow(0 0 16px rgba(234, 179, 8, 0.85)) drop-shadow(0 0 30px rgba(251, 113, 133, 0.5));
+                transform: scale(1.03);
+            }
+        }
+        #cochon_svg_main.goal-reached {
+            animation: cochonGoldenPulse 2.5s ease-in-out infinite;
+            transform-origin: center;
         }
 
         /* --- VINTAGE TICKET DE CAISSE (RECEIPT PAPER) --- */
@@ -707,77 +1203,122 @@
                 <path d="M0,100 C30,40 70,60 100,0 L100,100 Z"></path>
             </svg>
 
-            <!-- View Tabs -->
-            <div id="dashboard_tabs_container" class="relative z-10 flex bg-black/20 rounded-xl p-1 mb-3 select-none hidden">
-                <button type="button" onclick="switchDashboardTab('main')" id="tab_btn_main" class="flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-center transition-all bg-white text-stone-900 shadow-sm">
-                    💼 Solde Principal
-                </button>
-                <button type="button" onclick="switchDashboardTab('budgets')" id="tab_btn_budgets" class="flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-center transition-all text-white/80 hover:text-white font-bold">
-                    🎯 Enveloppes Dédiées
-                </button>
-            </div>
-
-            <!-- Credit Card Chip & Contactless Sign -->
-            <div id="card_chip_block" class="relative z-10 flex justify-between items-center mb-3 mt-1 select-none pointer-events-none">
+            <!-- Credit Card Chip + Tabs (s'étalent à droite) -->
+            <div id="card_chip_block" class="relative z-10 flex items-center gap-2 mb-3 mt-1 select-none">
                 <!-- Chip CB -->
-                <div class="w-9 h-7 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 rounded-md relative overflow-hidden shrink-0"
+                <div class="w-9 h-7 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 rounded-md relative overflow-hidden shrink-0 pointer-events-none"
                      style="border: 1px solid rgba(180,120,0,0.5); border-top: 1px solid rgba(255,220,80,0.7); box-shadow: 0 2px 0 rgba(120,80,0,0.5), 0 1px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,240,120,0.6);">
                     <div class="absolute inset-x-0 top-1/2 border-t border-amber-800/20"></div>
                     <div class="absolute inset-y-0 left-1/3 border-r border-amber-800/20"></div>
                     <div class="absolute inset-y-0 right-1/3 border-l border-amber-800/20"></div>
                     <div class="absolute inset-1 rounded border border-amber-200/50"></div>
                 </div>
-                <!-- Contactless Icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white/50 rotate-90">
-                    <path d="M12 2a10 10 0 0 1 0 20"></path>
-                    <path d="M16 5a7 7 0 0 1 0 14"></path>
-                    <path d="M20 8a4 4 0 0 1 0 8"></path>
-                </svg>
-            </div>
 
-            <div class="relative z-10 flex justify-between items-center">
-                <div>
-                    <p class="text-xs font-bold text-white/80 uppercase tracking-wider">Reste à dépenser</p>
-                    <h2 class="text-4xl font-black text-white mt-1 drop-shadow-sm" id="remaining_balance_disp">0.00 €</h2>
-                </div>
-                <div class="text-right">
-                    <span class="inline-block px-3 py-1 bg-white/20 text-white font-black text-xs rounded-full border border-white/10" id="current_date_label">Budget</span>
+                <!-- View Tabs (flex-1, de la puce jusqu'au bord droit) -->
+                <div id="dashboard_tabs_container" class="flex-1 flex bg-black/20 rounded-xl p-1 select-none hidden transition-all duration-350">
+                    <button type="button" onclick="switchDashboardTab('main')" id="tab_btn_main" class="flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-center transition-all bg-white text-stone-900 shadow-sm">
+                        💼 Solde Principal
+                    </button>
+                    <button type="button" onclick="switchDashboardTab('budgets')" id="tab_btn_budgets" class="flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-center transition-all text-white/80 hover:text-white font-bold">
+                        🎯 Enveloppes Dédiées
+                    </button>
                 </div>
             </div>
-            
-            <!-- Nom gravé style CB (mis à jour dynamiquement) -->
-            <div id="card_holder_block" class="relative z-10 flex justify-end select-none pointer-events-none">
-                <span id="card_holder_name"
-                      class="uppercase font-bold"
-                      style="
-                          font-family: 'Courier New', Courier, monospace;
-                          font-size: 13px;
-                          letter-spacing: 0.25em;
-                          color: rgba(255,255,255,0.7);
-                          text-shadow:
-                              0 1px 0 rgba(255,255,255,0.55),
-                              0 2px 0 rgba(255,255,255,0.18),
-                              0 -1px 0 rgba(0,0,0,0.55),
-                              0 -2px 0 rgba(0,0,0,0.2),
-                              0 0 12px rgba(255,255,255,0.1);
-                      "
-                >HMR</span>
+
+            <!-- ZONE CENTRALE -->
+            <div class="relative z-10 flex flex-col flex-1 py-1 min-h-[90px] justify-center">
+                <!-- LIGNE 1 : Reste à dépenser & Nom de carte -->
+                <div class="flex justify-between items-end w-full mb-1">
+                    <p class="text-xs font-bold text-white/80 uppercase tracking-wider leading-none">Reste à dépenser</p>
+                    <span id="card_holder_name"
+                          class="uppercase font-bold pointer-events-none leading-none"
+                          style="
+                              font-family: 'Courier New', Courier, monospace;
+                              font-size: 13px;
+                              letter-spacing: 0.25em;
+                              color: rgba(255,255,255,0.7);
+                              text-shadow:
+                                  0 1px 0 rgba(255,255,255,0.55),
+                                  0 2px 0 rgba(255,255,255,0.18),
+                                  0 -1px 0 rgba(0,0,0,0.55),
+                                  0 -2px 0 rgba(0,0,0,0.2),
+                                  0 0 12px rgba(255,255,255,0.1);
+                          "
+                    >HMR</span>
+                </div>
+
+                <!-- LIGNE 2 : Solde+Cochon & Mois -->
+                <div class="flex justify-between items-center w-full flex-1">
+                    <div class="flex flex-col justify-center items-start">
+                        <h2 class="text-3xl font-black text-white drop-shadow-sm truncate leading-none py-1" id="remaining_balance_disp">0.00 €</h2>
+                        <div id="cochon_badge_container" class="cochon-hidden pointer-events-auto mt-1">
+                            <button type="button" onclick="openCochonModal()" title="Ouvrir ma réserve Cochon">
+                                <svg width="36" height="36" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0; filter: drop-shadow(0 2px 8px rgba(244,63,94,0.35));">
+                                    <defs>
+                                        <radialGradient id="pg-body" cx="38%" cy="32%" r="62%">
+                                            <stop offset="0%" stop-color="#ffd6e0" />
+                                            <stop offset="40%" stop-color="#ff8fab" />
+                                            <stop offset="80%" stop-color="#e63870" />
+                                            <stop offset="100%" stop-color="#c0254e" />
+                                        </radialGradient>
+                                        <radialGradient id="pg-ear" cx="50%" cy="40%" r="60%">
+                                            <stop offset="0%" stop-color="#ffdce8" />
+                                            <stop offset="100%" stop-color="#ff8fab" />
+                                        </radialGradient>
+                                        <radialGradient id="pg-snout" cx="45%" cy="38%" r="58%">
+                                            <stop offset="0%" stop-color="#ffe0ea" />
+                                            <stop offset="100%" stop-color="#ffb3c6" />
+                                        </radialGradient>
+                                        <radialGradient id="pg-shadow" cx="50%" cy="50%" r="50%">
+                                            <stop offset="0%" stop-color="rgba(0,0,0,0.22)" />
+                                            <stop offset="100%" stop-color="rgba(0,0,0,0)" />
+                                        </radialGradient>
+                                    </defs>
+                                    <ellipse cx="20" cy="36.5" rx="9" ry="2.2" fill="url(#pg-shadow)" />
+                                    <ellipse cx="10" cy="13" rx="4.5" ry="5.5" fill="url(#pg-ear)" transform="rotate(-18 10 13)" />
+                                    <ellipse cx="10.5" cy="13.5" rx="2.2" ry="3.2" fill="#ffb3c6" opacity="0.7" transform="rotate(-18 10 13)" />
+                                    <ellipse cx="30" cy="13" rx="4.5" ry="5.5" fill="url(#pg-ear)" transform="rotate(18 30 13)" />
+                                    <ellipse cx="29.5" cy="13.5" rx="2.2" ry="3.2" fill="#ffb3c6" opacity="0.7" transform="rotate(18 30 13)" />
+                                    <circle cx="20" cy="22" r="13" fill="url(#pg-body)" />
+                                    <circle cx="20" cy="22" r="13" fill="none" stroke="rgba(196,130,255,0.65)" stroke-width="1.5" style="filter: drop-shadow(0 0 4px rgba(196,130,255,0.5));"/>
+                                    <rect x="15.5" y="9.5" width="9" height="2.5" rx="1.25" fill="rgba(10,8,20,0.75)" />
+                                    <rect x="15.5" y="9.5" width="9" height="1" rx="0.5" fill="rgba(255,255,255,0.12)" />
+                                    <ellipse cx="20" cy="27" rx="6.5" ry="4.8" fill="url(#pg-snout)" />
+                                    <ellipse cx="17.5" cy="27.5" rx="1.4" ry="1.8" fill="#e63870" opacity="0.65" />
+                                    <ellipse cx="22.5" cy="27.5" rx="1.4" ry="1.8" fill="#e63870" opacity="0.65" />
+                                    <circle cx="14.8" cy="20" r="1.8" fill="#1a0a2e" />
+                                    <circle cx="25.2" cy="20" r="1.8" fill="#1a0a2e" />
+                                    <circle cx="15.5" cy="19.3" r="0.7" fill="rgba(255,255,255,0.75)" />
+                                    <circle cx="25.9" cy="19.3" r="0.7" fill="rgba(255,255,255,0.75)" />
+                                    <ellipse cx="11.5" cy="24.5" rx="2.8" ry="1.8" fill="#f43f5e" opacity="0.30" />
+                                    <ellipse cx="28.5" cy="24.5" rx="2.8" ry="1.8" fill="#f43f5e" opacity="0.30" />
+                                    <ellipse cx="15" cy="16" rx="4.5" ry="3" fill="rgba(255,255,255,0.28)" transform="rotate(-25 15 16)" />
+                                    <ellipse cx="14" cy="15" rx="2" ry="1.2" fill="rgba(255,255,255,0.45)" transform="rotate(-25 14 15)" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span class="inline-block px-3 py-1 bg-white/20 text-white font-black text-xs rounded-full border border-white/10" id="current_date_label">Budget</span>
+                    </div>
+                </div>
             </div>
 
-            <div id="card_bottom_grid" class="relative z-10 grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/15 text-[11px] leading-tight select-none">
+            <div id="card_bottom_grid" class="relative z-10 grid grid-cols-3 gap-2 mt-2 pt-3 border-t border-white/15 leading-tight select-none">
                 <button type="button" id="tour_recap_revenues" onclick="openRecapModal('revenues')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-white/20">
-                    <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Revenus (+)</span>
-                    <span class="text-sm font-black text-white" id="base_budget_disp">0.00 €</span>
+                    <span class="block font-mono text-white/60 uppercase tracking-widest text-[7px]">Revenus (+)</span>
+                    <span class="font-mono font-black text-[10px] text-white tabular-nums" id="base_budget_disp">0.00 €</span>
                 </button>
                 <button type="button" id="tour_recap_charges" onclick="openRecapModal('fixedCharges')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl border-l border-white/15 pl-4 focus:outline-none focus:ring-1 focus:ring-white/20">
-                    <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Frais Fixes (-)</span>
-                    <span class="text-sm font-black text-white" id="fixed_charges_disp">0.00 €</span>
+                    <span class="block font-mono text-white/60 uppercase tracking-widest text-[7px]">Frais Fixes (-)</span>
+                    <span class="font-mono font-black text-[10px] text-white tabular-nums" id="fixed_charges_disp">0.00 €</span>
                 </button>
                 <button type="button" id="tour_recap_expenses" onclick="openRecapModal('expenses')" class="text-left cursor-pointer hover:bg-white/10 active:scale-95 transition-all p-2 -m-2 rounded-xl border-l border-white/15 pl-4 focus:outline-none focus:ring-1 focus:ring-white/20">
-                    <span class="block text-white/70 font-semibold uppercase tracking-wider text-[8px]">Dépenses (-)</span>
-                    <span class="text-sm font-black text-white" id="expenses_disp">0.00 €</span>
+                    <span class="block font-mono text-white/60 uppercase tracking-widest text-[7px]">Dépenses (-)</span>
+                    <span class="font-mono font-black text-[10px] text-white tabular-nums" id="expenses_disp">0.00 €</span>
                 </button>
             </div>
+
         </div>
     </div>
 
@@ -884,6 +1425,19 @@
                         <!-- Nouvelle Enveloppe -->
                         <button id="tour_new_envelope" type="button" onclick="confirmCreateBudget()" class="h-11 bg-gradient-to-b from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800 text-stone-700 dark:text-stone-200 font-black rounded-xl border-t border-white dark:border-stone-600 shadow-[0_3px_0_#cbd5e1] dark:shadow-[0_3px_0_#000000] transition-all active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-1 text-[9px] uppercase tracking-wider select-none">
                             <span>📩</span> Nouvelle Enveloppe
+                        </button>
+                    </div>
+
+                    <!-- BOUTON MODE COCHON : visible si cochon > 0 -->
+                    <div id="cochon_mode_row" class="hidden">
+                        <!-- Hidden checkbox for backward compat -->
+                        <input type="checkbox" id="cochon_mode_toggle" class="sr-only" tabindex="-1">
+                        <button id="cochon_mode_btn" type="button"
+                                onclick="toggleCochonMode()"
+                                data-active="false"
+                                class="cochon-mode-pill w-full flex items-center gap-2">
+                            <span>🐷</span>
+                            <span>Payer depuis le cochon</span>
                         </button>
                     </div>
                 </div>
@@ -1378,6 +1932,37 @@
 
             <hr class="border-stone-200 dark:border-stone-800" />
 
+            <!-- COCHON & ARRONDI INTELLIGENT -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider flex items-center gap-1.5">🐷 Cochon & Arrondi Intelligent</h4>
+
+                <!-- Toggle arrondi -->
+                <div class="flex items-center justify-between bg-stone-50 dark:bg-stone-800 rounded-xl px-3 py-2.5 border border-stone-200/60 dark:border-stone-700/40">
+                    <label for="settings_rounding_toggle" class="text-xs font-bold text-stone-700 dark:text-stone-200 cursor-pointer select-none">Arrondi automatique activé</label>
+                    <input type="checkbox" id="settings_rounding_toggle" class="cochon-toggle" onchange="saveUserSettings()">
+                </div>
+
+                <!-- Champs conditionnels -->
+                <div id="cochon_settings_fields" class="space-y-2.5 hidden">
+                    <div>
+                        <label class="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">Objectif d'épargne (€)</label>
+                        <input type="text" inputmode="decimal" id="settings_cochon_target" placeholder="60" class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" oninput="normalizeAmountInput(event); saveUserSettings()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">Arrondi max (% du montant) : <span id="rounding_ceiling_disp">8%</span></label>
+                        <input type="range" id="settings_rounding_ceiling" min="1" max="10" step="0.5" value="8" class="w-full accent-brand-500" oninput="onRoundingCeilingChange(this.value)">
+                        <!-- Exemples dynamiques d'arrondi -->
+                        <div id="rounding_examples" class="mt-2 space-y-0.5"></div>
+                    </div>
+
+                    <p class="text-[9px] text-stone-400 dark:text-stone-500 font-semibold leading-normal bg-stone-50 dark:bg-stone-800/50 rounded-xl px-3 py-2">
+                        🔒 <strong>Disclaimer</strong> : BUDGETHMR n'est pas un tiroir-caisse de poche, mais le reflet virtuel du budget disponible sur ton compte bancaire. Le Cochon représente de l'argent laissé sur le compte et déduit du budget principal. Il n'est pas remis à zéro au renouvellement mensuel.
+                    </p>
+                </div>
+            </div>
+
+            <hr class="border-stone-200 dark:border-stone-800" />
+
             <div class="space-y-3">
                 <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider">Tags</h4>
                 <button onclick="openTagManager()" class="w-full py-2.5 px-3 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-xl font-bold text-xs active:scale-95 transition-all border border-stone-200 dark:border-stone-700 flex items-center justify-center gap-1.5 shadow-sm">
@@ -1800,6 +2385,17 @@
                     </div>
                 </div>
             </div>
+            <!-- Slide 8 : Cochon -->
+            <div id="guide_slide_7" class="guide-slide space-y-4 text-center hidden">
+                <div class="text-5xl">🐷</div>
+                <h4 class="text-base font-black text-stone-800 dark:text-stone-100 font-display">L'épargne "Cochon"</h4>
+                <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
+                    Le <strong>Cochon</strong> est une cagnotte virtuelle déconnectée du renouvellement mensuel. Elle représente de l'argent laissé sur ton compte bancaire, que tu as pris soin de ne pas dépenser.<br><br>
+                    <strong>Comment il se remplit ?</strong> — Automatiquement ! À chaque dépense, BUDGETHMR arrondit le montant au palier supérieur (ex&nbsp;: 8,40&nbsp;€ → 9,00&nbsp;€). Le delta (0,60&nbsp;€) est versé dans ton cochon.<br><br>
+                    <strong>Quand l'utiliser ?</strong> — Depuis la golden card, clique sur le badge cochon 🐷 pour gérer ta cagnotte&nbsp;: retirer de l'argent, le placer en épargne réelle (virement bancaire), ou combler un déficit en urgence.<br><br>
+                    <em class="text-[10px]">🔒 Rappel&nbsp;: BUDGETHMR n'est pas un tiroir-caisse de poche, mais le reflet virtuel du budget disponible sur ton compte bancaire.</em>
+                </p>
+            </div>
         </div>
 
         <!-- Navigation Dots & Buttons -->
@@ -1813,6 +2409,7 @@
                 <span class="w-2 h-2 rounded-full bg-stone-300 dark:bg-stone-700 transition-all duration-300" id="guide_dot_4"></span>
                 <span class="w-2 h-2 rounded-full bg-stone-300 dark:bg-stone-700 transition-all duration-300" id="guide_dot_5"></span>
                 <span class="w-2 h-2 rounded-full bg-stone-300 dark:bg-stone-700 transition-all duration-300" id="guide_dot_6"></span>
+                <span class="w-2 h-2 rounded-full bg-stone-300 dark:bg-stone-700 transition-all duration-300" id="guide_dot_7"></span>
             </div>
             
             <div class="flex gap-2">
@@ -1904,6 +2501,34 @@
                 <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_8">
                     <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
                         <span class="status-icon">⏳</span> Cas limites fractionnés
+                    </span>
+                    <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
+                </div>
+                <!-- Test 10 -->
+                <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_9">
+                    <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                        <span class="status-icon">⏳</span> Montants d'échéances personnalisés
+                    </span>
+                    <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
+                </div>
+                <!-- Test 11 -->
+                <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_10">
+                    <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                        <span class="status-icon">⏳</span> Arrondi intelligent cochon 🐷
+                    </span>
+                    <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
+                </div>
+                <!-- Test 12 -->
+                <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_11">
+                    <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                        <span class="status-icon">⏳</span> Dépôt, retrait & remboursement cochon
+                    </span>
+                    <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
+                </div>
+                <!-- Test 13 -->
+                <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_12">
+                    <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                        <span class="status-icon">?</span> Export PDF &amp; flux fin de mois
                     </span>
                     <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
                 </div>
@@ -2222,6 +2847,107 @@
         </div>
     </div>
 </div>
+<!-- MODALE COCHON (CAGNOTTE / RÉSERVE) — MONOCHROME FINE ART -->
+<div id="cochon_modal" class="fixed inset-0 z-[65] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300 bg-black/80 backdrop-blur-sm">
+    <div class="cochon-panel w-full max-w-sm transform scale-95 transition-all duration-300 rounded-3xl flex flex-col max-h-[90vh] overflow-y-auto hide-scrollbar relative">
+
+        <!-- Bande décorative haut -->
+        <div class="flex-shrink-0" style="height:3px; background: linear-gradient(90deg, rgba(244,63,94,0.6) 0%, rgba(139,92,246,0.7) 50%, rgba(251,191,36,0.5) 100%); border-radius: 9999px 9999px 0 0; margin: 0;"></div>
+
+        <!-- Confetti canvas (goal reached) -->
+        <canvas id="cochon_confetti_canvas" width="400" height="600"></canvas>
+
+        <!-- Bravo overlay (goal reached) -->
+        <div id="cochon_bravo" class="hidden">
+            <span class="bravo-stars">🌟✨🌟</span>
+            <span class="bravo-text">Objectif atteint !</span>
+        </div>
+
+        <div class="p-5 flex flex-col gap-0 relative z-10">
+
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-5">
+                <div>
+                    <p class="cochon-header-label">Ma Réserve</p>
+                </div>
+                <button onclick="closeCochonModal()"
+                        class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-[10px] shadow-sm">
+                    &#x2715;
+                </button>
+            </div>
+
+            <!-- Pig SVG centré dans un halo -->
+            <div class="flex justify-center pb-2">
+                <div id="cochon_svg_container" class="w-[140px] h-[140px] flex items-center justify-center">
+                    <!-- Rendu par renderCochonSVG() -->
+                </div>
+            </div>
+
+            <!-- Solde principal -->
+            <div id="cochon_solde_display" class="text-center mb-4">
+                <span class="cochon-balance-amount">0,00 €</span>
+                <p class="cochon-balance-label">Vide</p>
+            </div>
+
+            <!-- Barre objectif -->
+            <div class="mb-5">
+                <div class="flex justify-between items-center mb-2">
+                    <span style="font-size:8px; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:rgba(255,255,255,0.62);">Progression</span>
+                    <span id="cochon_goal_label" style="font-size:8px; font-weight:700; letter-spacing:0.1em; color:rgba(255,255,255,0.88);">0%</span>
+                </div>
+                <div class="cochon-progress-track">
+                    <div id="cochon_goal_fill" class="cochon-progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Séparateur avec label MONTANT -->
+            <div class="mb-3">
+                <div class="flex items-center gap-3">
+                    <div style="flex:1; height:1px; background: rgba(255,255,255,0.10);"></div>
+                    <span style="font-size:7.5px; font-weight:900; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.60);">Montant</span>
+                    <div style="flex:1; height:1px; background: rgba(255,255,255,0.10);"></div>
+                    <span id="cochon_slider_value" style="font-size:13px; font-weight:900; color:rgba(255,255,255,0.9); letter-spacing:-0.01em;">0,00 €</span>
+                </div>
+                <div class="mt-3">
+                    <input type="range" id="cochon_action_slider" min="0" max="0" step="0.01" value="0" oninput="onCochonSliderChange()">
+                </div>
+            </div>
+
+            <!-- Séparateur -->
+            <div class="mb-4" style="height:1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);"></div>
+
+            <!-- Boutons d'action -->
+            <div class="flex flex-col gap-2 mb-4">
+                <button type="button" onclick="cochonAction('budget')" class="cochon-action-btn btn-budget">
+                    <span class="btn-icon">💰</span>
+                    <span>Remettre en budget</span>
+                </button>
+
+                <button type="button" onclick="cochonAction('floor')" class="cochon-action-btn btn-floor">
+                    <span class="btn-icon">📍</span>
+                    <span>Déplacer le Zéro (oublier)</span>
+                </button>
+            </div>
+
+            <!-- Bouton "Combler le trou" : séparé, visible seulement si budget déficitaire -->
+            <div id="cochon_fill_gap_section" class="hidden mb-4">
+                <div style="height:1px; background: linear-gradient(90deg, transparent, rgba(239,68,68,0.2), transparent); margin-bottom: 12px;"></div>
+                <button type="button" id="cochon_btn_fill_gap" onclick="cochonAction('gap')" class="cochon-action-btn btn-gap">
+                    <span class="btn-icon">🚑</span>
+                    <span>Combler le Trou</span>
+                    <span class="fill-amount ml-auto text-[8px] font-bold opacity-70"></span>
+                </button>
+            </div>
+
+            <!-- Disclaimer -->
+            <p style="font-size:8px; font-weight:500; line-height:1.6; text-align:center; color:rgba(255,255,255,0.52); padding: 0 8px;">
+                L'argent du Cochon reste sur ton compte bancaire. Il persiste d'un mois à l'autre.
+            </p>
+
+        </div>
+    </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>
