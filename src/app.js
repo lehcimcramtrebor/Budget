@@ -1714,52 +1714,51 @@ function renderExpensesList() {
         }
 
         item.innerHTML = `
-            <div class="flex justify-between w-full group/item-click">
-                <div onclick="openEditItem('expense', '${e.id}')" class="min-w-0 flex-1 cursor-pointer pr-3 flex flex-col justify-between">
-                    
-                    <div class="font-mono font-bold text-[11px] uppercase w-[calc(100%+50px)] text-stone-800 dark:text-stone-100 truncate group-hover/item-click:text-brand-500 transition-colors flex items-center h-6">
-                        ${displayTitle}
+            <div class="flex flex-col w-full gap-1 group/item-click">
+                
+                <div class="flex justify-between items-start w-full gap-2">
+                    <div onclick="openEditItem('expense', '${e.id}')" class="w-0 flex-1 cursor-pointer flex items-center min-h-[28px]">
+                        <div class="font-mono font-bold text-[11px] uppercase truncate text-stone-800 dark:text-stone-100 group-hover/item-click:text-brand-500 transition-colors w-full">
+                            ${displayTitle}
+                        </div>
                     </div>
-                    
-                    <div class="mt-1 flex items-center h-6">
-                        ${tagBadge}
+                    <div class="shrink-0">
+                        <button onclick="deleteExpense('${e.id}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-bold text-[9px] active:scale-90 border border-red-500/20" title="Supprimer">
+                            ✕
+                        </button>
                     </div>
-
-                    <div class="flex items-center gap-2 mt-1 whitespace-nowrap overflow-hidden text-ellipsis h-7">
-                        <span class="text-[9px] font-mono font-bold text-stone-400 dark:text-stone-500">${dateDisplay}</span>
-                        ${installmentBadgeHTML}
-                        ${badgeHTML}
-                        ${depositButtonHTML}
-                    </div>
-
                 </div>
 
-                <div class="flex flex-col items-end justify-between w-[150px] shrink-0">
-                    
-                    <div class="flex items-center justify-end w-full h-6">
-                        <span class="font-mono font-black text-xs ${amountColor} truncate">${amountSign} ${absAmount.toFixed(2).replace('.', ',')} €</span>
+                <div class="flex justify-between items-center w-full gap-2">
+                    <div onclick="openEditItem('expense', '${e.id}')" class="min-w-0 flex-1 cursor-pointer flex items-center gap-2">
+                        <span class="font-mono font-bold text-[10px] text-stone-500 dark:text-stone-400 shrink-0">${dateDisplay}</span>
+                        <span class="text-[8px] font-bold text-brand-500 uppercase tracking-wider opacity-0 group-hover/item-click:opacity-100 transition-all whitespace-nowrap select-none truncate">
+                            ${indicatorEmoji} ${modifierText}
+                        </span>
                     </div>
-
-                    <div class="flex items-center justify-end gap-2 w-full h-6 mt-1">
+                    <div class="shrink-0 flex items-center justify-end min-h-[24px]">
                         ${(cochonLineHTML || cochonIconHTML) ? `
-                            <div class="flex items-center justify-center gap-1 shrink-0">
+                            <div class="flex items-center justify-center gap-1">
                                 ${cochonIconHTML}
                                 <span class="text-[10px] select-none">${e.piocheCochon && e.piocheCochon > 0 ? '⛏️' : '🪙'}</span>
                             </div>
                             ${cochonLineHTML}
                         ` : ""}
                     </div>
-
-                    <div class="flex items-center justify-end gap-3 w-full mt-1 h-7">
-                        <span class="text-[8px] font-black text-brand-500 uppercase tracking-wider opacity-0 group-hover/item-click:opacity-100 transition-all whitespace-nowrap select-none">
-                            ${indicatorEmoji} ${modifierText}
-                        </span>
-                        <button onclick="deleteExpense('${e.id}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-bold text-[9px] active:scale-90 border border-red-500/20" title="Supprimer">
-                            ✕
-                        </button>
-                    </div>
-
                 </div>
+
+                <div class="flex justify-between items-center w-full gap-2">
+                    <div onclick="openEditItem('expense', '${e.id}')" class="min-w-0 flex-1 cursor-pointer flex items-center flex-wrap gap-2 mt-1">
+                        ${tagBadge}
+                        ${installmentBadgeHTML}
+                        ${badgeHTML}
+                        ${depositButtonHTML}
+                    </div>
+                    <div class="shrink-0 flex items-center justify-end">
+                        <span class="font-mono font-bold text-xs ${amountColor} truncate">${amountSign} ${absAmount.toFixed(2).replace('.', ',')} €</span>
+                    </div>
+                </div>
+
             </div>
         `;
         container.appendChild(item);
