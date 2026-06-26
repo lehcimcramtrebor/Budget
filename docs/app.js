@@ -753,11 +753,11 @@ let state = {
         username: "",
         genderTheme: "masculin",
         warningThreshold: 150,
-        // Cochon & Arrondi Intelligent
+        // Cochon & Pourboire Cochon
         cochonThresholds: [0, 20, 50, 100],  // Paliers visuels (vide/bas/moyen/plein)
         cochonTarget: 60,                     // Objectif d'épargne cochon (€)
-        roundingCeiling: 3.0,                 // % max autorisé pour l'arrondi (1–10)
-        isRoundingEnabled: true               // Arrondi automatique activé
+        roundingCeiling: 3.0,                 // % max autorisé pour le pourboire cochon (1–10)
+        isRoundingEnabled: true               // Pourboire cochon activé
     },
     ticketArchives: [], // Stockage local des tickets bruts
     customTags: [],    // Tags personnalisés de l'utilisateur [{key, icon, label}]
@@ -1477,35 +1477,20 @@ function calculateTotals() {
     return { totalRevenues, totalFixed, totalExpenses, remaining };
 }
 
-// --- ARRONDI INTELLIGENT COCHON ---
+// --- POURBOIRE COCHON ---
 /**
- * Calcule le palier d'arrondi optimal pour alimenter le cochon.
+ * Calcule le palier optimal pour alimenter le cochon (Pourboire Cochon).
  * Paliers (du plus élevé au plus bas) : 10€, 5€, 1€, 0.10€, 0.01€
- * Le palier 5€ (demi-dizaine) est un intermédiaire entre l'arrondi à l'euro et à la dizaine.
- * Retourne { roundedAmount, delta } ou null si pas d'arrondi applicable.
+ * Le palier 5€ (demi-dizaine) est un intermédiaire entre le pourboire à l'euro et à la dizaine.
+ * Retourne { roundedAmount, delta } ou null si pas de pourboire applicable.
  */
 function calculateSmartRounding(amount) {
     if (!state.settings.isRoundingEnabled) return null;
     if (!amount || amount <= 0) return null;
-    const ceiling = state.settings.roundingCeiling || 3.0;
-    const paliers = [0.10, 0.50, 1.0, 5.0, 10.0];
-    let best = null;
-    for (const palier of paliers) {
-        let rounded = Math.ceil(amount / palier) * palier;
-        let delta = Math.round((rounded - amount) * 100) / 100;
-        
-        // Si le montant est déjà un multiple parfait du palier, on ajoute le palier pour forcer l'épargne
-        if (delta === 0) {
-            rounded += palier;
-            delta = palier;
-        }
-
-        const pct = (delta / amount) * 100;
-        if (pct <= ceiling) {
-            best = { roundedAmount: Math.round(rounded * 100) / 100, delta };
-        }
-    }
-    return best;
+    const pct = state.settings.roundingCeiling || 3.0;
+    const delta = Math.round((amount * (pct / 100)) * 100) / 100;
+    if (delta <= 0) return null;
+    return { roundedAmount: Math.round((amount + delta) * 100) / 100, delta };
 }
 
 function getNextMonth(ymStr) {
@@ -1607,6 +1592,40 @@ function updateUI() {
     updateCochonBadge();
 }
 
+/**
+ * Retourne le code SVG du cochon (normal ou fissuré) pour affichage sous le bouton de suppression.
+ * La taille est de 18px pour s'intégrer harmonieusement sous le bouton ✕.
+ */
+function getCochonSVG(isFissured) {
+    const crackPath = isFissured 
+        ? `<path d="M 20 10.5 L 18 14 L 22 18 L 19 22 L 23 25" stroke="#1c1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />`
+        : '';
+    
+    return `<svg width="18" height="18" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;filter:drop-shadow(0 1px 2px rgba(244,63,94,0.15));" class="select-none">
+        <ellipse cx="20" cy="36.5" rx="9" ry="2.2" fill="url(#pg-shadow)" />
+        <ellipse cx="10" cy="13" rx="4.5" ry="5.5" fill="url(#pg-ear)" transform="rotate(-18 10 13)" />
+        <ellipse cx="10.5" cy="13.5" rx="2.2" ry="3.2" fill="#ffb3c6" opacity="0.7" transform="rotate(-18 10 13)" />
+        <ellipse cx="30" cy="13" rx="4.5" ry="5.5" fill="url(#pg-ear)" transform="rotate(18 30 13)" />
+        <ellipse cx="29.5" cy="13.5" rx="2.2" ry="3.2" fill="#ffb3c6" opacity="0.7" transform="rotate(18 30 13)" />
+        <circle cx="20" cy="22" r="13" fill="url(#pg-body)" />
+        <circle cx="20" cy="22" r="13" fill="none" stroke="rgba(196,130,255,0.65)" stroke-width="1.5" style="filter: drop-shadow(0 0 2px rgba(196,130,255,0.5));"/>
+        <rect x="15.5" y="9.5" width="9" height="2.5" rx="1.25" fill="rgba(10,8,20,0.75)" />
+        <rect x="15.5" y="9.5" width="9" height="1" rx="0.5" fill="rgba(255,255,255,0.12)" />
+        <ellipse cx="20" cy="27" rx="6.5" ry="4.8" fill="url(#pg-snout)" />
+        <ellipse cx="17.5" cy="27.5" rx="1.4" ry="1.8" fill="#e63870" opacity="0.65" />
+        <ellipse cx="22.5" cy="27.5" rx="1.4" ry="1.8" fill="#e63870" opacity="0.65" />
+        <circle cx="14.8" cy="20" r="1.8" fill="#1a0a2e" />
+        <circle cx="25.2" cy="20" r="1.8" fill="#1a0a2e" />
+        <circle cx="15.5" cy="19.3" r="0.7" fill="rgba(255,255,255,0.75)" />
+        <circle cx="25.9" cy="19.3" r="0.7" fill="rgba(255,255,255,0.75)" />
+        <ellipse cx="11.5" cy="24.5" rx="2.8" ry="1.8" fill="#f43f5e" opacity="0.30" />
+        <ellipse cx="28.5" cy="24.5" rx="2.8" ry="1.8" fill="#f43f5e" opacity="0.30" />
+        <ellipse cx="15" cy="16" rx="4.5" ry="3" fill="rgba(255,255,255,0.28)" transform="rotate(-25 15 16)" />
+        <ellipse cx="14" cy="15" rx="2" ry="1.2" fill="rgba(255,255,255,0.45)" transform="rotate(-25 14 15)" />
+        ${crackPath}
+    </svg>`;
+}
+
 // --- RENDER LISTS ---
 function renderExpensesList() {
     const container = document.getElementById("expenses_container");
@@ -1642,7 +1661,7 @@ function renderExpensesList() {
             bgClass = "bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 border-stone-200/40 dark:border-stone-800/60";
         }
         
-        item.className = `flex items-center justify-between p-3 rounded-2xl border shadow-sm transition-all ${bgClass}`;
+        item.className = `flex flex-col p-3 rounded-2xl border shadow-sm transition-all ${bgClass}`;
         
         // Display negative offsets if earlier than budgetMonth
         const dateDisplay = formatExpenseDate(e.date, state.budgetMonth);
@@ -1684,23 +1703,63 @@ function renderExpensesList() {
             ? `<button onclick="confirmCashDeposit(event, '${e.id}')" class="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[8px] uppercase tracking-wider active:scale-95 transition-all shadow-sm flex items-center gap-1 select-none">🏦 Remis sur mon compte ?</button>`
             : "";
         
+        let cochonLineHTML = "";
+        let cochonIconHTML = "";
+        if (e.piocheCochon && e.piocheCochon > 0) {
+            cochonLineHTML = `<div class="text-[10px] text-stone-400 dark:text-stone-500 font-mono font-semibold italic select-none">${e.piocheCochon.toFixed(2).replace('.', ',')} €</div>`;
+            cochonIconHTML = getCochonSVG(true);
+        } else if (e.roundingDelta && e.roundingDelta > 0) {
+            cochonLineHTML = `<div class="text-[10px] text-stone-400 dark:text-stone-500 font-mono font-semibold italic select-none">+${e.roundingDelta.toFixed(2).replace('.', ',')} €</div>`;
+            cochonIconHTML = getCochonSVG(false);
+        }
+
         item.innerHTML = `
-            <div onclick="openEditItem('expense', '${e.id}')" class="min-w-0 pr-2 flex-1 cursor-pointer group/item-click">
-                <div class="font-mono font-bold text-xs text-stone-800 dark:text-stone-100 truncate group-hover/item-click:text-brand-500 transition-colors">${displayTitle}</div>
-                <div class="flex items-center gap-2 mt-1 flex-wrap">
-                    <span class="text-[9px] font-mono font-bold text-stone-400 dark:text-stone-500">${dateDisplay}</span>
-                    ${tagBadge}
-                    ${installmentBadgeHTML}
-					${badgeHTML}
-                    ${depositButtonHTML}
-                    <span class="text-[8px] font-black text-brand-500 uppercase tracking-wider opacity-0 group-hover/item-click:opacity-100 transition-all">${indicatorEmoji} ${modifierText}</span>
+            <div class="flex justify-between w-full group/item-click">
+                <div onclick="openEditItem('expense', '${e.id}')" class="min-w-0 flex-1 cursor-pointer pr-3 flex flex-col justify-between">
+                    
+                    <div class="font-mono font-bold text-[11px] uppercase w-[calc(100%+50px)] text-stone-800 dark:text-stone-100 truncate group-hover/item-click:text-brand-500 transition-colors flex items-center h-6">
+                        ${displayTitle}
+                    </div>
+                    
+                    <div class="mt-1 flex items-center h-6">
+                        ${tagBadge}
+                    </div>
+
+                    <div class="flex items-center gap-2 mt-1 whitespace-nowrap overflow-hidden text-ellipsis h-7">
+                        <span class="text-[9px] font-mono font-bold text-stone-400 dark:text-stone-500">${dateDisplay}</span>
+                        ${installmentBadgeHTML}
+                        ${badgeHTML}
+                        ${depositButtonHTML}
+                    </div>
+
                 </div>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-                <span class="font-mono font-black text-xs ${amountColor}">${amountSign} ${absAmount.toFixed(2).replace('.', ',')} €</span>
-                <button onclick="deleteExpense('${e.id}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-bold text-[9px] active:scale-90 border border-red-500/20" title="Supprimer">
-                    ✕
-                </button>
+
+                <div class="flex flex-col items-end justify-between w-[150px] shrink-0">
+                    
+                    <div class="flex items-center justify-end w-full h-6">
+                        <span class="font-mono font-black text-xs ${amountColor} truncate">${amountSign} ${absAmount.toFixed(2).replace('.', ',')} €</span>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 w-full h-6 mt-1">
+                        ${(cochonLineHTML || cochonIconHTML) ? `
+                            <div class="flex items-center justify-center gap-1 shrink-0">
+                                ${cochonIconHTML}
+                                <span class="text-[10px] select-none">${e.piocheCochon && e.piocheCochon > 0 ? '⛏️' : '🪙'}</span>
+                            </div>
+                            ${cochonLineHTML}
+                        ` : ""}
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 w-full mt-1 h-7">
+                        <span class="text-[8px] font-black text-brand-500 uppercase tracking-wider opacity-0 group-hover/item-click:opacity-100 transition-all whitespace-nowrap select-none">
+                            ${indicatorEmoji} ${modifierText}
+                        </span>
+                        <button onclick="deleteExpense('${e.id}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-bold text-[9px] active:scale-90 border border-red-500/20" title="Supprimer">
+                            ✕
+                        </button>
+                    </div>
+
+                </div>
             </div>
         `;
         container.appendChild(item);
@@ -1844,11 +1903,22 @@ function addExpense(event) {
         };
     }
 
-    // --- ARRONDI INTELLIGENT COCHON ---
-    // Appliqué uniquement : hors mode cochon, hors remboursement, hors paiement fractionné
+    // --- POURBOIRE ET PIOCHE COCHON ---
     const isCochonMode = document.getElementById('cochon_mode_toggle')?.checked;
     const isRefundMode = newExpense.amount < 0;
-    if (!isCochonMode && !isRefundMode && !newExpense.installment && state.settings.isRoundingEnabled) {
+    
+    // Autorisé tant que ce n'est pas un remboursement (peu importe si c'est une mensualité ou son numéro)
+    const canUseCochon = !isRefundMode;
+
+    if (isCochonMode && canUseCochon) {
+        const piocheDelta = Math.min(newExpense.amount, state.cochon);
+        if (piocheDelta > 0) {
+            newExpense.piocheCochon = piocheDelta;
+            newExpense.amount = Math.round((newExpense.amount - piocheDelta) * 100) / 100;
+            state.cochon = Math.round((state.cochon - piocheDelta) * 100) / 100;
+            updateCochonBadge();
+        }
+    } else if (!isCochonMode && canUseCochon && state.settings.isRoundingEnabled) {
         const rounding = calculateSmartRounding(newExpense.amount);
         if (rounding && rounding.delta > 0) {
             newExpense.roundingDelta = rounding.delta;
@@ -1977,7 +2047,7 @@ function deleteExpense(id) {
     const titleWord  = isRefund ? "le remboursement" : "la dépense";
     const emoji      = isRefund ? "💵" : "🗑️";
 
-    // Avertissement cochon si la dépense avait généré un arrondi
+    // Avertissement cochon si la dépense avait généré un pourboire cochon ou utilisé la pioche cochon
     let cochonWarning = '';
     if (expense.roundingDelta && expense.roundingDelta > 0) {
         const delta    = expense.roundingDelta;
@@ -1995,6 +2065,15 @@ function deleteExpense(id) {
                     }
                 </div>
             </div>`;
+    } else if (expense.piocheCochon && expense.piocheCochon > 0) {
+        const piocheFmt = expense.piocheCochon.toFixed(2).replace('.', ',');
+        cochonWarning = `
+            <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:8px 10px;">
+                <span style="font-size:20px; line-height:1; flex-shrink:0;">🐷</span>
+                <div style="font-size:10px; font-weight:700; color:rgb(5,150,105); line-height:1.5;">
+                    Cette dépense a été co-payée avec le cochon à hauteur de <strong>${piocheFmt}&nbsp;€</strong>.<br>En la supprimant, <strong>${piocheFmt}&nbsp;€</strong> seront reversés dans votre réserve cochon.
+                </div>
+            </div>`;
     }
 
     showGenericConfirm(
@@ -2008,11 +2087,16 @@ function deleteExpense(id) {
                     `Êtes-vous absolument sûr ? Cette action effacera définitivement ${titleWord} <strong>"${expense.title}"</strong>.`,
                     "⚠️",
                     () => {
-                        // Sécurité cochon : si arrondi delta, le réintégrer
+                        // Sécurité cochon : si pourboire cochon delta ou pioche cochon, réajuster
                         const toDelete = state.expenses.find(e => e.id === id);
-                        if (toDelete && toDelete.roundingDelta) {
-                            state.cochon = Math.max(0, Math.round((state.cochon - toDelete.roundingDelta) * 100) / 100);
-                            updateCochonBadge();
+                        if (toDelete) {
+                            if (toDelete.roundingDelta) {
+                                state.cochon = Math.max(0, Math.round((state.cochon - toDelete.roundingDelta) * 100) / 100);
+                                updateCochonBadge();
+                            } else if (toDelete.piocheCochon) {
+                                state.cochon = Math.round((state.cochon + toDelete.piocheCochon) * 100) / 100;
+                                updateCochonBadge();
+                            }
                         }
                         state.expenses = state.expenses.filter(e => e.id !== id);
                         saveState();
@@ -2384,6 +2468,26 @@ function proceedToImportRenewalCarryover() {
     }
 }
 
+function proceedToRenewalCarryover() {
+    document.getElementById("renewal_step_1").classList.add("hidden");
+    
+    // Check balance
+    const { remaining } = calculateTotals();
+    
+    if (Math.abs(remaining) > 0.009) {
+        document.getElementById("renewal_step_2_5").classList.remove("hidden");
+        
+        const sign = remaining > 0 ? "+" : "";
+        const colorClass = remaining > 0 ? "text-emerald-500" : "text-red-500";
+        document.getElementById("renewal_carryover_amount").innerHTML = `<span class="${colorClass}">${sign}${formatCurrency(remaining)}</span>`;
+        
+        triggerHaptic(10);
+    } else {
+        willCarryOver = false;
+        goToRenewalStep3();
+    }
+}
+
 function selectRenewSameMonth() {
     selectedRenewalMonth = state.budgetMonth;
     willCarryOver = false;
@@ -2489,7 +2593,7 @@ function showRenewalPdfStep() {
  */
 function skipPdfAndContinue() {
     document.getElementById('renewal_step_1').classList.add('hidden');
-    goToRenewalStep2();
+    proceedToRenewalCarryover();
 }
 
 function confirmCarryOver(choice) {
@@ -2605,11 +2709,11 @@ async function renewalExportPDF() {
     try {
         autoCloseAllBudgets(); // Close and finalize all budgets before PDF generation
         await generateBudgetPDF();
-        goToRenewalStep2();
+        proceedToRenewalCarryover();
     } catch (err) {
         console.error("PDF generation failed:", err);
         showGenericAlert("Erreur PDF", "Impossible de générer le PDF. Vous pouvez continuer sans.", "❌");
-        goToRenewalStep2();
+        proceedToRenewalCarryover();
     }
 }
 
@@ -2847,20 +2951,45 @@ function executeRenewal() {
         state.expenses.push(d);
     });
 
-    // Créer la prochaine échéance pour chaque paiement en cours
+	// Créer la prochaine échéance pour chaque paiement en cours
     pendingInstallments.forEach(e => {
+        // 1. Retrouver le vrai montant (annuler l'arrondi ou la pioche du mois précédent)
+        let nextAmount = e.amount;
+        if (e.roundingDelta) {
+            nextAmount = Math.round((e.amount - e.roundingDelta) * 100) / 100;
+        } else if (e.piocheCochon) {
+            nextAmount = Math.round((e.amount + e.piocheCochon) * 100) / 100;
+        }
+        
+        // Priorité aux montants personnalisés s'ils ont été modifiés manuellement
+        if (e.installment && e.installment.amounts && e.installment.amounts.length >= e.installment.current + 1) {
+            nextAmount = e.installment.amounts[e.installment.current];
+        }
+
         const nextInstallment = {
             id:    `${Date.now()}_${Math.floor(Math.random() * 10000)}`,
             title: e.title,
-            amount: e.amount,
+            amount: nextAmount, // Montant de base propre
             date:  `${selectedRenewalMonth}-01`,
             tag:   e.tag || 'divers',
             installment: {
                 groupId: e.installment.groupId,
                 current: e.installment.current + 1,
-                total:   e.installment.total
+                total:   e.installment.total,
+                amounts: e.installment.amounts ? [...e.installment.amounts] : null
             }
         };
+
+        // 2. Appliquer le NOUVEL arrondi (pourboire) pour ce mois-ci
+        if (state.settings.isRoundingEnabled) {
+            const rounding = calculateSmartRounding(nextInstallment.amount);
+            if (rounding && rounding.delta > 0) {
+                nextInstallment.roundingDelta = rounding.delta;
+                nextInstallment.amount = rounding.roundedAmount;
+                state.cochon = Math.round((state.cochon + rounding.delta) * 100) / 100;
+            }
+        }
+
         state.expenses.push(nextInstallment);
     });
     
@@ -3755,7 +3884,7 @@ function openSettingsModal() {
         }
     }
 
-    // --- Cochon & Arrondi : peupler les champs ---
+    // --- Cochon & Pourboire Cochon : peupler les champs ---
     const roundingToggle = document.getElementById('settings_rounding_toggle');
     if (roundingToggle) {
         roundingToggle.checked = state.settings.isRoundingEnabled !== false;
@@ -3824,7 +3953,7 @@ function shareApp() {
 }
 
 /**
- * Appelé quand le slider "Arrondi max %" change.
+ * Appelé quand le slider "Pourboire Cochon max %" change.
  * Met à jour le display + génère des exemples dynamiques.
  */
 function onRoundingCeilingChange(val) {
@@ -3832,46 +3961,28 @@ function onRoundingCeilingChange(val) {
     const disp = document.getElementById('rounding_ceiling_disp');
     if (disp) disp.textContent = pct + '%';
 
-    // Exemples représentatifs : montants pour chaque type d'arrondi
+    // Exemples représentatifs : montants pour chaque type de pourboire cochon (triés par montant croissant)
     const examples = [
-        { label: '10 cts', amount: 12.72 },
-        { label: '50 cts', amount: 9.30 },
-        { label: '1 €',    amount: 45.40 },
-        { label: '5 €',    amount: 192.50 },
-        { label: '10 €',   amount: 87.20 },
+        { label: 'Café / snack', amount: 3.20 },
+        { label: 'Déjeuner', amount: 15.50 },
+        { label: 'Courses', amount: 65.00 },
+        { label: 'Achat moyen', amount: 120.00 },
+        { label: 'Gros achat', amount: 350.00 },
     ];
 
     const container = document.getElementById('rounding_examples');
     if (!container) { saveUserSettings(); return; }
 
     const rows = examples.map(ex => {
-        // Simulate calculateSmartRounding inline (same logic)
-        const paliers = [0.10, 0.50, 1.0, 5.0, 10.0];
-        let chosen = null;
-        for (const palier of paliers) {
-            let rounded = Math.ceil(ex.amount / palier) * palier;
-            let delta = Math.round((rounded - ex.amount) * 100) / 100;
-            
-            if (delta === 0) {
-                rounded += palier;
-                delta = palier;
-            }
-
-            const p = (delta / ex.amount) * 100;
-            if (p <= pct) { chosen = { rounded: Math.round(rounded * 100) / 100, delta }; }
-        }
-
+        const delta = Math.round((ex.amount * (pct / 100)) * 100) / 100;
+        const rounded = Math.round((ex.amount + delta) * 100) / 100;
+        
         const amtFmt = ex.amount.toFixed(2).replace('.', ',');
-        if (!chosen) {
-            return `<div class="flex items-center justify-between text-[9px] font-semibold text-stone-400 dark:text-stone-500 leading-tight py-0.5 px-1">
-                        <span>Ex. ${amtFmt} € <span class="opacity-50">(pourboire ${ex.label})</span></span>
-                        <span class="text-stone-300 dark:text-stone-600 italic">hors plafond</span>
-                    </div>`;
-        }
-        const roundedFmt = chosen.rounded.toFixed(2).replace('.', ',');
-        const deltaFmt   = chosen.delta.toFixed(2).replace('.', ',');
+        const roundedFmt = rounded.toFixed(2).replace('.', ',');
+        const deltaFmt   = delta.toFixed(2).replace('.', ',');
+        
         return `<div class="flex items-center justify-between text-[9px] font-semibold leading-tight py-0.5 px-1">
-                    <span class="text-stone-500 dark:text-stone-400">${amtFmt} € → <strong class="text-stone-700 dark:text-stone-200">${roundedFmt} €</strong></span>
+                    <span class="text-stone-500 dark:text-stone-400">${amtFmt} € (${ex.label}) → <strong class="text-stone-700 dark:text-stone-200">${roundedFmt} €</strong></span>
                     <span class="text-brand-500 font-black">+${deltaFmt} € 🐷</span>
                 </div>`;
     });
@@ -3890,7 +4001,7 @@ function saveUserSettings() {
         state.settings.warningThreshold = !isNaN(thresholdVal) ? thresholdVal : 150;
     }
 
-    // --- Cochon & Arrondi Intelligent ---
+    // --- Cochon & Pourboire Cochon ---
     // Ne lire le toggle QUE si la modale réglages est visible (évite d'écraser avec false)
     const settingsModal = document.getElementById('settings_modal');
     const isSettingsOpen = settingsModal && !settingsModal.classList.contains('hidden');
@@ -5508,15 +5619,28 @@ function openRecapModal(category) {
                 const absAmt = Math.abs(e.amount);
                 const amtColor = isRefund ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400';
                 const amtSign = isRefund ? '+' : '-';
-                // Mention fractionnement en texte monospace discret
                 const instSuffix = (e.installment && e.installment.total > 1)
                     ? ` <span style="font-size:9px;opacity:0.55">${e.installment.current}/${e.installment.total}</span>`
                     : '';
+                let subLinesHTML = '';
+                if (e.piocheCochon && e.piocheCochon > 0) {
+                    subLinesHTML = `
+                        <div class="flex justify-between items-baseline px-1 py-0.5 opacity-60 pl-4 -mt-0.5 select-none">
+                            <span class="font-mono text-[9px] ${subText} italic">   PART COCHON</span>
+                            <span class="font-mono font-semibold text-[9px] ${subText} tabular-nums">${formatCurrency(e.piocheCochon)}</span>
+                        </div>`;
+                } else if (e.roundingDelta && e.roundingDelta > 0) {
+                    subLinesHTML = `
+                        <div class="flex justify-between items-baseline px-1 py-0.5 opacity-60 pl-4 -mt-0.5 select-none">
+                            <span class="font-mono text-[9px] ${subText} italic">   POURBOIRE COCHON</span>
+                            <span class="font-mono font-semibold text-[9px] ${subText} tabular-nums">+${formatCurrency(e.roundingDelta)}</span>
+                        </div>`;
+                }
                 bodyHTML += `
                     <div class="${lineHover} flex justify-between items-baseline px-1 py-0.5 rounded transition-colors">
                         <span class="font-mono text-[11px] ${ticketText} truncate max-w-[60%]">${e.title.toUpperCase()}${instSuffix}</span>
                         <span class="font-mono font-black text-[11px] ${amtColor} tabular-nums">${amtSign} ${formatCurrency(absAmt)}</span>
-                    </div>`;
+                    </div>${subLinesHTML}`;
             });
         });
         
@@ -5930,6 +6054,11 @@ function generateBudgetPDF() {
                     const titleStr = e.isBudgetReference ? (e.isCashDepositPending ? `[CASH] ${e.title}` : `[ENV] ${e.title}`) : e.title;
                     
                     pdfTx += padLine(` • ${titleStr}`, formattedAmt) + "\n";
+                    if (e.piocheCochon && e.piocheCochon > 0) {
+                        pdfTx += padLine(`     Pioche cochon`, `${e.piocheCochon.toFixed(2).replace('.', ',')} €`) + "\n";
+                    } else if (e.roundingDelta && e.roundingDelta > 0) {
+                        pdfTx += padLine(`     Pourboire cochon`, `+${e.roundingDelta.toFixed(2).replace('.', ',')} €`) + "\n";
+                    }
                 });
                 pdfTx += "\n";
             });
@@ -6130,6 +6259,11 @@ function updateEnvelopeTicket(budgetId) {
             const archLabel = op.isArchived ? " (PREC)" : "";
             const dateLabel = (op.date && op.date.includes('-')) ? `[${op.date.split('-').slice(1).reverse().join('/')}] ` : "";
             receiptTx += padLine(` • ${dateLabel}${prefix}${op.title}${archLabel}`, formattedOpAmt) + "\n";
+            if (op.piocheCochon && op.piocheCochon > 0) {
+                receiptTx += padLine(`     Pioche cochon`, `${op.piocheCochon.toFixed(2).replace('.', ',')} €`) + "\n";
+            } else if (op.roundingDelta && op.roundingDelta > 0) {
+                receiptTx += padLine(`     Pourboire cochon`, `+${op.roundingDelta.toFixed(2).replace('.', ',')} €`) + "\n";
+            }
         });
     } else {
         receiptTx += `[Aucun mouvement enregistré]\n`;
@@ -8749,7 +8883,7 @@ function testInstallmentCustomAmounts() {
 // --- TESTS COCHON ---
 
 /**
- * Test 11 : Arrondi intelligent - vérifie que calculateSmartRounding
+ * Test 11 : Pourboire Cochon - vérifie que calculateSmartRounding
  * sélectionne TOUJOURS le palier le plus élevé acceptable sous le plafond %.
  */
 function testSmartRounding() {
@@ -8763,37 +8897,32 @@ function testSmartRounding() {
         return calculateSmartRounding(amount);
     }
 
-    // 1. 291 € à 5%   doit arrondir à 300 € (palier 10€, delta=9, 3.09%)
-    const r1 = sim(291, 5);
-    if (!r1) throw new Error("291€ @5% : aucun arrondi retourné");
-    if (r1.roundedAmount !== 300) throw new Error(`291€ @5% : attendu 300, obtenu ${r1.roundedAmount}`);
-    if (r1.delta !== 9) throw new Error(`291€ @5% : delta attendu 9, obtenu ${r1.delta}`);
+    // 1. 12,50 € à 3% -> pourboire de 0,38 € (12,50 * 0,03 = 0,375 -> arrondi à 0,38), total 12,88 €
+    const r1 = sim(12.50, 3);
+    if (!r1) throw new Error("12,50€ @3% : aucun pourboire cochon retourné");
+    if (r1.roundedAmount !== 12.88) throw new Error(`12,50€ @3% : attendu 12,88, obtenu ${r1.roundedAmount}`);
+    if (r1.delta !== 0.38) throw new Error(`12,50€ @3% : delta attendu 0,38, obtenu ${r1.delta}`);
 
-    // 2. 291,04 € à 1%   hors plafond (delta 10€ = 3.09%, delta 5€ = 1.37%, delta 1€ = 0.33%)
-    //    Le palier 1€ donne delta=0.33% <= 1%   doit retourner 292
-    const r2 = sim(291.04, 1);
-    if (!r2) throw new Error("291,04€ @1% : attendu arrondi à 1€");
-    if (r2.roundedAmount !== 292) throw new Error(`291,04€ @1% : attendu 292, obtenu ${r2.roundedAmount}`);
+    // 2. 9,30 € à 3% -> pourboire de 0,28 € (9,30 * 0,03 = 0,279 -> 0,28), total 9,58 €
+    const r2 = sim(9.30, 3);
+    if (!r2) throw new Error("9,30€ @3% : aucun pourboire cochon retourné");
+    if (r2.roundedAmount !== 9.58) throw new Error(`9,30€ @3% : attendu 9,58, obtenu ${r2.roundedAmount}`);
+    if (r2.delta !== 0.28) throw new Error(`9,30€ @3% : delta attendu 0,28, obtenu ${r2.delta}`);
 
-    // 3. 291 € à 0.2%   palier 0.10€ (delta=0.10€... mais 291 est entier, delta=0 -> hors palier 0.10)
-    //    palier 0.10 : ceil(291/0.1)*0.1 = 291, delta=0. palier 0.01 : même. Donc null.
-    const r3 = sim(291, 0.2);
-    if (r3 !== null) throw new Error(`291€ @0.2% : attendu null (déjà entier), obtenu ${r3?.roundedAmount}`);
+    // 3. 10,00 € à 3% -> pourboire de 0,30 € (10,00 * 0,03 = 0,30), total 10,30 €
+    const r3 = sim(10.00, 3);
+    if (!r3) throw new Error("10,00€ @3% : aucun pourboire cochon retourné");
+    if (r3.roundedAmount !== 10.30) throw new Error(`10,00€ @3% : attendu 10,30, obtenu ${r3.roundedAmount}`);
+    if (r3.delta !== 0.30) throw new Error(`10,00€ @3% : delta attendu 0,30, obtenu ${r3.delta}`);
 
-    // 4. 9.63 € à 5%   palier 1€ : ceil(9.63)=10, delta=0.37, 3.84% <= 5%
-    const r4 = sim(9.63, 5);
-    if (!r4) throw new Error("9.63€ @5% : aucun arrondi");
-    if (r4.roundedAmount !== 10) throw new Error(`9.63€ @5% : attendu 10, obtenu ${r4.roundedAmount}`);
+    // 4. 0,10 € à 1% -> pourboire de 0,00 € (0,10 * 0,01 = 0,001 -> 0,00), doit renvoyer null
+    const r4 = sim(0.10, 1);
+    if (r4 !== null) throw new Error("0,10€ @1% : attendu null, obtenu un résultat");
 
-    // 5. 43.20 € à 5%   palier 5€ : ceil(43.2/5)*5=45, delta=1.80, 4.17% <= 5%
-    const r5 = sim(43.20, 5);
-    if (!r5) throw new Error("43.20€ @5% : aucun arrondi");
-    if (r5.roundedAmount !== 45) throw new Error(`43.20€ @5% : attendu 45, obtenu ${r5.roundedAmount}`);
-
-    // 6. Arrondi désactivé -> null obligatoire
+    // 5. Pourboire désactivé -> null obligatoire
     state.settings.isRoundingEnabled = false;
-    const r6 = calculateSmartRounding(100);
-    if (r6 !== null) throw new Error("Arrondi désactivé : doit retourner null");
+    const r5 = calculateSmartRounding(100);
+    if (r5 !== null) throw new Error("Pourboire cochon désactivé : doit retourner null");
 
     // Restauration
     state.settings.isRoundingEnabled = savedEnabled;
@@ -8802,7 +8931,7 @@ function testSmartRounding() {
 }
 
 /**
- * Test 12 : Logique Cochon - dépôt via arrondi, suppression avec remboursement,
+ * Test 12 : Logique Cochon - dépôt via pourboire cochon, suppression avec remboursement,
  * et vérification que isSavingsLine & isFloorShift sont exclus des totaux.
  */
 function testCochonLogic() {
@@ -8818,25 +8947,25 @@ function testCochonLogic() {
     state.fixedCharges = [{ id: "c1", title: "Loyer",  amount: 650 }];
     state.expenses     = [];
 
-    // 1. Simulation d'un arrondi sur 9.63€ -> 10€, delta=0.37€ au cochon
+    // 1. Simulation d'un pourboire cochon sur 9.63€ -> 10,11€, delta=0.48€ au cochon
     const rounding = calculateSmartRounding(9.63);
-    if (!rounding) throw new Error("Arrondi 9.63€ : attendu un résultat");
-    if (rounding.delta !== 0.37) throw new Error(`Delta attendu 0.37, obtenu ${rounding.delta}`);
+    if (!rounding) throw new Error("Pourboire cochon 9.63€ : attendu un résultat");
+    if (rounding.delta !== 0.48) throw new Error(`Delta attendu 0.48, obtenu ${rounding.delta}`);
 
     state.expenses.push({
         id: "e_test_1", title: "Courses",
-        amount: rounding.roundedAmount, // 10€
-        roundingDelta: rounding.delta,  // 0.37€
+        amount: rounding.roundedAmount, // 10.11€
+        roundingDelta: rounding.delta,  // 0.48€
         date: "2026-06-01", tag: "alimentation"
     });
     state.cochon = Math.round((state.cochon + rounding.delta) * 100) / 100;
 
-    if (state.cochon !== 0.37) throw new Error(`Cochon après dépôt : attendu 0.37, obtenu ${state.cochon}`);
+    if (state.cochon !== 0.48) throw new Error(`Cochon après dépôt : attendu 0.48, obtenu ${state.cochon}`);
 
-    // 2. La dépense de 10€ doit apparaître dans calculateTotals
+    // 2. La dépense de 10.11€ doit apparaître dans calculateTotals
     const t1 = calculateTotals();
-    if (t1.totalExpenses !== 10) throw new Error(`totalExpenses attendu 10, obtenu ${t1.totalExpenses}`);
-    if (t1.remaining !== 1340) throw new Error(`Remaining attendu 1340, obtenu ${t1.remaining}`);
+    if (t1.totalExpenses !== 10.11) throw new Error(`totalExpenses attendu 10.11, obtenu ${t1.totalExpenses}`);
+    if (t1.remaining !== 1339.89) throw new Error(`Remaining attendu 1339.89, obtenu ${t1.remaining}`);
 
     // 3. Suppression : le delta doit être remboursé du cochon
     const toDelete = state.expenses.find(e => e.id === "e_test_1");
@@ -8846,6 +8975,41 @@ function testCochonLogic() {
     state.expenses = state.expenses.filter(e => e.id !== "e_test_1");
 
     if (state.cochon !== 0) throw new Error(`Cochon après remboursement : attendu 0, obtenu ${state.cochon}`);
+
+    // 3.b Test de la Pioche Cochon :
+    state.cochon = 10;
+    state.expenses = [];
+    
+    // Simuler l'ajout avec pioche cochon active
+    const rawExpenseAmt = 100;
+    const piocheDelta = Math.min(rawExpenseAmt, state.cochon); // 10€
+    const expenseWithPioche = {
+        id: "e_pioche_test",
+        title: "Achat Test Pioche",
+        amount: Math.round((rawExpenseAmt - piocheDelta) * 100) / 100, // 90.00€
+        piocheCochon: piocheDelta, // 10.00€
+        date: "2026-06-01",
+        tag: "divers"
+    };
+    state.expenses.push(expenseWithPioche);
+    state.cochon = Math.round((state.cochon - piocheDelta) * 100) / 100; // 0€
+    
+    if (state.cochon !== 0) throw new Error(`Pioche Cochon : solde cochon attendu 0, obtenu ${state.cochon}`);
+    if (expenseWithPioche.amount !== 90) throw new Error(`Pioche Cochon : montant dépense attendu 90, obtenu ${expenseWithPioche.amount}`);
+    
+    const tPioche = calculateTotals();
+    if (tPioche.totalExpenses !== 90) throw new Error(`Pioche Cochon : totalExpenses attendu 90, obtenu ${tPioche.totalExpenses}`);
+    
+    // Simuler la suppression et la restauration de la pioche cochon
+    const toDeletePioche = state.expenses.find(e => e.id === "e_pioche_test");
+    if (toDeletePioche && toDeletePioche.piocheCochon) {
+        state.cochon = Math.round((state.cochon + toDeletePioche.piocheCochon) * 100) / 100;
+    }
+    state.expenses = state.expenses.filter(e => e.id !== "e_pioche_test");
+    
+    if (state.cochon !== 10) throw new Error(`Restauration Pioche Cochon : solde cochon attendu 10, obtenu ${state.cochon}`);
+    const tRestore = calculateTotals();
+    if (tRestore.totalExpenses !== 0) throw new Error(`Restauration Pioche Cochon : totalExpenses attendu 0, obtenu ${tRestore.totalExpenses}`);
 
     // 4. isSavingsLine ne doit PAS compter dans totalExpenses
     state.cochon = 20;
@@ -9670,10 +9834,16 @@ function toggleCochonMode() {
 
     if (newActive) {
         btn.classList.add('cochon-btn-active');
-        btn.innerHTML = '<span>🐷</span><span>Pioche &mdash; Sans pourboire</span><span style="margin-left:auto;font-size:9px;opacity:0.7;">✓</span>';
+        btn.innerHTML = `<span>🐷</span><span>Piocher le cochon</span>
+            <svg class="cochon-checkmark" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>`;
     } else {
         btn.classList.remove('cochon-btn-active');
-        btn.innerHTML = '<span>🐷</span><span>Payer depuis le cochon</span>';
+        btn.innerHTML = `<span>🐷</span><span>Piocher le cochon</span>
+            <svg class="cochon-indicator" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" fill="none"></circle>
+            </svg>`;
     }
 
     // Désactiver "Remboursement" quand mode cochon actif
@@ -9693,7 +9863,10 @@ function resetCochonMode() {
     if (btn) {
         btn.dataset.active = 'false';
         btn.classList.remove('cochon-btn-active');
-        btn.innerHTML = '<span>🐷</span><span>Payer depuis le cochon</span>';
+        btn.innerHTML = `<span>🐷</span><span>Piocher le cochon</span>
+            <svg class="cochon-indicator" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" fill="none"></circle>
+            </svg>`;
     }
     if (toggle) toggle.checked = false;
     // Re-enable refund button

@@ -790,13 +790,62 @@
             background: rgba(var(--brand-500), 0.08);
             border-color: rgba(var(--brand-500), 0.2);
         }
+        .cochon-mode-pill:hover {
+            background: rgba(var(--brand-500), 0.12);
+            border-color: rgba(var(--brand-500), 0.45);
+            transform: translateY(-1px);
+        }
+        .dark .cochon-mode-pill:hover {
+            background: rgba(var(--brand-500), 0.15);
+            border-color: rgba(var(--brand-500), 0.4);
+        }
         .cochon-mode-pill.cochon-btn-active {
             background: rgba(var(--brand-500), 0.18);
             border-color: rgba(var(--brand-500), 0.6);
             box-shadow: 0 0 0 2px rgba(var(--brand-500), 0.15), inset 0 2px 4px rgba(0,0,0,0.1);
             transform: translateY(1px);
         }
-        .cochon-mode-pill:active { transform: translateY(2px); }
+        .cochon-mode-pill.cochon-btn-active:hover {
+            transform: translateY(1px);
+        }
+        .cochon-mode-pill:active { transform: translateY(2px) !important; }
+        .cochon-indicator {
+            margin-left: auto;
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            opacity: 0.45;
+            flex-shrink: 0;
+            transition: opacity 0.18s, transform 0.18s;
+        }
+        .cochon-mode-pill:hover .cochon-indicator {
+            opacity: 0.85;
+            transform: scale(1.1);
+        }
+        @keyframes checkmark-draw {
+            0% {
+                stroke-dashoffset: 24;
+            }
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+        .cochon-checkmark {
+            margin-left: auto;
+            width: 14px;
+            height: 14px;
+            stroke: #22c55e;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+            stroke-dasharray: 24;
+            stroke-dashoffset: 24;
+            animation: checkmark-draw 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            flex-shrink: 0;
+        }
         /* Boutons d'action cochon -- bordure complète, relief bas/droite */
         .cochon-action-btn {
             display: flex;
@@ -1437,7 +1486,10 @@
                                 data-active="false"
                                 class="cochon-mode-pill w-full flex items-center gap-2">
                             <span>🐷</span>
-                            <span>Payer depuis le cochon</span>
+                            <span>Piocher le cochon</span>
+                            <svg class="cochon-indicator" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" fill="none"></circle>
+                            </svg>
                         </button>
                     </div>
                 </div>
@@ -1932,13 +1984,13 @@
 
             <hr class="border-stone-200 dark:border-stone-800" />
 
-            <!-- COCHON & ARRONDI INTELLIGENT -->
+            <!-- POURBOIRE COCHON -->
             <div class="space-y-3">
-                <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider flex items-center gap-1.5">🐷 Cochon & Arrondi Intelligent</h4>
+                <h4 class="text-xs font-black text-stone-400 uppercase tracking-wider flex items-center gap-1.5">🐷 Pourboire Cochon</h4>
 
-                <!-- Toggle arrondi -->
+                <!-- Toggle pourboire cochon -->
                 <div class="flex items-center justify-between bg-stone-50 dark:bg-stone-800 rounded-xl px-3 py-2.5 border border-stone-200/60 dark:border-stone-700/40">
-                    <label for="settings_rounding_toggle" class="text-xs font-bold text-stone-700 dark:text-stone-200 cursor-pointer select-none">Arrondi automatique activé</label>
+                    <label for="settings_rounding_toggle" class="text-xs font-bold text-stone-700 dark:text-stone-200 cursor-pointer select-none">Pourboire Cochon activé</label>
                     <input type="checkbox" id="settings_rounding_toggle" class="cochon-toggle" onchange="saveUserSettings()">
                 </div>
 
@@ -1949,9 +2001,9 @@
                         <input type="text" inputmode="decimal" id="settings_cochon_target" placeholder="60" class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" oninput="normalizeAmountInput(event); saveUserSettings()">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">Arrondi max (% du montant) : <span id="rounding_ceiling_disp">8%</span></label>
+                        <label class="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">Pourboire Cochon (% du montant) : <span id="rounding_ceiling_disp">8%</span></label>
                         <input type="range" id="settings_rounding_ceiling" min="1" max="10" step="0.5" value="8" class="w-full accent-brand-500" oninput="onRoundingCeilingChange(this.value)">
-                        <!-- Exemples dynamiques d'arrondi -->
+                        <!-- Exemples dynamiques de pourboire cochon -->
                         <div id="rounding_examples" class="mt-2 space-y-0.5"></div>
                     </div>
 
@@ -2391,7 +2443,7 @@
                 <h4 class="text-base font-black text-stone-800 dark:text-stone-100 font-display">L'épargne "Cochon"</h4>
                 <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
                     Le <strong>Cochon</strong> est une cagnotte virtuelle déconnectée du renouvellement mensuel. Elle représente de l'argent laissé sur ton compte bancaire, que tu as pris soin de ne pas dépenser.<br><br>
-                    <strong>Comment il se remplit ?</strong> — Automatiquement ! À chaque dépense, BUDGETHMR arrondit le montant au palier supérieur (ex&nbsp;: 8,40&nbsp;€ → 9,00&nbsp;€). Le delta (0,60&nbsp;€) est versé dans ton cochon.<br><br>
+                    <strong>Comment il se remplit ?</strong> — Automatiquement ! À chaque dépense, BUDGETHMR applique un <strong>pourboire cochon</strong> correspondant au pourcentage choisi (ex&nbsp;: pour 3%, une dépense de 10,00&nbsp;€ génère +0,30&nbsp;€). Le pourboire est versé dans ton cochon.<br><br>
                     <strong>Quand l'utiliser ?</strong> — Depuis la golden card, clique sur le badge cochon 🐷 pour gérer ta cagnotte&nbsp;: retirer de l'argent, le placer en épargne réelle (virement bancaire), ou combler un déficit en urgence.<br><br>
                     <em class="text-[10px]">🔒 Rappel&nbsp;: BUDGETHMR n'est pas un tiroir-caisse de poche, mais le reflet virtuel du budget disponible sur ton compte bancaire.</em>
                 </p>
@@ -2514,7 +2566,7 @@
                 <!-- Test 11 -->
                 <div class="flex items-center justify-between text-xs font-semibold" id="cert_test_row_10">
                     <span class="text-stone-600 dark:text-stone-300 flex items-center gap-2">
-                        <span class="status-icon">⏳</span> Arrondi intelligent cochon 🐷
+                        <span class="status-icon">⏳</span> Pourboire Cochon 🐷
                     </span>
                     <span class="status-badge font-bold text-stone-400 text-[10px]">En attente</span>
                 </div>
