@@ -8580,13 +8580,15 @@ function renderCochonModal() {
     const sliderVal = document.getElementById('cochon_slider_value');
     if (sliderEl) {
         const step = cochonSliderStep(maxAmt);
-        const minVal = maxAmt > 0 ? Math.min(1.0, maxAmt) : 0;
-        sliderEl.min   = maxAmt > 0 ? minVal : 0;
+        const minVal = maxAmt >= 1.0 ? 1.0 : 0;
+        sliderEl.min   = minVal;
         sliderEl.max   = maxAmt;           // toujours le montant exact, même décimal
-        sliderEl.step  = step;
+        sliderEl.step  = 'any';
+        sliderEl.dataset.step = step;
         // Initialise à la première marche (1€ ou montant max si < 1)
         const prevVal  = parseFloat(sliderEl.dataset.userSet || '0');
-        const initVal  = prevVal > 0 ? Math.min(prevVal, maxAmt) : minVal;
+        const defaultInit = maxAmt >= 1.0 ? 1.0 : maxAmt;
+        const initVal  = prevVal > 0 ? Math.min(prevVal, maxAmt) : defaultInit;
         sliderEl.value = maxAmt > 0 ? Math.max(minVal, Math.min(initVal, maxAmt)) : 0;
         if (sliderVal) sliderVal.textContent = formatCurrency(parseFloat(sliderEl.value) || 0);
     }
@@ -8629,8 +8631,8 @@ let _cochonConfettiRAF = null;
 function startCochonConfetti(canvas) {
     if (_cochonConfettiRAF) return; // already running
     const ctx = canvas.getContext('2d');
-    const W = canvas.offsetWidth  || 400;
-    const H = canvas.offsetHeight || 600;
+    let W = canvas.clientWidth  || 400;
+    let H = canvas.clientHeight || 600;
     canvas.width  = W;
     canvas.height = H;
 
@@ -8653,6 +8655,16 @@ function startCochonConfetti(canvas) {
     }));
 
     function draw() {
+        // Mettre à jour la taille si elle a changé (ex: après ouverture de la modale)
+        const currentW = canvas.clientWidth  || 400;
+        const currentH = canvas.clientHeight || 600;
+        if (canvas.width !== currentW || canvas.height !== currentH) {
+            canvas.width  = currentW;
+            canvas.height = currentH;
+            W = currentW;
+            H = currentH;
+        }
+
         ctx.clearRect(0, 0, W, H);
         for (const p of particles) {
             ctx.save();
@@ -8710,9 +8722,26 @@ function onCochonSliderChange() {
     const slider = document.getElementById('cochon_action_slider');
     const display = document.getElementById('cochon_slider_value');
     if (slider && display) {
-        const v = parseFloat(slider.value) || 0;
-        slider.dataset.userSet = v; // mémorise pour re-init
-        display.textContent = formatCurrency(v);
+        let v = parseFloat(slider.value) || 0;
+        const max = parseFloat(slider.max) || 0;
+        const step = parseFloat(slider.dataset.step) || 0.01;
+        const min = parseFloat(slider.min) || 0;
+
+        // Arrondir au step le plus proche
+        let rounded = Math.round(v / step) * step;
+        // Si on est à moins d'un demi-pas du max, on snap au max
+        if (v >= max - (step / 2)) {
+            rounded = max;
+        }
+
+        // S'assurer de rester dans les limites
+        rounded = Math.max(min, Math.min(rounded, max));
+
+        // Mettre à jour la valeur physique du slider pour bloquer le thumb sur le cran
+        slider.value = rounded;
+
+        slider.dataset.userSet = rounded; // mémorise pour re-init
+        display.textContent = formatCurrency(rounded);
     }
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "budget-hmr-cache-v4.00";
+const CACHE_NAME = "budget-hmr-cache-v4.01";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,7 +6,7 @@ const ASSETS = [
   "./manifest.json",
   "./icon.svg",
   "./assets/js/html2pdf.bundle.min.js",
-  "./assets/css/output.css",
+  "./assets/css/output.css?v=4.0.1",
   "./assets/css/inter.css",
   "./assets/css/premium-fonts.css",
   "./config/tags.js",

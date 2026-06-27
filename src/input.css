@@ -149,7 +149,7 @@
                 border-color: rgba(120, 113, 108, 0.30) !important;
             }
             .golden-card {
-                @apply p-6 rounded-3xl transition-all duration-300 relative overflow-hidden;
+                @apply px-6 py-4 rounded-3xl transition-all duration-300 relative overflow-hidden;
                 /* Gradient directionnel basé sur les vars CSS — répond aux thèmes dynamiques */
                 background: linear-gradient(
                     145deg,
@@ -818,8 +818,10 @@
         #cochon_confetti_canvas {
             position: absolute;
             inset: 0;
+            width: 100% !important;
+            height: 100% !important;
             pointer-events: none;
-            z-index: 0;
+            z-index: 20;
             border-radius: 1.5rem;
         }
         #cochon_bravo {
