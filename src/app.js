@@ -1,778 +1,86 @@
-// --- BLOC UNIQUE DE CONFIGURATION DES TAGS ---
-const TAG_DATA = {
-    revenus: {
-        label: "💰 Revenus",
-        items: {
-            salaire: { icon: "💶", label: "Salaire" },
-            aides: { icon: "🏛️", label: "Aides/CAF" },
-            remboursement: { icon: "🔄", label: "Remboursement" },
-            ventes: { icon: "📦", label: "Ventes" },
-            divers: { icon: "➕", label: "Divers" }
-        }
-    },
-    alimentation: {
-        label: "🍔 Alimentation",
-        items: {
-            courses: { icon: "🛒", label: "Courses" },
-            resto: { icon: "🍽️", label: "Resto" },
-            fastfood: { icon: "🍔", label: "Fast-Food" },
-            boulangerie: { icon: "🥖", label: "Boulangerie" },
-            boucherie: { icon: "🥩", label: "Boucherie" },
-            marche: { icon: "🍎", label: "Marché" },
-            cantine: { icon: "🍱", label: "Cantine" },
-            bar: { icon: "🍺", label: "Bar" },
-            livraison: { icon: "🛵", label: "Livraison" }
-        }
-    },
-    vehicule: {
-        label: "🚗 Véhicules",
-        items: {
-            carburant: { icon: "⛽", label: "Carburant" },
-            entretien_auto: { icon: "🔧", label: "Entretien Auto" },
-            entretien_moto: { icon: "🏍️", label: "Entretien Moto" },
-            transport: { icon: "🚌", label: "Transports" },
-            train: { icon: "🚆", label: "Train" },
-            avion: { icon: "✈️", label: "Avion" },
-            taxi: { icon: "🚕", label: "Taxi" },
-            peage: { icon: "🎫", label: "Péage" },
-            parking: { icon: "🅿️", label: "Parking" },
-            velo: { icon: "🚲", label: "Vélo/Trot" }
-        }
-    },
-    maison: {
-        label: "🏠 Maison",
-        items: {
-            loyer_credit: { icon: "🏠", label: "Loyer/Crédit" },
-            energie: { icon: "⚡", label: "Élec/Gaz" },
-            eau: { icon: "💧", label: "Eau" },
-            assurance: { icon: "🛡️", label: "Assurance" },
-            internet: { icon: "🌐", label: "Internet/Forfait" },
-            equipement: { icon: "📺", label: "Équipement" },
-            entretien: { icon: "🧹", label: "Entretien" },
-            decoration: { icon: "🛋️", label: "Décoration" },
-            brico_jardin: { icon: "🛠️", label: "Brico/Jardin" },
-            travaux: { icon: "🏗️", label: "Travaux" }
-        }
-    },
-    shopping: {
-        label: "🛍️ Shopping & Perso",
-        items: {
-            vetements: { icon: "👕", label: "Vêtements" },
-            chaussures: { icon: "👟", label: "Chaussures" },
-            accessoires: { icon: "⌚", label: "Accessoires" },
-            cadeaux: { icon: "🎁", label: "Cadeaux" }
-        }
-    },
-    loisirs: {
-        label: "🍿 Loisirs",
-        items: {
-            activite: { icon: "🔫", label: "Activités" },
-            vape: { icon: "💨", label: "Vape" },
-            cinema: { icon: "🍿", label: "Cinéma" },
-            gaming: { icon: "🎮", label: "Gaming" },
-            musique: { icon: "🎵", label: "Musique" },
-            streaming: { icon: "📺", label: "Streaming" },
-            lecture: { icon: "📚", label: "Lecture" },
-            presse: { icon: "📰", label: "Presse" },
-            sorties: { icon: "🎟️", label: "Sorties" },
-            voyage: { icon: "🏖️", label: "Voyage" },
-            tabac: { icon: "🚬", label: "Tabac" },
-            numerique: { icon: "📱", label: "Logiciels/Apps" },
-            abonnements: { icon: "💳", label: "Abonnements" }
-        }
-    },
-    sante: {
-        label: "💊 Santé",
-        items: {
-            generaliste: { icon: "👨‍⚕️", label: "Généraliste" },
-            hopital: { icon: "🏥", label: "Hôpital" },
-            cpam: { icon: "📂", label: "CPAM" },
-            mutuelle: { icon: "🏥", label: "Mutuelle" },
-            pharmacie: { icon: "⚕️", label: "Pharmacie" },
-            laboratoire: { icon: "🔬", label: "Laboratoire" },
-            complements: { icon: "🌿", label: "Compléments" },
-            therapie: { icon: "🧘", label: "Thérapie" }
-        }
-    },
-    specialistes: {
-        label: "🩺 Spécialistes",
-        items: {
-            cardiologue: { icon: "❤️", label: "Cardiologue" },
-            dentiste: { icon: "🦷", label: "Dentiste" },
-            ophtalmologue: { icon: "👁️", label: "Ophtalmo" },
-            dermatologue: { icon: "🩺", label: "Dermatologue" },
-            orl: { icon: "👂", label: "ORL" },
-            pneumologue: { icon: "🫁", label: "Pneumologue" },
-            gastro: { icon: "🥨", label: "Gastro-entéro" },
-            radiologue: { icon: "☢️", label: "Radiologue" },
-            kine: { icon: "🧘", label: "Kiné" },
-            osteo: { icon: "🦴", label: "Ostéo" },
-            podologue: { icon: "🦶", label: "Podologue" }
-        }
-    },
-    beaute: {
-        label: "💄 Beauté",
-        items: {
-            coiffeur: { icon: "✂️", label: "Coiffeur" },
-            hygiene: { icon: "🧴", label: "Hygiène" },
-            cosmetique: { icon: "💅", label: "Cosmétique" }
-        }
-    },
-    sport: {
-        label: "🏋️ Sports",
-        items: {
-            licence: { icon: "💳", label: "Licence" },
-            equipement: { icon: "👟", label: "Équipement" },
-            competition: { icon: "🏅", label: "Compétition" },
-            piscine: { icon: "🏊", label: "Piscine" },
-            running: { icon: "🏃", label: "Running" },
-            musculation: { icon: "💪", label: "Musculation" },
-            cyclisme: { icon: "🚴", label: "Cyclisme" },
-            randonnee: { icon: "🏔️", label: "Randonnée" },
-            combat: { icon: "🥊", label: "Combat" },
-            raquette: { icon: "🎾", label: "Raquette" },
-            collectif: { icon: "⚽", label: "Collectif" }
-        }
-    },
-    famille: {
-        label: "👧 Famille",
-        items: {
-            enfants: { icon: "👧", label: "Enfants" },
-            ecole: { icon: "🎒", label: "École/Périscolaire" },
-            jouets: { icon: "🧸", label: "Jouets" },
-            garde: { icon: "🍼", label: "Garde/Nounou" },
-            animaux: { icon: "🐶", label: "Animaux" },
-            veterinaire: { icon: "🩺", label: "Vétérinaire" },
-            argent_poche: { icon: "🪙", label: "Argent de poche" }
-        }
-    },
-    pro: {
-        label: "💼 Frais Pro",
-        items: {
-            repas: { icon: "🍽️", label: "Repas Pro" },
-            deplacement: { icon: "🚗", label: "Déplacement" },
-            hotel: { icon: "🏨", label: "Hôtel" },
-            materiel: { icon: "💻", label: "Matériel Pro" },
-            fournitures: { icon: "📎", label: "Fournitures" }
-        }
-    },
-    finance: {
-        label: "🏦 Finances & Admin",
-        items: {
-            frais_bancaires: { icon: "🏦", label: "Frais Bancaires" },
-            epargne: { icon: "🐷", label: "Épargne" },
-            impots: { icon: "📄", label: "Impôts/Taxes" },
-            justice: { icon: "⚖️", label: "Justice" },
-            notaire: { icon: "✒️", label: "Notaire" },
-            amende: { icon: "👮", label: "Amende" },
-            dons: { icon: "🤝", label: "Dons" },
-            poste: { icon: "📮", label: "Poste" },
-            divers: { icon: "📝", label: "Divers" }
-        }
+// =========================================================================
+// 🧠 POINT D'ENTRÉE PRINCIPAL DE L'APPLICATION (app.js)
+// Rôle : Gestion globale des dépenses, enveloppes, frais fixes et persistance.
+// =========================================================================
+
+// --- IMPORTS DES MODULES ---
+import { TAG_DATA, EXPENSE_TAGS, TAG_CATEGORIES, TAG_EMOJI_PICKER } from './config/tags.js';
+import { toTitleCase, stripAccents, formatYearMonthFrench, formatExpenseDate, getTodayDateString } from './utils/stringUtils.js';
+import { triggerHaptic, isClickableElement, setupHapticFeedback, initModalScrollLock, initScrollOnFocus } from './utils/domUtils.js';
+import { state, hasUnsavedChanges, lastRemaining, isFirstLaunchAndInTolerance, saveState, initDatabase, mergeCustomTagsIntoExpenseTags } from './store/state.js';
+import { getTopUsedTags, getSuggestedTags } from './services/tagService.js';
+import {
+    renderCompactTags,
+    createCompactTagBtn,
+    toggleTagCategory,
+    openTagSelectionModal,
+    closeTagSelectionModal,
+    openTagManager,
+    closeTagManager,
+    renderTagManager,
+    toggleTagCategory_mgr,
+    toggleCategoryAllTags,
+    bulkSetAllSystemTags,
+    toggleSingleTag,
+    toggleTagManagerSelect,
+    enterTagManagerSelectMode,
+    bulkSetTags,
+    openCreateTagModal,
+    closeCreateTagModal,
+    selectTagEmoji,
+    saveCustomTag,
+    deleteCustomTag
+} from './components/tagsUI.js';
+
+// =========================================================================
+// 🛠️ SYSTEME DE CAPTURE D'ERREURS (BOÎTE NOIRE)
+// =========================================================================
+window.debugErrors = [];
+
+window.onerror = function (message, source, lineno, colno, error) {
+    const file = source ? source.split('/').pop() : 'inconnu';
+    const errStr = `${message} (à ${file}:${lineno})`;
+    if (!window.debugErrors.includes(errStr)) {
+        window.debugErrors.push(errStr);
+        if (window.debugErrors.length > 5) window.debugErrors.shift(); // Garde les 5 dernières
+    }
+    return false; // Permet à l'erreur de se propager normalement
+};
+
+window.onunhandledrejection = function (event) {
+    const errStr = `Rejet de promesse non géré : ${event.reason}`;
+    if (!window.debugErrors.includes(errStr)) {
+        window.debugErrors.push(errStr);
+        if (window.debugErrors.length > 5) window.debugErrors.shift();
     }
 };
 
-// --- GÉNÉRATION AUTOMATIQUE DES VARIABLES UTILISÉES PAR L'APP ---
-const EXPENSE_TAGS = {};
-const TAG_CATEGORIES = {};
-
-Object.keys(TAG_DATA).forEach(catKey => {
-    const category = TAG_DATA[catKey];
-    // On extrait les clés pour TAG_CATEGORIES
-    TAG_CATEGORIES[catKey] = { 
-        label: category.label, 
-        keys: Object.keys(category.items) 
-    };
-    // On fusionne tous les items dans EXPENSE_TAGS
-    Object.assign(EXPENSE_TAGS, category.items);
-});
-
 // --- CALCUL DES TAGS LES PLUS UTILISÉS (POUR LA SECTION DYNAMIQUE) ---
-function getTopUsedTags(limit = 12) {
-    const counts = {};
-    const allOps = [...state.expenses];
-    state.budgets.forEach(b => {
-        if (b.expenses) allOps.push(...b.expenses);
-        if (b.archivedExpenses) allOps.push(...b.archivedExpenses);
-    });
 
-    allOps.forEach(op => {
-        if (op.tag) counts[op.tag] = (counts[op.tag] || 0) + 1;
-    });
-
-    let sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
-    
-    // Tes anciens tags par défaut si l'historique est vierge ou faible
-    const defaultTop = ['courses', 'resto', 'loisirs', 'vape', 'numerique', 'auto', 'moto', 'brico', 'enfant', 'medical', 'vetements', 'animaux', 'cadeaux', 'divers'];
-    
-    defaultTop.forEach(tag => {
-        if (!sorted.includes(tag)) sorted.push(tag);
-    });
-
-    return sorted.slice(0, limit);
-}
 
 // --- NOUVEAU SYSTEME DE TAGS COMPACTS ---
-function getSuggestedTags(titleVal) {
-    const counts = {};
-    const titleLower = (titleVal || "").trim().toLowerCase();
 
-    // Récupérer tout l'historique
-    const allOps = [...state.expenses];
-    state.budgets.forEach(b => {
-        if (b.expenses) allOps.push(...b.expenses);
-        if (b.archivedExpenses) allOps.push(...b.archivedExpenses);
-    });
 
-    // 1. Chercher des correspondances intelligentes sur le titre tapé
-    let matchedOps = [];
-    if (titleLower.length >= 2) {
-        // On découpe la saisie en mots de 3 lettres minimum (pour ignorer "le", "de", "au"...)
-        const searchWords = titleLower.split(/\s+/).filter(w => w.length >= 3);
-        
-        // Si on tape juste un mot court (ex: "Mc"), on le garde quand même
-        if (searchWords.length === 0 && titleLower.length > 0) {
-            searchWords.push(titleLower);
-        }
 
-        matchedOps = allOps.filter(op => {
-            if (!op.title) return false;
-            const opTitleLower = op.title.toLowerCase();
-            
-            // 1. Le libellé historique contient ce qu'on tape (ex: tapé="Boul", historique="Boulangerie")
-            if (opTitleLower.includes(titleLower)) return true;
-            
-            // 2. Ce qu'on tape contient le libellé historique (ex: tapé="Courses Auchan", historique="Auchan")
-            if (titleLower.includes(opTitleLower)) return true;
-            
-            // 3. Un des mots tapés correspond à l'historique
-            return searchWords.some(word => opTitleLower.includes(word));
-        });
-    }
 
-    if (matchedOps.length > 0) {
-        matchedOps.forEach(op => {
-            if (op.tag && op.tag !== 'divers') counts[op.tag] = (counts[op.tag] || 0) + 1;
-        });
-    }
 
-    // Filtrer les tags désactivés
-    const disabledSet = new Set(state.disabledTags || []);
-    let sortedTags = Object.keys(counts).filter(k => !disabledSet.has(k)).sort((a, b) => counts[b] - counts[a]);
-
-    // Le meilleur match réel basé sur la frappe
-    const autoMatch = sortedTags.length > 0 ? sortedTags[0] : null;
-
-    // 2. Compléter avec les tags les plus utilisés globalement si besoin
-    if (sortedTags.length < 2) {
-        const globalCounts = {};
-        allOps.forEach(op => {
-            if (op.tag && op.tag !== 'divers') globalCounts[op.tag] = (globalCounts[op.tag] || 0) + 1;
-        });
-        const globalSorted = Object.keys(globalCounts).filter(k => !disabledSet.has(k)).sort((a, b) => globalCounts[b] - globalCounts[a]);
-        globalSorted.forEach(tag => {
-            if (!sortedTags.includes(tag) && sortedTags.length < 2) sortedTags.push(tag);
-        });
-    }
-
-    // 3. Valeurs par défaut de secours (non désactivés)
-    const fallbacks = ['courses', 'auto', 'resto', 'loisirs'];
-    fallbacks.forEach(tag => {
-        if (!disabledSet.has(tag) && !sortedTags.includes(tag) && sortedTags.length < 2) sortedTags.push(tag);
-    });
-
-    return { tags: sortedTags.slice(0, 2), autoMatch };
-}
-
-function renderCompactTags(containerId, inputId, titleVal = "", isTyping = false) {
-    const container = document.getElementById(containerId);
-    const input = document.getElementById(inputId);
-    if (!container || !input) return;
-
-    const { tags: suggestions, autoMatch } = getSuggestedTags(titleVal);
-
-    if (isTyping) {
-        input.value = autoMatch || 'divers';
-    }
-    let selectedKey = input.value || 'divers';
-
-    // Détection intelligente du changement pour éviter le tremblement à la frappe
-    const currentSugStr = suggestions.join(',');
-    const hasChanged = container.dataset.lastSug !== currentSugStr;
-    container.dataset.lastSug = currentSugStr;
-
-    let thirdBtnKey = 'divers';
-    if (!suggestions.includes(selectedKey)) {
-        thirdBtnKey = selectedKey;
-    }
-
-    container.innerHTML = "";
-
-    // Boutons de suggestion (gauche & milieu)
-    suggestions.forEach(key => {
-        container.appendChild(createCompactTagBtn(key, key === selectedKey, () => {
-            input.value = key;
-            renderCompactTags(containerId, inputId, titleVal);
-            triggerHaptic(10);
-        }, true, hasChanged)); // Transmet le signal d'animation
-    });
-
-    // 3ème Bouton (Ouvre la modale)
-    const thirdBtn = createCompactTagBtn(thirdBtnKey, thirdBtnKey === selectedKey, () => {
-        openTagSelectionModal(inputId, containerId, titleVal, suggestions);
-    }, false, false);
-    thirdBtn.innerHTML += `<span class="ml-1 text-[8px] opacity-50">▼</span>`;
-    container.appendChild(thirdBtn);
-}
-
-function createCompactTagBtn(key, isActive, onClick, isMagic = false, shouldAnimate = false) {
-    const tag = EXPENSE_TAGS[key] || EXPENSE_TAGS['divers'];
-    const btn = document.createElement("button");
-    btn.type = "button";
-    
-    let baseClass = "";
-    if (isActive) {
-        // Touche enfoncée (Incrustée dans la carte)
-        baseClass = "w-full py-2 px-1 rounded-lg text-xs font-black bg-brand-500 text-white border-t border-brand-600 shadow-[inset_0_2px_4px_rgba(0,0,0,0.25)] select-none overflow-hidden flex items-center justify-center gap-1 scale-[0.98]";
-    } else if (isMagic) {
-        // Touche en relief avec pointillés magiques
-        baseClass = "w-full py-2 px-1 rounded-lg text-[10px] font-bold border border-dashed border-brand-500/40 dark:border-brand-400/40 bg-gradient-to-b from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-850 text-stone-600 dark:text-stone-300 shadow-[0_2px_0_#cbd5e1] dark:shadow-[0_2px_0_#000000] select-none overflow-hidden flex items-center justify-center gap-1 active:scale-[0.97] transition-all";
-        if (shouldAnimate) {
-            baseClass += " animate-tag-pop";
-        }
-    } else {
-        // Touche en relief classique au repos
-        baseClass = "w-full py-2 px-1 rounded-lg text-[10px] font-bold bg-gradient-to-b from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-850 text-stone-600 dark:text-stone-300 border-t border-white dark:border-stone-700/50 shadow-[0_2px_0_#cbd5e1] dark:shadow-[0_2px_0_#000000] select-none overflow-hidden flex items-center justify-center gap-1 active:scale-[0.97] transition-all";
-    }
-
-    btn.className = baseClass;
-    btn.innerHTML = `<span class="text-xs shrink-0">${tag.icon}</span> <span class="truncate">${tag.label}</span>`;
-    btn.onclick = onClick;
-    return btn;
-}
 
 // Variables de session pour la modale
-let activeTagInputId = "";
-let activeTagContainerId = "";
-let activeTagTitleVal = "";
-let activeExcludedKeys = []; // NOUVEAU : Pour recharger la modale dynamiquement
+ // NOUVEAU : Pour recharger la modale dynamiquement
 
-function toggleTagCategory(catKey) {
-    let collapsed = JSON.parse(localStorage.getItem('budget_hmr_collapsed_cats') || '[]');
-    if (collapsed.includes(catKey)) {
-        collapsed = collapsed.filter(k => k !== catKey); // Déroule
-    } else {
-        collapsed.push(catKey); // Enroule
-    }
-    localStorage.setItem('budget_hmr_collapsed_cats', JSON.stringify(collapsed));
-    
-    // Recharge la modale instantanément avec les mêmes paramètres
-    openTagSelectionModal(activeTagInputId, activeTagContainerId, activeTagTitleVal, activeExcludedKeys);
-}
 
-function openTagSelectionModal(inputId, containerId, titleVal, excludedKeys) {
-    activeTagInputId = inputId;
-    activeTagContainerId = containerId;
-    activeTagTitleVal = titleVal;
-    activeExcludedKeys = excludedKeys; // Sauvegarde pour la bascule
 
-    const container = document.getElementById("tag_selection_grid");
-    container.innerHTML = "";
 
-    // Helper pour générer un bouton de tag
-    const createBtn = (key) => {
-        if (excludedKeys.includes(key)) return null;
-        // Ne pas afficher les tags désactivés (sauf custom perso)
-        if (!key.startsWith('custom_') && (state.disabledTags || []).includes(key)) return null;
-        
-        const tag = EXPENSE_TAGS[key];
-        if (!tag) return null;
 
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "py-2.5 px-1 rounded-xl text-[10px] font-mono font-black border transition-all flex flex-col items-center justify-center gap-1 active:scale-95 bg-stone-50 dark:bg-stone-900 text-stone-700 dark:text-stone-200 border-stone-200 dark:border-stone-800 hover:border-brand-400 hover:bg-brand-50/40 dark:hover:bg-brand-900/20 select-none";
-        btn.innerHTML = `<span class="text-xl">${tag.icon}</span> <span class="truncate w-full text-center uppercase tracking-tight">${tag.label}</span>`;
 
-        btn.onclick = () => {
-            const input = document.getElementById(activeTagInputId);
-            if (input) input.value = key;
-            renderCompactTags(activeTagContainerId, activeTagInputId, activeTagTitleVal);
-            closeTagSelectionModal();
-            triggerHaptic(10);
-        };
-        return btn;
-    };
-
-    // --- CALCUL DES STATISTIQUES GLOBAL ---
-    const tagCounts = {};
-    const allOps = [...state.expenses];
-    state.budgets.forEach(b => {
-        if (b.expenses) allOps.push(...b.expenses);
-        if (b.archivedExpenses) allOps.push(...b.archivedExpenses);
-    });
-    allOps.forEach(op => {
-        if (op.tag) tagCounts[op.tag] = (tagCounts[op.tag] || 0) + 1;
-    });
-
-    // Lecture des préférences d'affichage
-    const collapsedCats = JSON.parse(localStorage.getItem('budget_hmr_collapsed_cats') || '[]');
-
-    // --- 1. SECTION DYNAMIQUE (FAVORIS) ---
-    const topTags = getTopUsedTags(12);
-    const dynSection = document.createElement("div");
-    dynSection.innerHTML = `<h4 class="text-[10px] font-black text-brand-500 uppercase tracking-tight mb-2 px-1 flex items-center gap-1">⭐ Les plus utilisés</h4><div class="grid grid-cols-3 gap-2"></div>`;
-    const dynGrid = dynSection.querySelector(".grid");
-    
-    topTags.forEach(key => {
-        const btn = createBtn(key);
-        if (btn) dynGrid.appendChild(btn);
-    });
-    if (dynGrid.children.length > 0) container.appendChild(dynSection);
-
-    // --- 2. SECTIONS PAR CATÉGORIE (TRIÉES PAR STATS ET ÉTAT) ---
-    const scoredCategories = Object.keys(TAG_CATEGORIES).map(catKey => {
-        const cat = TAG_CATEGORIES[catKey];
-        let score = 0;
-        cat.keys.forEach(key => { score += (tagCounts[key] || 0); });
-        return { catKey, score, cat, isCollapsed: collapsedCats.includes(catKey) };
-    });
-
-    // Tri : Déroulés d'abord (par score), puis Enroulés à la fin (par score)
-    scoredCategories.sort((a, b) => {
-        if (a.isCollapsed === b.isCollapsed) return b.score - a.score;
-        return a.isCollapsed ? 1 : -1;
-    });
-
-    scoredCategories.forEach(scoredCat => {
-        const { catKey, cat, isCollapsed } = scoredCat;
-        const sec = document.createElement("div");
-        
-        // En-tête cliquable
-        const header = document.createElement("div");
-        header.className = "flex justify-between items-center mb-2 px-1 cursor-pointer select-none active:scale-95 transition-transform";
-        header.onclick = () => { 
-            triggerHaptic(10); 
-            toggleTagCategory(catKey); 
-        };
-        
-        header.innerHTML = `
-            <h4 class="text-[10px] font-black text-stone-500 dark:text-stone-400 uppercase tracking-tight">${cat.label}</h4>
-            <span class="text-stone-500 dark:text-stone-400 bg-stone-200/50 dark:bg-stone-800 rounded-full w-6 h-6 flex items-center justify-center transition-transform duration-300 ${isCollapsed ? '-rotate-90' : 'rotate-0'}">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-            </span>
-        `;
-        sec.appendChild(header);
-
-        // Grille de boutons (injectée seulement si la catégorie est déroulée)
-        if (!isCollapsed) {
-            const grid = document.createElement("div");
-            grid.className = "grid grid-cols-3 gap-2";
-            cat.keys.forEach(key => {
-                const btn = createBtn(key);
-                if (btn) grid.appendChild(btn);
-            });
-            if (grid.children.length > 0) sec.appendChild(grid);
-        }
-        
-        container.appendChild(sec);
-    });
-
-    // --- 0. SECTION TAGS PERSO (en tête) ---
-    if (state.customTags && state.customTags.length > 0) {
-        const customSec = document.createElement("div");
-        customSec.innerHTML = `<h4 class="text-[10px] font-black text-brand-500 uppercase tracking-tight mb-2 px-1">⭐ Mes Tags Perso</h4><div class="grid grid-cols-3 gap-2"></div>`;
-        const customGrid = customSec.querySelector(".grid");
-        state.customTags.forEach(t => {
-            const btn = createBtn(t.key);
-            if (btn) customGrid.appendChild(btn);
-        });
-        if (customGrid.children.length > 0) container.appendChild(customSec);
-    }
-
-    // Affichage de la modale
-    const modal = document.getElementById("tag_selection_modal");
-    modal.classList.remove("hidden");
-    setTimeout(() => {
-        modal.classList.remove("opacity-0");
-        modal.querySelector(".glass-card").classList.remove("scale-95");
-    }, 10);
-
-    // Bouton "Créer un tag" en bas
-    setTimeout(() => {
-        const grid = document.getElementById("tag_selection_grid");
-        if (!grid) return;
-        const createBtn_el = document.createElement("div");
-        createBtn_el.className = "pt-2 border-t border-stone-200/60 dark:border-stone-700/60 mt-2";
-        createBtn_el.innerHTML = `<button onclick="closeTagSelectionModal(); setTimeout(openTagManager, 320);" class="w-full py-2.5 rounded-xl border-2 border-dashed border-brand-400/40 text-brand-500 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-brand-50/30 dark:hover:bg-brand-900/20 transition-all active:scale-95">＋ Créer un tag perso</button>`;
-        grid.appendChild(createBtn_el);
-    }, 50);
-}
-
-function closeTagSelectionModal() {
-    const modal = document.getElementById("tag_selection_modal");
-    modal.classList.add("opacity-0");
-    modal.querySelector(".glass-card").classList.add("scale-95");
-    setTimeout(() => modal.classList.add("hidden"), 300);
-}
 
 // ============================================================
 // GESTIONNAIRE DE TAGS — Custom + Activation/Désactivation
 // ============================================================
-
-const TAG_EMOJI_PICKER = [
-    '🏠','🛒','🍽️','🍺','🎁','🏖️','✈️','🚗',
-    '🎮','🎵','🎬','📚','🎯','🏋️','🐶','👶',
-    '💰','🐷','💳','📱','💼','🔧','🌿','⭐',
-    '🎰','✂️','🍕','☕','🧴','💊','🎪','🕯️',
-    '🏊','🚴','⚽','🎾','🏔️','🌊','🎣','🎨',
-    '🍷','🧁','🌺','🦋','✨','🎭','🪴','🦄'
-];
-
-let tagManagerSelectMode = false;
-let tagManagerSelected = new Set();
-
-function mergeCustomTagsIntoExpenseTags() {
-    Object.keys(EXPENSE_TAGS).forEach(k => { if (k.startsWith('custom_')) delete EXPENSE_TAGS[k]; });
-    delete TAG_CATEGORIES['custom'];
-    if (state.customTags && state.customTags.length > 0) {
-        TAG_CATEGORIES['custom'] = { label: '⭐ Mes Tags Perso', keys: state.customTags.map(t => t.key) };
-        state.customTags.forEach(t => { EXPENSE_TAGS[t.key] = { icon: t.icon, label: t.label }; });
-    }
-}
-
-function openTagManager() {
-    tagManagerSelectMode = false;
-    tagManagerSelected = new Set();
-    renderTagManager();
-    const modal = document.getElementById('tag_manager_modal');
-    modal.classList.remove('hidden');
-    setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('.glass-card').classList.remove('scale-95'); }, 10);
-}
-
-function closeTagManager() {
-    const modal = document.getElementById('tag_manager_modal');
-    modal.classList.add('opacity-0');
-    modal.querySelector('.glass-card').classList.add('scale-95');
-    setTimeout(() => modal.classList.add('hidden'), 300);
-}
-
-function renderTagManager() {
-    const body = document.getElementById('tag_manager_body');
-    if (!body) return;
-    const disabled = new Set(state.disabledTags || []);
-    let html = '';
-
-    // Tags Perso
-    html += `<div class="space-y-2"><h4 class="text-[10px] font-black text-brand-500 uppercase tracking-wider">⭐ Mes Tags Perso</h4>`;
-    if (!state.customTags || state.customTags.length === 0) {
-        html += `<p class="text-[10px] text-stone-400 dark:text-stone-500 font-mono px-1">Aucun tag perso — crée-en un ci-dessous.</p>`;
-    } else {
-        html += `<div class="space-y-1.5">`;
-        state.customTags.forEach(t => {
-            html += `<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200/60 dark:border-stone-700/60">
-                <span class="flex items-center gap-2 text-xs font-bold text-stone-700 dark:text-stone-200"><span class="text-base">${t.icon}</span>${t.label}</span>
-                <button onclick="deleteCustomTag('${t.key}')" class="w-6 h-6 rounded-md bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center text-[10px] font-black border border-red-500/20">✕</button>
-            </div>`;
-        });
-        html += `</div>`;
-    }
-    html += `<button onclick="openCreateTagModal()" class="w-full py-2.5 rounded-xl border-2 border-dashed border-brand-400/40 text-brand-500 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-brand-50/30 dark:hover:bg-brand-900/20 transition-all active:scale-95">＋ Créer un tag</button></div>`;
-    html += `<hr class="border-stone-200 dark:border-stone-800"/>`;
-
-    // Tags Système
-    html += `<div class="space-y-2">
-        <div class="flex items-center justify-between">
-            <h4 class="text-[10px] font-black text-stone-400 uppercase tracking-wider">Tags Système</h4>
-            <button onclick="bulkSetAllSystemTags(true)" class="text-[9px] font-black text-emerald-500 uppercase tracking-wider px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all">Tout activer</button>
-        </div>`;
-
-    Object.keys(TAG_DATA).forEach(catKey => {
-        const cat = TAG_DATA[catKey];
-        const keys = Object.keys(cat.items);
-        const activeCount = keys.filter(k => !disabled.has(k)).length;
-        const allActive = activeCount === keys.length;
-        const noneActive = activeCount === 0;
-        const badgeLabel = allActive ? 'COMPLET' : noneActive ? 'AUCUN' : 'PARTIEL';
-        const badgeClass = allActive
-            ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
-            : noneActive
-                ? 'bg-red-500/15 text-red-500 border-red-500/30'
-                : 'bg-amber-500/15 text-amber-500 border-amber-500/30';
-        html += `<div class="rounded-xl border border-stone-200/60 dark:border-stone-700/60 overflow-hidden">
-            <div class="w-full flex items-center justify-between px-3 py-2.5 bg-stone-50 dark:bg-stone-900">
-                <button onclick="toggleTagCategory_mgr('${catKey}')" class="flex items-center gap-2 flex-1 text-left active:scale-[0.99] transition-transform">
-                    <span class="text-sm">${cat.label.split(' ')[0]}</span>
-                    <span class="text-[10px] font-black text-stone-600 dark:text-stone-300">${cat.label.split(' ').slice(1).join(' ')}</span>
-                    <span class="text-stone-400 text-[9px]">▶</span>
-                </button>
-                <button onclick="toggleCategoryAllTags('${catKey}')"
-                    class="text-[8px] font-black px-2 py-0.5 rounded-full border tracking-wider transition-all ${badgeClass}">
-                    ${badgeLabel}
-                </button>
-            </div>
-            <div id="catblock_${catKey}" class="hidden px-3 pb-2 pt-1 bg-white dark:bg-stone-950 space-y-1">`;
-        keys.forEach(k => {
-            const tag = cat.items[k];
-            const isOn = !disabled.has(k);
-            html += `<div class="flex items-center justify-between py-1.5">
-                <span class="flex items-center gap-2 text-[11px] font-bold text-stone-600 dark:text-stone-300 select-none">
-                    ${tagManagerSelectMode ? `<input type="checkbox" class="accent-brand-500" ${tagManagerSelected.has(k) ? 'checked' : ''} onchange="toggleTagManagerSelect('${k}')">` : ''}
-                    <span class="text-sm">${tag.icon}</span><span>${tag.label}</span>
-                </span>
-                ${!tagManagerSelectMode ? `<button onclick="toggleSingleTag('${k}')" class="relative w-10 h-5 rounded-full transition-all ${isOn ? 'bg-emerald-400' : 'bg-stone-300 dark:bg-stone-600'}">
-                    <span class="absolute top-0.5 ${isOn ? 'left-5' : 'left-0.5'} w-4 h-4 rounded-full bg-white shadow transition-all duration-200"></span>
-                </button>` : ''}
-            </div>`;
-        });
-        html += `</div></div>`;
-    });
-    html += `</div>`;
-    body.innerHTML = html;
-
-    const bulkBar = document.getElementById('tag_manager_bulk_bar');
-    if (bulkBar) {
-        const show = tagManagerSelectMode && tagManagerSelected.size > 0;
-        bulkBar.classList.toggle('hidden', !show);
-        const countEl = document.getElementById('bulk_count');
-        if (countEl) countEl.textContent = `${tagManagerSelected.size} sélectionné(s)`;
-    }
-    const selectBtn = document.getElementById('tag_manager_select_btn');
-    if (selectBtn) selectBtn.textContent = tagManagerSelectMode ? 'Annuler' : 'Sélection multiple';
-}
-
-function toggleTagCategory_mgr(catKey) {
-    const block = document.getElementById(`catblock_${catKey}`);
-    if (block) block.classList.toggle('hidden');
-}
-
-function toggleCategoryAllTags(catKey) {
-    const cat = TAG_DATA[catKey];
-    if (!cat) return;
-    const keys = Object.keys(cat.items);
-    const disabled = new Set(state.disabledTags || []);
-    const allActive = keys.every(k => !disabled.has(k));
-    keys.forEach(k => { if (allActive) disabled.add(k); else disabled.delete(k); });
-    state.disabledTags = Array.from(disabled);
-    saveState(); renderTagManager(); triggerHaptic(10);
-}
-
-function bulkSetAllSystemTags(active) {
-    state.disabledTags = active ? [] : Object.keys(TAG_DATA).flatMap(c => Object.keys(TAG_DATA[c].items));
-    saveState(); renderTagManager(); triggerHaptic(10);
-}
-
-function toggleSingleTag(key) {
-    const disabled = new Set(state.disabledTags || []);
-    if (disabled.has(key)) disabled.delete(key); else disabled.add(key);
-    state.disabledTags = Array.from(disabled);
-    saveState(); renderTagManager(); triggerHaptic(10);
-}
-
-function toggleTagManagerSelect(key) {
-    if (tagManagerSelected.has(key)) tagManagerSelected.delete(key); else tagManagerSelected.add(key);
-    renderTagManager();
-}
-
-function enterTagManagerSelectMode() {
-    tagManagerSelectMode = !tagManagerSelectMode;
-    tagManagerSelected = new Set();
-    renderTagManager();
-}
-
-function bulkSetTags(active) {
-    const disabled = new Set(state.disabledTags || []);
-    tagManagerSelected.forEach(k => { if (active) disabled.delete(k); else disabled.add(k); });
-    state.disabledTags = Array.from(disabled);
-    saveState(); tagManagerSelectMode = false; tagManagerSelected = new Set();
-    renderTagManager(); triggerHaptic(15);
-}
-
-let pendingTagEmoji = '';
-
-function openCreateTagModal() {
-    pendingTagEmoji = '';
-    const modal = document.getElementById('create_tag_modal');
-    if (!modal) return;
-    modal.querySelector('#new_tag_label').value = '';
-    modal.querySelector('#new_tag_emoji_preview').textContent = '?';
-    modal.querySelectorAll('.emoji-picker-btn').forEach(b => b.classList.remove('ring-2','ring-brand-500','scale-110'));
-    modal.classList.remove('hidden');
-    setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('.glass-card').classList.remove('scale-95'); }, 10);
-}
-
-function closeCreateTagModal() {
-    const modal = document.getElementById('create_tag_modal');
-    modal.classList.add('opacity-0');
-    modal.querySelector('.glass-card').classList.add('scale-95');
-    setTimeout(() => modal.classList.add('hidden'), 300);
-}
-
-function selectTagEmoji(emoji, btn) {
-    pendingTagEmoji = emoji;
-    document.querySelectorAll('.emoji-picker-btn').forEach(b => b.classList.remove('ring-2','ring-brand-500','scale-110'));
-    btn.classList.add('ring-2','ring-brand-500','scale-110');
-    document.getElementById('new_tag_emoji_preview').textContent = emoji;
-}
-
-function saveCustomTag() {
-    const label = (document.getElementById('new_tag_label')?.value || '').trim();
-    if (!pendingTagEmoji) { showGenericAlert('Choisis un emoji !', ''); return; }
-    if (!label) { showGenericAlert('Saisis un libellé !', ''); return; }
-    const key = `custom_${Date.now()}`;
-    if (!state.customTags) state.customTags = [];
-    state.customTags.push({ key, icon: pendingTagEmoji, label });
-    mergeCustomTagsIntoExpenseTags();
-    saveState(); closeCreateTagModal(); renderTagManager(); triggerHaptic(15);
-}
-
-function deleteCustomTag(key) {
-    state.customTags = (state.customTags || []).filter(t => t.key !== key);
-    mergeCustomTagsIntoExpenseTags();
-    saveState(); renderTagManager(); triggerHaptic(10);
-}
-
-
-
-// --- APPLICATION STATE (SIMPLE MODEL) ---
-let state = {
-    revenues: [
-        { id: "r1", title: "Salaire", amount: 2000 }
-    ],
-    fixedCharges: [
-        { id: "c1", title: "Loyer", amount: 650 },
-        { id: "c2", title: "Électricité", amount: 85 },
-        { id: "c3", title: "Abonnement internet & mobile", amount: 45 }
-    ],
-    expenses: [],
-    darkMode: true,
-    budgetMonth: "", // Stores the active budgeted month (YYYY-MM)
-    isCertified: false,
-    // --- COCHON (Cagnotte/Réserve sans échéance) ---
-    cochon: 0, // Solde du cochon en euros (persiste entre les renouvellements)
-    settings: {
-        username: "",
-        genderTheme: "masculin",
-        warningThreshold: 150,
-        // Cochon & Pourboire Cochon
-        cochonThresholds: [0, 20, 50, 100],  // Paliers visuels (vide/bas/moyen/plein)
-        cochonTarget: 60,                     // Objectif d'épargne cochon (€)
-        roundingCeiling: 3.0,                 // % max autorisé pour le pourboire cochon (1–10)
-        isRoundingEnabled: true               // Pourboire cochon activé
-    },
-    ticketArchives: [], // Stockage local des tickets bruts
-    customTags: [],    // Tags personnalisés de l'utilisateur [{key, icon, label}]
-    disabledTags: []   // Clés de tags système désactivés
-};
-
-let hasUnsavedChanges = false;
-let lastRemaining = null;
-
-// Renewal flow state
 let selectedRenewalMonth = null;
 let renewalSecurityCode = "";
 let willCarryOver = false;
 let carryOverAmount = 0;
-let isFirstLaunchAndInTolerance = false;
 let isImportRenewalFlow = false;
 let budgetRenewalActions = {}; // budgetId -> "close" or "carry"
 let budgetsToCarryForward = []; // Array of budget objects to recreate in the new month
@@ -827,167 +135,7 @@ function hideSplashScreen() {
     }, remainingTime);
 }
 
-function initDatabase() {
-    const savedState = localStorage.getItem("budget_hmr_simple");
-    if (savedState) {
-        let migrationPerformed = false;
-        try {
-            const parsed = JSON.parse(savedState);
-            
-            // Migration: Auto-confirm cash deposits for active (open) budgets
-            if (Array.isArray(parsed.budgets) && Array.isArray(parsed.expenses)) {
-                parsed.budgets.forEach(budget => {
-                    if (!budget.closed) {
-                        parsed.expenses.forEach(e => {
-                            if (e.isCashDepositPending && e.budgetId === budget.id && !e.isDeposited) {
-                                e.isDeposited = true;
-                                migrationPerformed = true;
-                                if (e.title.startsWith("Espèces à déposer :")) {
-                                    e.title = e.title.replace("Espèces à déposer :", "Dépôt espèces :");
-                                }
-                                // Also ensure all cash operations in this open budget are marked deposited
-                                const markDep = (op) => {
-                                    if (op.isCash && op.amount < 0 && (!op.isDeposited || op.depositTxId === e.id)) {
-                                        op.isDeposited = true;
-                                        op.depositTxId = e.id;
-                                    }
-                                };
-                                if (budget.expenses) budget.expenses.forEach(markDep);
-                                if (budget.archivedExpenses) budget.archivedExpenses.forEach(markDep);
-                            }
-                        });
-                    }
-                });
-            }
 
-            if (Array.isArray(parsed.revenues)) {
-                state.revenues = parsed.revenues;
-            } else if (typeof parsed.baseBudget === 'number') {
-                state.revenues = [{ id: "r1", title: "Revenu Principal", amount: parsed.baseBudget }];
-            }
-            if (Array.isArray(parsed.fixedCharges)) {
-                state.fixedCharges = parsed.fixedCharges.map(c => {
-                    // Migration silencieuse : ajoute periodicity si absent
-                    if (!c.periodicity) c.periodicity = { type: 'monthly' };
-                    return c;
-                });
-                migrationPerformed = true;
-            }
-            if (Array.isArray(parsed.expenses)) {
-                // Migration silencieuse : normalise les dates au format ISO YYYY-MM-DD
-                const MOIS_NORM = {
-                    'janvier':'01','février':'02','fevrier':'02','mars':'03','avril':'04','mai':'05','juin':'06',
-                    'juillet':'07','août':'08','aout':'08','septembre':'09','octobre':'10','novembre':'11','décembre':'12','decembre':'12'
-                };
-                const [budgYear] = (parsed.budgetMonth || state.budgetMonth).split('-');
-                parsed.expenses = parsed.expenses.map(e => {
-                    if (e.date && !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
-                        const frMatch = e.date.toLowerCase().trim().match(/^(\d{1,2})\s+([a-zéûôèàâùîœ]+)/);
-                        if (frMatch) {
-                            const mo = MOIS_NORM[frMatch[2]];
-                            if (mo) {
-                                e.date = `${budgYear}-${mo}-${frMatch[1].padStart(2,'0')}`;
-                                migrationPerformed = true;
-                            }
-                        }
-                    }
-                    return e;
-                });
-                state.expenses = parsed.expenses;
-            }
-            if (typeof parsed.darkMode === 'boolean') state.darkMode = parsed.darkMode;
-            
-            // Load budgetMonth
-            if (parsed.budgetMonth) {
-                state.budgetMonth = parsed.budgetMonth;
-            } else {
-                const now = new Date();
-                state.budgetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            }
-
-            // Load budgets
-            if (Array.isArray(parsed.budgets)) {
-                state.budgets = parsed.budgets;
-            } else {
-                state.budgets = [];
-            }
-
-            // Load isCertified
-            if (typeof parsed.isCertified === 'boolean') {
-                state.isCertified = parsed.isCertified;
-            } else {
-                state.isCertified = false;
-            }
-
-            if (parsed.settings) {
-                state.settings = { ...state.settings, ...parsed.settings };
-            }
-            if (!state.settings.genderTheme) {
-                state.settings.genderTheme = "masculin";
-            }
-            if (typeof state.settings.warningThreshold !== 'number') {
-                state.settings.warningThreshold = 150;
-            }
-            // Migration cochon
-            if (typeof parsed.cochon === 'number') {
-                state.cochon = parsed.cochon;
-            } else {
-                state.cochon = 0;
-            }
-            if (!Array.isArray(state.settings.cochonThresholds)) {
-                state.settings.cochonThresholds = [0, 20, 50, 100];
-            }
-            if (typeof state.settings.cochonTarget !== 'number') {
-                state.settings.cochonTarget = 60;
-            }
-            if (typeof state.settings.roundingCeiling !== 'number') {
-                state.settings.roundingCeiling = 3.0;
-            }
-            // Migration cochon : isRoundingEnabled
-            // Toujours forcer true au démarrage sauf si parsed.settings avait EXPLICITEMENT false
-            // (= l'utilisateur a manuellement désactivé via le toggle dans la modale)
-            // Note : le bug précédent pouvait sauvegarder false sans action utilisateur → on remet true
-            if (!parsed.settings || !('isRoundingEnabled' in parsed.settings) || parsed.settings.isRoundingEnabled === undefined) {
-                state.settings.isRoundingEnabled = true;
-            }
-            // Si parsed.settings.isRoundingEnabled === false : on le respecte (désactivé volontairement)
-            // Si parsed.settings.isRoundingEnabled === true : le spread l'a déjà mis à true
-
-            // Migration one-shot v3 : force isRoundingEnabled=true
-            // (les versions précédentes pouvaient sauvegarder false sans action utilisateur)
-            if (!localStorage.getItem('budgethmr_cochon_migration_v3')) {
-                state.settings.isRoundingEnabled = true;
-                localStorage.setItem('budgethmr_cochon_migration_v3', '1');
-                migrationPerformed = true;
-            }
-
-            // Charger les tags personnalisés et désactivés
-            if (Array.isArray(parsed.customTags)) state.customTags = parsed.customTags;
-            if (Array.isArray(parsed.disabledTags)) state.disabledTags = parsed.disabledTags;
-
-            if (migrationPerformed) {
-                saveState();
-            }
-        } catch (e) {
-            console.error("Erreur lors de la lecture du localStorage", e);
-        }
-    } else {
-        const now = new Date();
-        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        const thresholdDay = daysInMonth - 10;
-        
-        state.budgetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        state.budgets = [];
-        state.isCertified = false;
-        
-        if (now.getDate() >= thresholdDay) {
-            isFirstLaunchAndInTolerance = true;
-        }
-        saveState();
-    }
-    // Fusionner les tags perso dans EXPENSE_TAGS
-    mergeCustomTagsIntoExpenseTags();
-}
 
 // ============================================================
 // --- PAIEMENTS EN PLUSIEURS FOIS — UTILITAIRES UI ---
@@ -1377,6 +525,22 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================================
 
 function initUI() {
+    // Déclencheur secret du Panel de Diagnostic (Easter Egg : 10 clics en 5 secondes)
+    const logo = document.getElementById("app_logo");
+    if (logo) {
+        let logoClicks = [];
+        logo.addEventListener("click", () => {
+            const now = Date.now();
+            logoClicks.push(now);
+            logoClicks = logoClicks.filter(t => now - t < 5000);
+            if (logoClicks.length >= 10) {
+                logoClicks = [];
+                triggerHaptic('success');
+                openDebugModal();
+            }
+        });
+    }
+
     // Apply dark mode
     if (state.darkMode) {
         document.documentElement.classList.add("dark");
@@ -1413,14 +577,10 @@ function initUI() {
     updateUI();
     
     // Default tabs styling
-    switchDashboardTab('main');
+    switchDashboardTab('main', true);
 }
 
-function saveState() {
-    localStorage.setItem("budget_hmr_simple", JSON.stringify(state));
-    hasUnsavedChanges = true;
-    updateQuickSaveUI();
-}
+
 
 // --- PERIODICITY HELPERS ---
 
@@ -1538,7 +698,7 @@ function updateUI() {
     if (lastRemaining !== null && lastRemaining >= 0 && remaining < 0) {
         playOverdraftSound();
     }
-    lastRemaining = remaining;
+    window.lastRemaining = remaining;
 
     // Update dashboard label month and apply alert style if transition is delayed
     const currentMonthLabel = formatYearMonthFrench(state.budgetMonth);
@@ -2187,20 +1347,8 @@ function addFixedCharge() {
     const amount = parseFloat(amountStr);
 
     if (title && !isNaN(amount) && amount >= 0) {
-        // Lire la périodicité depuis le formulaire
-        const periodicityType = document.getElementById("new_charge_periodicity_type")?.value || 'monthly';
-        let periodicity = { type: periodicityType };
-
-        if (periodicityType === 'weekly') {
-            const dayOfWeek = parseInt(document.getElementById("new_charge_day_of_week")?.value ?? '1');
-            periodicity = { type: 'weekly', dayOfWeek };
-        } else if (periodicityType === 'specific_months') {
-            const months = [];
-            document.querySelectorAll(".new_charge_month_checkbox:checked").forEach(cb => {
-                months.push(parseInt(cb.value));
-            });
-            periodicity = { type: 'specific_months', months };
-        }
+        // Lire la périodicité depuis le formulaire via la fonction utilitaire partagée
+        const periodicity = readPeriodicityFromUI('new_charge_periodicity_section', 'new_charge_periodicity_type');
 
         state.fixedCharges.push({
             id: Date.now().toString(),
@@ -2911,16 +2059,7 @@ function executeRenewal() {
     pdfTx += `FIN DE TICKET — MERCI\n`;
     pdfTx += makeSep("=") + "\n";
     
-    // --- ALERTE RAPPEL ÉPARGNE ---
-    if (savingsLines.length > 0) {
-        const epargneTotal = savingsLines.filter(e => e.isSavingsLine).reduce((s, e) => s + Math.abs(e.amount), 0);
-        const zeroTotal = savingsLines.filter(e => e.isFloorShift).reduce((s, e) => s + Math.abs(e.amount), 0);
-        let alertMsg = `⚠️ Ce mois-ci, tu as effectué ${savingsLines.length} mouvement(s) depuis ton Cochon :\n`;
-        if (epargneTotal > 0) alertMsg += `• Épargne réelle : ${formatCurrency(epargneTotal)}\n`;
-        if (zeroTotal > 0)   alertMsg += `• Zéro déplacé  : ${formatCurrency(zeroTotal)}\n`;
-        alertMsg += `\nAs-tu bien effectué les virements bancaires correspondants ?`;
-        setTimeout(() => showGenericAlert('Rappel : Virements Épargne', alertMsg, '🐷'), 800);
-    }
+    // --- ALERTE RAPPEL ÉPARGNE DESACTIVEE ---
 
     // 2. ENREGISTREMENT AUTOMATIQUE DU TICKET DANS LES ARCHIVES
     const archiveId = `arch_${state.budgetMonth}_main`;
@@ -3165,13 +2304,7 @@ function normalizeAmountInput(event) {
     event.target.value = val;
 }
 
-function toTitleCase(str) {
-    if (!str) return "";
-    return str.split(' ').map(word => {
-        if (word.length === 0) return '';
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    }).join(' ');
-}
+
 
 // --- GENERIC CONFIRMATION MODAL LOGIC ---
 let activeConfirmCallback = null;
@@ -3179,7 +2312,7 @@ let activeCancelCallback = null;
 let confirmTimeoutId = null;
 let activeGenericConfirmCode = null;
 
-function showGenericConfirm(title, message, icon, confirmCallback, cancelCallback = null, confirmText = "Confirmer", cancelText = "Annuler", requireSecurityCode = false) {
+function showGenericConfirm(title, message, icon, confirmCallback, cancelCallback = null, confirmText = "Confirmer", cancelText = "Annuler", requireSecurityCode = false, swapButtonsOrder = false) {
     if (confirmTimeoutId) {
         clearTimeout(confirmTimeoutId);
         confirmTimeoutId = null;
@@ -3194,6 +2327,14 @@ function showGenericConfirm(title, message, icon, confirmCallback, cancelCallbac
     
     const cancelBtn = document.getElementById("generic_cancel_btn");
     if (cancelBtn) cancelBtn.innerText = cancelText;
+
+    if (swapButtonsOrder) {
+        confirmBtn.classList.add("order-first");
+        if (cancelBtn) cancelBtn.classList.add("order-last");
+    } else {
+        confirmBtn.classList.remove("order-first");
+        if (cancelBtn) cancelBtn.classList.remove("order-last");
+    }
     
     activeConfirmCallback = confirmCallback;
     activeCancelCallback = cancelCallback;
@@ -3275,6 +2416,9 @@ function closeGenericConfirmModal() {
 }
 
 function showGenericAlert(title, message, icon = "ℹ️") {
+    if (window.showGenericAlert && window.showGenericAlert !== showGenericAlert) {
+        return window.showGenericAlert(title, message, icon);
+    }
     document.getElementById("generic_alert_title").innerText = title;
     document.getElementById("generic_alert_message").innerHTML = message;
     document.getElementById("generic_alert_icon").innerText = icon;
@@ -4059,7 +3203,7 @@ async function exportJSONData() {
                 dialogTitle: 'Exporter les données de budget'
             });
             
-            hasUnsavedChanges = false;
+            window.hasUnsavedChanges = false;
             updateQuickSaveUI();
             triggerHaptic('success');
             return;
@@ -4088,7 +3232,7 @@ async function exportJSONData() {
             } catch (saveErr) {
                 console.error("Erreur lors de la sauvegarde du handle :", saveErr);
             }
-            hasUnsavedChanges = false;
+            window.hasUnsavedChanges = false;
             updateQuickSaveUI();
             showGenericAlert("Export réussi", "Vos données de budget ont été enregistrées avec succès !", "📤");
             triggerHaptic('success');
@@ -4105,7 +3249,7 @@ async function exportJSONData() {
         dlAnchorElem.setAttribute("href", dataStr);
         dlAnchorElem.setAttribute("download", defaultFileName);
         dlAnchorElem.click();
-        hasUnsavedChanges = false;
+        window.hasUnsavedChanges = false;
         updateQuickSaveUI();
         triggerHaptic('success');
     }
@@ -4517,7 +3661,7 @@ function clearDatabase(onCancelCallback = null) {
                         const thresholdDay = daysInMonth - 10;
                         state.budgetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                         
-                        isFirstLaunchAndInTolerance = (now.getDate() >= thresholdDay);
+                        window.isFirstLaunchAndInTolerance = (now.getDate() >= thresholdDay);
                         
                         saveState();
                         initUI();
@@ -4606,121 +3750,11 @@ let lastScrollTime = 0;
 const SCROLL_THRESHOLD = 30; // pixels
 const SCROLL_THROTTLE = 60;   // ms
 
-async function triggerHaptic(typeOrDuration = 'click') {
-    let duration = typeof typeOrDuration === 'number' ? typeOrDuration : 40;
-    let type = typeof typeOrDuration === 'string' ? typeOrDuration : 'click';
 
-    // 1. Utiliser le plugin natif Capacitor Haptics si disponible
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
-        try {
-            const haptics = window.Capacitor.Plugins.Haptics;
-            if (type === 'success') {
-                // Sensation de dessin d'un "V" de validation : MEDIUM -> LIGHT (après 120ms) -> HEAVY (après 120ms)
-                await haptics.impact({ style: 'MEDIUM' });
-                setTimeout(async () => {
-                    await haptics.impact({ style: 'LIGHT' });
-                    setTimeout(async () => {
-                        await haptics.impact({ style: 'HEAVY' });
-                    }, 120);
-                }, 120);
-            } else if (type === 'confirm') {
-                // Double vibration successive légère espacée de 120ms (évite la sensation de vibration continue longue)
-                await haptics.impact({ style: 'LIGHT' });
-                setTimeout(async () => {
-                    await haptics.impact({ style: 'LIGHT' });
-                }, 120);
-            } else if (type === 'focus') {
-                await haptics.impact({ style: 'LIGHT' }); // Retour d'activation de zone de saisie
-            } else if (type === 'scroll') {
-                await haptics.vibrate({ duration: 12 }); // Micro-vibration de défilement ultra-courte (12ms)
-            } else { // 'click'
-                await haptics.impact({ style: 'LIGHT' }); // Clic standard très discret
-            }
-            return;
-        } catch (e) {
-            console.warn("Capacitor Haptics non disponible, bascule sur l'API Web standard", e);
-        }
-    }
 
-    // 2. Fallback sur l'API Vibrations HTML5 classique
-    if (navigator.vibrate) {
-        if (type === 'success') {
-            navigator.vibrate([50, 120, 20, 120, 150]); // Profil V
-        } else if (type === 'confirm') {
-            navigator.vibrate([20, 120, 20]); // Double impulsion de 20ms
-        } else if (type === 'focus') {
-            navigator.vibrate(35); // Impulsion intermédiaire (35ms)
-        } else if (type === 'scroll') {
-            navigator.vibrate(12); // Micro-impulsion de 12ms
-        } else { // 'click'
-            navigator.vibrate(20); // Impulsion légère de 20ms
-        }
-    }
-}
 
-function isClickableElement(el) {
-    if (!el || el === document.body || el === document.documentElement) return false;
-    const tag = el.tagName;
-    const classes = el.classList;
-    if (tag === 'BUTTON' || tag === 'A' || el.getAttribute('role') === 'button' || el.onclick) {
-        return true;
-    }
-    if (tag === 'INPUT' && (el.type === 'checkbox' || el.type === 'radio' || el.type === 'file' || el.type === 'submit' || el.type === 'button')) {
-        return true;
-    }
-    if (classes.contains('cursor-pointer') || classes.contains('custom-option') || classes.contains('custom-option-month') || classes.contains('custom-option-year') || classes.contains('autocomplete-item')) {
-        return true;
-    }
-    return isClickableElement(el.parentElement);
-}
 
-function setupHapticFeedback() {
-    // 1. Évitement de clavier pour les inputs de type texte/nombre
-    document.addEventListener('focusin', (e) => {
-        const target = e.target;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-            const type = target.type;
-            if (type !== 'hidden' && type !== 'checkbox' && type !== 'radio' && type !== 'file' && type !== 'submit' && type !== 'button' && type !== 'image') {
-                triggerHaptic('focus');
-            }
-        }
-    });
 
-    // 2. Gestion globale des vibrations de clic sur éléments interactifs
-    const handleGlobalClickHaptic = (e) => {
-        const now = Date.now();
-        if (now - lastClickVibrateTime < 100) return;
-        if (isClickableElement(e.target)) {
-            triggerHaptic('click');
-            lastClickVibrateTime = now;
-        }
-    };
-    document.addEventListener('click', handleGlobalClickHaptic);
-    document.addEventListener('mousedown', handleGlobalClickHaptic);
-
-    // 3. Gestion globale des vibrations rapides de défilement (scroll)
-    document.addEventListener('scroll', (e) => {
-        const target = e.target;
-        let scrollTop = 0;
-        if (target === document || target === window || target === document.documentElement || target === document.body) {
-            scrollTop = window.scrollY || document.documentElement.scrollTop;
-        } else if (target instanceof HTMLElement) {
-            scrollTop = target.scrollTop;
-        } else {
-            return;
-        }
-        
-        const now = Date.now();
-        if (now - lastScrollTime > SCROLL_THROTTLE) {
-            const diff = Math.abs(scrollTop - lastScrollTop);
-            if (diff > SCROLL_THRESHOLD) {
-                triggerHaptic('scroll');
-                lastScrollTop = scrollTop;
-                lastScrollTime = now;
-            }
-        }
-    }, true);
-}
 
 
 // --- INTERACTIVE TOUR LOGIC ---
@@ -5273,7 +4307,7 @@ async function quickExportJSON() {
                 const writable = await handle.createWritable();
                 await writable.write(jsonString);
                 await writable.close();
-                hasUnsavedChanges = false;
+                window.hasUnsavedChanges = false;
                 updateQuickSaveUI();
                 showGenericAlert("Sauvegarde rapide", `Les données ont été écrasées avec succès dans votre fichier de sauvegarde local :<br><br>📁 <strong>${handle.name}</strong>`, "💾");
                 return;
@@ -5384,75 +4418,12 @@ async function updateSystemBars() {
 
 // --- NEW BUDGET MANAGEMENT FUNCTIONS ---
 
-function formatYearMonthFrench(ym) {
-    if (!ym) return "";
-    const [year, month] = ym.split("-");
-    const date = new Date(year, month - 1, 1);
-    const label = date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
-    return label.charAt(0).toUpperCase() + label.slice(1);
-}
 
-function formatExpenseDate(dateStr, budgetMonth) {
-    if (!dateStr) return "";
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        const [year, month, day] = dateStr.split("-").map(Number);
-        const [bYear, bMonth] = budgetMonth.split("-").map(Number);
-        
-        if (year === bYear && month === bMonth) {
-            const d = new Date(year, month - 1, day);
-            return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-        } else {
-            const budgetFirstDay = new Date(bYear, bMonth - 1, 1);
-            const expenseDate = new Date(year, month - 1, day);
-            
-            const utcBudget = Date.UTC(budgetFirstDay.getFullYear(), budgetFirstDay.getMonth(), budgetFirstDay.getDate());
-            const utcExpense = Date.UTC(expenseDate.getFullYear(), expenseDate.getMonth(), expenseDate.getDate());
-            
-            const diffTime = utcExpense - utcBudget;
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays < 0) {
-                return `${diffDays}`;
-            } else {
-                return expenseDate.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-            }
-        }
-    }
-    return dateStr;
-}
+
+
 
 // Visual scroll lock mechanism for modals
-function initModalScrollLock() {
-    const MODAL_SELECTOR = '.fixed.inset-0.backdrop-blur-sm';
-    const updateBodyScroll = () => {
-        const modals = document.querySelectorAll(MODAL_SELECTOR);
-        const anyModalVisible = Array.from(modals).some(el => {
-            return el && !el.classList.contains("hidden");
-        });
-        if (anyModalVisible) {
-            document.body.classList.add("overflow-hidden");
-            document.documentElement.classList.add("overflow-hidden");
-        } else {
-            document.body.classList.remove("overflow-hidden");
-            document.documentElement.classList.remove("overflow-hidden");
-        }
-    };
-    
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.type === "attributes" && mutation.attributeName === "class") {
-                updateBodyScroll();
-            }
-        });
-    });
-    
-    const modals = document.querySelectorAll(MODAL_SELECTOR);
-    modals.forEach(el => {
-        observer.observe(el, { attributes: true, attributeFilter: ["class"] });
-    });
-    
-    updateBodyScroll();
-}
+
 
 
 // Recap Modal opening & rendering
@@ -5825,35 +4796,39 @@ function renderCalendarGrid() {
     
     for (let day = 1; day <= daysInMonth; day++) {
         const cell = document.createElement("div");
-        cell.className = "h-8 w-8 flex items-center justify-center rounded-full cursor-pointer transition-colors mx-auto font-semibold text-xs";
-        
         const cellDate = new Date(calendarYear, calendarMonth, day);
         const isToday = today.getDate() === day && today.getMonth() === calendarMonth && today.getFullYear() === calendarYear;
         const isSelected = calendarSelectedDate.getDate() === day && calendarSelectedDate.getMonth() === calendarMonth && calendarSelectedDate.getFullYear() === calendarYear;
+        const isFuture = cellDate > today && day !== 1;
         
         cell.textContent = day;
         
-        if (isSelected) {
-            cell.classList.add("bg-brand-500", "text-white", "font-black", "shadow-sm");
-        } else if (isToday) {
-            cell.classList.add("border", "border-brand-500", "dark:border-brand-400", "text-brand-600", "dark:text-brand-400", "font-bold");
+        if (isFuture) {
+            cell.className = "h-8 w-8 flex items-center justify-center rounded-full mx-auto font-semibold text-xs text-stone-300 dark:text-stone-700 opacity-40 cursor-not-allowed pointer-events-none";
         } else {
-            cell.classList.add("text-stone-700", "dark:text-stone-300", "hover:bg-stone-100", "dark:hover:bg-stone-800");
+            cell.className = "h-8 w-8 flex items-center justify-center rounded-full cursor-pointer transition-colors mx-auto font-semibold text-xs";
+            if (isSelected) {
+                cell.classList.add("bg-brand-500", "text-white", "font-black", "shadow-sm");
+            } else if (isToday) {
+                cell.classList.add("border", "border-brand-500", "dark:border-brand-400", "text-brand-600", "dark:text-brand-400", "font-bold");
+            } else {
+                cell.classList.add("text-stone-700", "dark:text-stone-300", "hover:bg-stone-100", "dark:hover:bg-stone-800");
+            }
+            
+            cell.addEventListener("click", (e) => {
+                e.stopPropagation();
+                triggerHaptic(12);
+                calendarSelectedDate = new Date(calendarYear, calendarMonth, day);
+                renderCalendarGrid();
+            });
+            
+            cell.addEventListener("dblclick", (e) => {
+                e.stopPropagation();
+                triggerHaptic(25);
+                calendarSelectedDate = new Date(calendarYear, calendarMonth, day);
+                confirmSelectedDate();
+            });
         }
-        
-        cell.addEventListener("click", (e) => {
-            e.stopPropagation();
-            triggerHaptic(12);
-            calendarSelectedDate = new Date(calendarYear, calendarMonth, day);
-            renderCalendarGrid();
-        });
-        
-        cell.addEventListener("dblclick", (e) => {
-            e.stopPropagation();
-            triggerHaptic(25);
-            calendarSelectedDate = new Date(calendarYear, calendarMonth, day);
-            confirmSelectedDate();
-        });
         
         grid.appendChild(cell);
     }
@@ -5932,6 +4907,9 @@ function getRenewalMonthOptions() {
 
 // --- GENERATION DU BILAN MENSUEL FORMAT TICKET ---
 function generateBudgetPDF() {
+    if (window.generateBudgetPDF && window.generateBudgetPDF !== generateBudgetPDF) {
+        return window.generateBudgetPDF();
+    }
     return new Promise((resolve, reject) => {
         const userName = state.settings.username ? state.settings.username.toUpperCase() : "HMR";
         const monthLabel = formatYearMonthFrench(state.budgetMonth);
@@ -6365,9 +5343,9 @@ async function shareBlob(blob, filename, shareText = 'Partager', dialogTitle = '
 }
 
 // --- DEDICATED BUDGETS (ENVELOPES) MANAGEMENT ---
-function switchDashboardTab(tab) {
+function switchDashboardTab(tab, bypassHaptic = false) {
     activeTab = tab;
-    triggerHaptic(10);
+    if (!bypassHaptic) triggerHaptic(10);
     
     const tabBtnMain = document.getElementById("tab_btn_main");
     const tabBtnBudgets = document.getElementById("tab_btn_budgets");
@@ -6508,13 +5486,7 @@ function handleBudgetFundingChoice(type) {
     showSuccessAnimation();
 }
 
-function getTodayDateString() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
+
 
 function renderBudgetsList() {
     const container = document.getElementById("budgets_dashboard_content");
@@ -7306,6 +6278,9 @@ function confirmCashDeposit(event, txId) {
 }
 
 function autoCloseAllBudgets() {
+    if (window.autoCloseAllBudgets && window.autoCloseAllBudgets !== autoCloseAllBudgets) {
+        return window.autoCloseAllBudgets();
+    }
     if (!state.budgets || state.budgets.length === 0) return;
     
     state.budgets.forEach(budget => {
@@ -7679,7 +6654,7 @@ function reopenBudget(budgetId) {
 
 
 // --- VERSIONING & ONBOARDING SYSTEM ---
-const BUDGET_HMR_VERSION = "2.0.0";
+const BUDGET_HMR_VERSION = "4.0.0";
 
 function checkAppVersionAndWelcome() {
     const savedVersion = localStorage.getItem("budget_hmr_version");
@@ -7744,19 +6719,21 @@ function openVersionUpdateModal() {
     }, 10);
 }
 
-function closeVersionUpdateModal() {
+function closeVersionUpdateModal(skipOnboardingClose = false) {
     const modal = document.getElementById("version_update_modal");
     if (!modal) return;
     modal.classList.add("opacity-0");
     modal.querySelector(".glass-card").classList.add("scale-95");
     setTimeout(() => {
         modal.classList.add("hidden");
-        handleOnboardingOrUpdateClose();
+        if (!skipOnboardingClose) {
+            handleOnboardingOrUpdateClose();
+        }
     }, 300);
 }
 
 function acceptVersionUpdateCertify() {
-    closeVersionUpdateModal();
+    closeVersionUpdateModal(true);
     openCertification();
 }
 
@@ -7946,7 +6923,7 @@ function handleOnboardingOrUpdateClose() {
 
 function triggerFirstLaunchToleranceCheck() {
     if (isFirstLaunchAndInTolerance) {
-        isFirstLaunchAndInTolerance = false;
+        window.isFirstLaunchAndInTolerance = false;
         
         const now = new Date();
         const currentMonthName = formatYearMonthFrench(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
@@ -7956,7 +6933,11 @@ function triggerFirstLaunchToleranceCheck() {
             "Bienvenue !",
             `Nous sommes en fin de mois (période de tolérance). Souhaitez-vous démarrer la gestion de vos comptes sur le mois en cours (<strong>${currentMonthName}</strong>) ou directement sur le mois prochain (<strong>${nextMonthName}</strong>) ?`,
             "📅",
-            // Confirm callback (Mois prochain)
+            // Confirm callback (Mois en cours)
+            () => {
+                triggerHaptic('success');
+            },
+            // Cancel callback (Mois prochain)
             () => {
                 const n = new Date();
                 state.budgetMonth = getNextMonth(`${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`);
@@ -7968,12 +6949,10 @@ function triggerFirstLaunchToleranceCheck() {
                 
                 triggerHaptic('success');
             },
-            // Cancel callback (Mois en cours)
-            () => {
-                triggerHaptic('success');
-            },
+            "Mois en cours",
             "Mois prochain",
-            "Mois en cours"
+            false,
+            true
         );
     }
 }
@@ -8073,7 +7052,7 @@ function runCertificationTests() {
     
     function runNext() {
         if (currentTestIndex >= tests.length) {
-            state = originalState;
+            window.state = originalState;
             saveState();
             updateUI();
             
@@ -8113,7 +7092,7 @@ function runCertificationTests() {
                 console.error("Test failed:", err);
                 updateTestRowStatus(currentTestIndex, "failed", err.message);
                 
-                state = originalState;
+                window.state = originalState;
                 saveState();
                 updateUI();
                 
@@ -9876,14 +8855,398 @@ function resetCochonMode() {
     }
 }
 
-/** Réinitialise le mode cochon à la réinitialisation du formulaire */
-function resetCochonMode() {
-    const toggle = document.getElementById('cochon_mode_toggle');
-    if (toggle) toggle.checked = false;
-    toggleCochonMode();
-}
+
 
 // ============================================================
 // FIN DU BLOC COCHON
 // ============================================================
 
+
+// =========================================================================
+// 🛠️ LOGIQUE DU PANEL DE DIAGNOSTIC (MODE DEBUG CACHÉ)
+// =========================================================================
+
+function openDebugModal() {
+    const modal = document.getElementById("debug_modal");
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    setTimeout(() => {
+        modal.classList.remove("opacity-0");
+        modal.querySelector(".glass-card").classList.remove("scale-95");
+    }, 10);
+    generateDiagnosticReport();
+}
+
+function closeDebugModal() {
+    const modal = document.getElementById("debug_modal");
+    if (!modal) return;
+    modal.classList.add("opacity-0");
+    modal.querySelector(".glass-card").classList.add("scale-95");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+    }, 300);
+}
+
+function generateDiagnosticReport() {
+    let report = "# Rapport de Diagnostic BUDGETHMR\n";
+    report += `Généré le : ${new Date().toLocaleString('fr-FR')}\n\n`;
+    
+    // 1. Stats Système
+    const platform = window.Capacitor ? "Android/iOS (Native Capacitor)" : "Navigateur Web";
+    let storageUsed = 0;
+    try {
+        const savedState = localStorage.getItem("budget_hmr_simple") || "";
+        storageUsed = new Blob([savedState]).size;
+    } catch(e) {}
+    const storagePercent = ((storageUsed / (5 * 1024 * 1024)) * 100).toFixed(2);
+    
+    report += "## 🖥️ Statuts Système\n";
+    report += `- Version de l'application : v${window.BUDGET_HMR_VERSION || '4.0.0'}\n`;
+    report += `- Plateforme : ${platform}\n`;
+    report += `- Espace occupé LocalStorage : ${(storageUsed / 1024).toFixed(2)} KB (${storagePercent}%)\n`;
+    report += `- Mois budgétaire actif : ${state.budgetMonth}\n\n`;
+    
+    // Update UI elements
+    const verEl = document.getElementById("debug_version");
+    if (verEl) verEl.innerText = "v" + (window.BUDGET_HMR_VERSION || '4.0.0');
+    const platEl = document.getElementById("debug_platform");
+    if (platEl) platEl.innerText = platform;
+    const storEl = document.getElementById("debug_storage_used");
+    if (storEl) storEl.innerText = `${(storageUsed / 1024).toFixed(2)} KB (${storagePercent}%)`;
+    
+    // 2. Autodiagnostic des Données
+    report += "## 🔍 Intégrité des Données\n";
+    let issues = [];
+    
+    // Check state schema
+    const requiredKeys = ['revenues', 'fixedCharges', 'expenses', 'budgets', 'settings', 'cochon'];
+    requiredKeys.forEach(k => {
+        if (!(k in state)) {
+            issues.push(`Clé manquante dans le schéma : ${k}`);
+        }
+    });
+    
+    // Check duplicate IDs
+    const checkDuplicateIds = (arr, name) => {
+        const ids = new Set();
+        arr.forEach((item, index) => {
+            if (!item.id) {
+                issues.push(`Élément sans ID dans ${name} à l'index ${index}`);
+            } else if (ids.has(item.id)) {
+                issues.push(`ID en doublon dans ${name} : ${item.id} (Titre : ${item.title || item.label || 'sans titre'})`);
+            } else {
+                ids.add(item.id);
+            }
+        });
+    };
+    
+    if (state.expenses) checkDuplicateIds(state.expenses, "Dépenses");
+    if (state.revenues) checkDuplicateIds(state.revenues, "Revenus");
+    if (state.fixedCharges) checkDuplicateIds(state.fixedCharges, "Frais Fixes");
+    if (state.budgets) checkDuplicateIds(state.budgets, "Enveloppes");
+    
+    // Check amounts and dates in expenses
+    if (state.expenses) {
+        state.expenses.forEach(e => {
+            if (typeof e.amount !== 'number' || isNaN(e.amount)) {
+                issues.push(`Dépense [ID: ${e.id}] : Montant invalide (${e.amount})`);
+            }
+            if (!e.date || !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
+                issues.push(`Dépense [ID: ${e.id}, Titre: ${e.title}] : Format de date incorrect (${e.date})`);
+            }
+        });
+    }
+    
+    const diagHtmlContainer = document.getElementById("debug_diagnostic_results");
+    if (diagHtmlContainer) {
+        if (issues.length === 0) {
+            diagHtmlContainer.innerHTML = '<span class="text-emerald-500 font-bold">✅ Zéro anomalie détectée. Base de données intègre.</span>';
+            report += "✅ Zéro anomalie détectée. Base de données intègre.\n\n";
+        } else {
+            diagHtmlContainer.innerHTML = issues.map(i => `<span class="text-red-500 block">⚠️ ${i}</span>`).join('');
+            report += issues.map(i => `⚠️ ${i}`).join('\n') + "\n\n";
+        }
+    }
+    
+    // 3. Error Logs
+    report += "## 🛞 Erreurs JavaScript Récentes (Boîte Noire)\n";
+    const errorContainer = document.getElementById("debug_error_log");
+    if (errorContainer) {
+        if (!window.debugErrors || window.debugErrors.length === 0) {
+            errorContainer.innerHTML = '<span class="text-emerald-500">Aucune erreur détectée.</span>';
+            report += "Aucune erreur détectée.\n";
+        } else {
+            errorContainer.innerHTML = window.debugErrors.map(e => `<div class="py-1">❌ ${e}</div>`).join('');
+            report += window.debugErrors.map(e => `❌ ${e}`).join('\n') + "\n";
+        }
+    }
+    
+    return report;
+}
+
+function copyDiagnosticReport() {
+    const reportText = generateDiagnosticReport();
+    navigator.clipboard.writeText(reportText).then(() => {
+        showGenericAlert("Rapport copié", "Le rapport de diagnostic a été copié dans le presse-papier.", "📋");
+    }).catch(err => {
+        console.error("Clipboard copy failed:", err);
+    });
+}
+
+function copyRawStateJSON() {
+    const stateStr = JSON.stringify(state, null, 2);
+    navigator.clipboard.writeText(stateStr).then(() => {
+        showGenericAlert("JSON copié", "L'état complet JSON a été copié dans le presse-papier.", "💾");
+    }).catch(err => {
+        console.error("Clipboard copy failed:", err);
+    });
+}
+
+function runDebugSelfTests() {
+    showGenericAlert("Lancement des tests", "La suite de tests de certification va s'exécuter en arrière-plan.", "🧪");
+    runCertificationTests();
+    setTimeout(() => {
+        generateDiagnosticReport();
+    }, 1500);
+}
+
+
+window.openDebugModal = openDebugModal;
+window.closeDebugModal = closeDebugModal;
+window.generateDiagnosticReport = generateDiagnosticReport;
+window.copyDiagnosticReport = copyDiagnosticReport;
+window.copyRawStateJSON = copyRawStateJSON;
+window.runDebugSelfTests = runDebugSelfTests;
+
+// --- EXPOSITION DES FONCTIONS GLOBALES POUR LA COMPATIBILITÉ HTML ---
+window.hideSplashScreen = hideSplashScreen;
+window.generateInstallmentGroupId = generateInstallmentGroupId;
+window.openInstallmentModal = openInstallmentModal;
+window.closeInstallmentModal = closeInstallmentModal;
+window.cancelInstallmentModal = cancelInstallmentModal;
+window.confirmCancelInstallment = confirmCancelInstallment;
+window.confirmInstallmentModal = confirmInstallmentModal;
+window.updateInstallmentTriggerLabel = updateInstallmentTriggerLabel;
+window.updateInstallmentIncompatibleButtons = updateInstallmentIncompatibleButtons;
+window.onAmountClickWhenLocked = onAmountClickWhenLocked;
+window.closeLockedAmountModal = closeLockedAmountModal;
+window.renderInstallmentButtons = renderInstallmentButtons;
+window.selectInstallmentTotal = selectInstallmentTotal;
+window.selectInstallmentCurrent = selectInstallmentCurrent;
+window.renderInstallmentAmountRows = renderInstallmentAmountRows;
+window.onInstallmentAmountChange = onInstallmentAmountChange;
+window.onInstallmentAmountBlur = onInstallmentAmountBlur;
+window.updateInstallmentPreview = updateInstallmentPreview;
+window.resetInstallmentUI = resetInstallmentUI;
+window.initUI = initUI;
+window.countDayOccurrences = countDayOccurrences;
+window.getEffectiveChargeAmount = getEffectiveChargeAmount;
+window.calculateTotals = calculateTotals;
+window.calculateSmartRounding = calculateSmartRounding;
+window.getNextMonth = getNextMonth;
+window.updateUI = updateUI;
+window.getCochonSVG = getCochonSVG;
+window.renderExpensesList = renderExpensesList;
+window.renderFixedChargesList = renderFixedChargesList;
+window.renderRevenuesList = renderRevenuesList;
+window.addExpense = addExpense;
+window.deleteExpense = deleteExpense;
+window.confirmAddRefund = confirmAddRefund;
+window.updateBaseBudget = updateBaseBudget;
+window.addFixedCharge = addFixedCharge;
+window.deleteFixedCharge = deleteFixedCharge;
+window.addRevenue = addRevenue;
+window.deleteRevenue = deleteRevenue;
+window.confirmReset = confirmReset;
+window.closeRenewalModal = closeRenewalModal;
+window.renderRenewalBudgetsList = renderRenewalBudgetsList;
+window.setBudgetRenewalAction = setBudgetRenewalAction;
+window.confirmBudgetsRenewalSelection = confirmBudgetsRenewalSelection;
+window.closeBudgetSilently = closeBudgetSilently;
+window.goToRenewalStep2 = goToRenewalStep2;
+window.proceedToImportRenewalCarryover = proceedToImportRenewalCarryover;
+window.proceedToRenewalCarryover = proceedToRenewalCarryover;
+window.selectRenewSameMonth = selectRenewSameMonth;
+window.selectRenewNextMonth = selectRenewNextMonth;
+window.showRenewalPdfStep = showRenewalPdfStep;
+window.skipPdfAndContinue = skipPdfAndContinue;
+window.confirmCarryOver = confirmCarryOver;
+window.goToRenewalStep3 = goToRenewalStep3;
+window.renderRenewalRevenuesList = renderRenewalRevenuesList;
+window.confirmRevenuesRenewalSelection = confirmRevenuesRenewalSelection;
+window.proceedToSecurityCode = proceedToSecurityCode;
+window.validateRenewalCode = validateRenewalCode;
+window.renewalExportPDF = renewalExportPDF;
+window.executeRenewal = executeRenewal;
+window.toggleTheme = toggleTheme;
+window.updateThemeToggleIcon = updateThemeToggleIcon;
+window.updateThemeColorMeta = updateThemeColorMeta;
+window.applyVisualTheme = applyVisualTheme;
+window.setVisualTheme = setVisualTheme;
+window.updateCollapsibleUI = updateCollapsibleUI;
+window.formatCurrency = formatCurrency;
+window.normalizeAmountInput = normalizeAmountInput;
+window.showGenericConfirm = showGenericConfirm;
+window.validateGenericConfirmCode = validateGenericConfirmCode;
+window.closeGenericConfirmModal = closeGenericConfirmModal;
+window.showGenericAlert = showGenericAlert;
+window.closeGenericAlertModal = closeGenericAlertModal;
+window.handleCancelClick = handleCancelClick;
+window.openEditItem = openEditItem;
+window.renderPeriodicitySelector = renderPeriodicitySelector;
+window.selectPeriodicityType = selectPeriodicityType;
+window.selectPeriodicityDay = selectPeriodicityDay;
+window.updateSpecificMonthsPreview = updateSpecificMonthsPreview;
+window.readPeriodicityFromUI = readPeriodicityFromUI;
+window.resetChargePeriodicityUI = resetChargePeriodicityUI;
+window.closeEditModal = closeEditModal;
+window.earlyRepayInstallment = earlyRepayInstallment;
+window.saveEdit = saveEdit;
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.shareApp = shareApp;
+window.onRoundingCeilingChange = onRoundingCeilingChange;
+window.saveUserSettings = saveUserSettings;
+window.exportJSONData = exportJSONData;
+window.importJSONData = importJSONData;
+window.getPreviousMonth = getPreviousMonth;
+window.closeImportOptionsModal = closeImportOptionsModal;
+window.showImportWizardOptions = showImportWizardOptions;
+window.applyImportFull = applyImportFull;
+window.applyImportPartial = applyImportPartial;
+window.startImportRevenuesReview = startImportRevenuesReview;
+window.executeImportOption = executeImportOption;
+window.getMonthDifference = getMonthDifference;
+window.checkMonthTransitionOnLaunch = checkMonthTransitionOnLaunch;
+window.closeTransitionReminderModal = closeTransitionReminderModal;
+window.acceptTransitionReminder = acceptTransitionReminder;
+window.executeForcedTransition = executeForcedTransition;
+window.executeReinitOption = executeReinitOption;
+window.clearDatabase = clearDatabase;
+window.playConfirmationSound = playConfirmationSound;
+window.playOverdraftSound = playOverdraftSound;
+window.showSuccessAnimation = showSuccessAnimation;
+window.repositionTooltip = repositionTooltip;
+window.trackTourTooltip = trackTourTooltip;
+window.startTour = startTour;
+window.showTourStep = showTourStep;
+window.nextTourStep = nextTourStep;
+window.endTour = endTour;
+window.registerServiceWorker = registerServiceWorker;
+window.initPWAInstall = initPWAInstall;
+window.checkStoragePersistence = checkStoragePersistence;
+window.initStoragePersistence = initStoragePersistence;
+window.updateStorageUI = updateStorageUI;
+window.tryRequestPersistence = tryRequestPersistence;
+window.getDB = getDB;
+window.saveFileHandle = saveFileHandle;
+window.getFileHandle = getFileHandle;
+window.verifyPermission = verifyPermission;
+window.quickExportJSON = quickExportJSON;
+window.updateQuickSaveUI = updateQuickSaveUI;
+window.initApkDownload = initApkDownload;
+window.showApkDownloadPrompt = showApkDownloadPrompt;
+window.initPlatformSpecifics = initPlatformSpecifics;
+window.updateSystemBars = updateSystemBars;
+window.openRecapModal = openRecapModal;
+window.closeRecapModal = closeRecapModal;
+window.openExpenseDatePicker = openExpenseDatePicker;
+window.openEditExpenseDatePicker = openEditExpenseDatePicker;
+window.openCustomDatePicker = openCustomDatePicker;
+window.closeCustomDatePicker = closeCustomDatePicker;
+window.renderCalendarGrid = renderCalendarGrid;
+window.confirmSelectedDate = confirmSelectedDate;
+window.clearExpenseDate = clearExpenseDate;
+window.clearCustomDatePickerDate = clearCustomDatePickerDate;
+window.getRenewalMonthOptions = getRenewalMonthOptions;
+window.generateBudgetPDF = generateBudgetPDF;
+window.updateEnvelopeTicket = updateEnvelopeTicket;
+window.viewEnvelopeTicket = viewEnvelopeTicket;
+window.shareBlob = shareBlob;
+window.switchDashboardTab = switchDashboardTab;
+window.confirmCreateBudget = confirmCreateBudget;
+window.selectBudgetSubType = selectBudgetSubType;
+window.goBackToBudgetSubTypeSelection = goBackToBudgetSubTypeSelection;
+window.closeBudgetFundingModal = closeBudgetFundingModal;
+window.handleBudgetFundingChoice = handleBudgetFundingChoice;
+window.renderBudgetsList = renderBudgetsList;
+window.toggleBudgetOpHistory = toggleBudgetOpHistory;
+window.addBudgetOperation = addBudgetOperation;
+window.calculateCashDepositAmount = calculateCashDepositAmount;
+window.depositBudgetCash = depositBudgetCash;
+window.deleteBudgetOperation = deleteBudgetOperation;
+window.syncMainBudgetReference = syncMainBudgetReference;
+window.confirmCloseBudget = confirmCloseBudget;
+window.executeCloseBudgetLogic = executeCloseBudgetLogic;
+window.closeBudget = closeBudget;
+window.confirmDeleteBudget = confirmDeleteBudget;
+window.confirmCashDeposit = confirmCashDeposit;
+window.autoCloseAllBudgets = autoCloseAllBudgets;
+window.openViewBudgetModal = openViewBudgetModal;
+window.closeViewBudgetModal = closeViewBudgetModal;
+window.executeReopenBudgetLogic = executeReopenBudgetLogic;
+window.reopenBudget = reopenBudget;
+window.checkAppVersionAndWelcome = checkAppVersionAndWelcome;
+window.openWelcomeModal = openWelcomeModal;
+window.closeWelcomeModal = closeWelcomeModal;
+window.acceptWelcomeOption = acceptWelcomeOption;
+window.openVersionUpdateModal = openVersionUpdateModal;
+window.closeVersionUpdateModal = closeVersionUpdateModal;
+window.acceptVersionUpdateCertify = acceptVersionUpdateCertify;
+window.openAppGuide = openAppGuide;
+window.closeAppGuide = closeAppGuide;
+window.updateGuideUI = updateGuideUI;
+window.nextGuideSlide = nextGuideSlide;
+window.prevGuideSlide = prevGuideSlide;
+window.resetDemoState = resetDemoState;
+window.updateDemoUI = updateDemoUI;
+window.runDemoAction = runDemoAction;
+window.handleOnboardingOrUpdateClose = handleOnboardingOrUpdateClose;
+window.triggerFirstLaunchToleranceCheck = triggerFirstLaunchToleranceCheck;
+window.openCertification = openCertification;
+window.closeCertification = closeCertification;
+window.updateTestRowStatus = updateTestRowStatus;
+window.runCertificationTests = runCertificationTests;
+window.testBaseCalculations = testBaseCalculations;
+window.testMonthTransitions = testMonthTransitions;
+window.testClassicEnvelopes = testClassicEnvelopes;
+window.testFriendsEnvelopes = testFriendsEnvelopes;
+window.testCashManagement = testCashManagement;
+window.testPeriodSecurity = testPeriodSecurity;
+window.testPeriodicityCalculations = testPeriodicityCalculations;
+window.testInstallmentPayments = testInstallmentPayments;
+window.testInstallmentEdgeCases = testInstallmentEdgeCases;
+window.testInstallmentCustomAmounts = testInstallmentCustomAmounts;
+window.testSmartRounding = testSmartRounding;
+window.testCochonLogic = testCochonLogic;
+window.testPdfExportFlow = testPdfExportFlow;
+window.renderTicketArchives = renderTicketArchives;
+window.deleteArchiveTicket = deleteArchiveTicket;
+window.openArchiveModal = openArchiveModal;
+window.closeArchiveModal = closeArchiveModal;
+window.reexportArchiveToPDF = reexportArchiveToPDF;
+window.openExpensesModal = openExpensesModal;
+window.closeExpensesModal = closeExpensesModal;
+window.openRevenuesModal = openRevenuesModal;
+window.closeRevenuesModal = closeRevenuesModal;
+window.openChargesModal = openChargesModal;
+window.closeChargesModal = closeChargesModal;
+window.updateCochonBadge = updateCochonBadge;
+window.renderCochonSVG = renderCochonSVG;
+window.openCochonModal = openCochonModal;
+window.closeCochonModal = closeCochonModal;
+window.renderCochonModal = renderCochonModal;
+window.startCochonConfetti = startCochonConfetti;
+window.stopCochonConfetti = stopCochonConfetti;
+window.cochonSliderStep = cochonSliderStep;
+window.onCochonSliderChange = onCochonSliderChange;
+window.cochonAction = cochonAction;
+window.toggleCochonMode = toggleCochonMode;
+window.resetCochonMode = resetCochonMode;
+window.openDebugModal = openDebugModal;
+window.closeDebugModal = closeDebugModal;
+window.generateDiagnosticReport = generateDiagnosticReport;
+window.copyDiagnosticReport = copyDiagnosticReport;
+window.copyRawStateJSON = copyRawStateJSON;
+window.runDebugSelfTests = runDebugSelfTests;
+window.toTitleCase = toTitleCase;

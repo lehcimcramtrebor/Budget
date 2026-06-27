@@ -1,0 +1,8 @@
+Dossier : src/store/
+Rôle : Gestion de l'état applicatif global (State) et sa persistance.
+
+Fichiers inclus :
+- state.js : Contient l'objet `state` de l'application (revenus, frais fixes, dépenses courantes, budgets ouverts, réglages de l'utilisateur). Gère également le chargement initial (`initDatabase`), la persistance automatique (`saveState`), les migrations de données à chaque démarrage (ex: correctif cochon, normalisation des dates) et le pont de synchronisation des tags personnalisés (`mergeCustomTagsIntoExpenseTags`).
+
+Pourquoi cette structure ?
+C'est la source unique de vérité ("Single Source of Truth") des données. Isoler l'état permet de découpler totalement la base de données locale (localStorage) du rendu visuel de la page, assurant la robustesse de la donnée.

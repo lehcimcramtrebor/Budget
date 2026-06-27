@@ -1,0 +1,9 @@
+Dossier : src/utils/
+Rôle : Fonctions utilitaires génériques, indépendantes et réutilisables.
+
+Fichiers inclus :
+- stringUtils.js : Fonctions pures de traitement de texte (suppression d'accents, conversion de casse, formateur de mois en français, formateur de date de dépenses).
+- domUtils.js : Gestion des retours haptiques (vibrations mobiles via Capacitor ou fallback HTML5), détection des clics sur éléments interactifs et mécanismes de verrouillage du défilement des modales.
+
+Pourquoi cette structure ?
+Ces fonctions n'ont pas d'état interne (stateless) et ne dépendent pas des données métier de l'application. Les centraliser ici permet de les importer à travers toute l'application sans duplication et de simplifier les tests unitaires.

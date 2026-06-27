@@ -1,0 +1,8 @@
+Dossier : src/services/
+Rôle : Logique métier pure (calculs, algorithmes et traitement des données).
+
+Fichiers inclus :
+- tagService.js : Héberge l'intelligence de suggestion des tags (`getSuggestedTags` qui analyse dynamiquement le texte saisi par l'utilisateur pour trouver des correspondances de mots dans l'historique de ses dépenses) et le calcul des tags favoris les plus fréquemment utilisés (`getTopUsedTags`).
+
+Pourquoi cette structure ?
+Ces algorithmes lisent l'état (`state`) mais n'interagissent pas directement avec les éléments graphiques du DOM. Les séparer dans la couche "services" permet de tester et d'optimiser les algorithmes en isolation sans charger l'interface utilisateur.

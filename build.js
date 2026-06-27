@@ -18,7 +18,12 @@ const filesToCopy = [
 ];
 
 const dirsToCopy = [
-    'assets'
+    'assets',
+    'components',
+    'config',
+    'services',
+    'store',
+    'utils'
 ];
 
 // Helper to clean and recreate directory contents

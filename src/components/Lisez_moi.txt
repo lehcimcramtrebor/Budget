@@ -1,0 +1,8 @@
+Dossier : src/components/
+Rôle : Rendu visuel de l'interface utilisateur (UI), composants DOM et interactions.
+
+Fichiers inclus :
+- tagsUI.js : Gère le cycle de vie visuel des tags. Cela comprend le rendu des boutons de tags compacts à la frappe (`renderCompactTags`), l'ouverture/fermeture et la construction de la grille de recherche de la modale de sélection de tags, et l'interface complète du gestionnaire de tags de l'application (activation, désactivation de tags système et création de nouveaux tags personnalisés).
+
+Pourquoi cette structure ?
+Ces fonctions s'occupent uniquement de manipuler le DOM, d'afficher/masquer des modales HTML et d'attacher des écouteurs d'événements. Isoler l'UI de la logique de calcul simplifie la maintenance de l'interface graphique et la mise à jour des thèmes CSS/Tailwind.

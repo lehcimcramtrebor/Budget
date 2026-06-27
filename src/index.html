@@ -182,10 +182,11 @@
     }
     </script>
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="BudgetHMR">
     <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="manifest" href="manifest.json">
 
     <script src="assets/js/tailwind.js"></script>
@@ -233,6 +234,13 @@
             }
         }
         @layer components {
+            .status-badge {
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
+            }
+            [id^="cert_test_row_"] {
+                gap: 12px;
+            }
             .btn-adjust { 
                 @apply w-10 h-10 shrink-0 rounded-xl bg-white dark:bg-stone-800 hover:bg-brand-100 dark:hover:bg-stone-800 hover:border-brand-300 dark:hover:border-stone-700 font-black text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-all active:scale-95; 
                 box-shadow: 0 8px 16px -2px rgba(120, 113, 108, 0.12), 0 2px 6px -2px rgba(120, 113, 108, 0.06);
@@ -524,6 +532,13 @@
             pointer-events: none;
             max-height: 0px;
             margin-top: 0px;
+        }
+        .tour-active #cochon_badge_container.cochon-hidden {
+            opacity: 1 !important;
+            transform: scale(1) !important;
+            max-height: 50px !important;
+            margin-top: 4px !important;
+            pointer-events: auto !important;
         }
         #cochon_badge_container button {
             display: flex;
@@ -1179,6 +1194,20 @@
 </head>
 <body class="min-h-screen p-2 sm:p-4 md:p-8 bg-gradient-to-br from-stone-100 via-stone-50 to-stone-200 dark:from-stone-950 dark:via-stone-950 dark:to-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300">
 
+<!-- 
+=============================================================================
+🗺️ ARCHITECTURE VISUELLE & SECTION DES PAGES (index.html)
+- 1. SPLASH SCREEN (id="app_splash_screen") : Écran de chargement et diagnostic.
+- 2. BARRE SUPÉRIEURE (Top Header) : Accès réglages, PWA et interrupteur de thème.
+- 3. BANNIÈRE PRINCIPALE (id="sticky_banner_container") : Reste à vivre et résumés.
+- 4. CONTENU TABLEAU DE BORD (id="main_dashboard_content") :
+     - Formulaire de Saisie Rapide (id="expense_form")
+     - Boutons d'accès (Opérations en cours, Revenus, Frais Fixes)
+- 5. CONTENU DES ENVELOPPES DÉDIÉES (id="budgets_dashboard_content")
+- 6. SECTION DES MODALES DE CONFIGURATION ET CYCLE DE VIE (Réglages, Cochon, etc.)
+=============================================================================
+-->
+
 <!-- SYSTEM SPLASH SCREEN -->
 <div id="app_splash_screen">
     <div></div>
@@ -1202,7 +1231,7 @@
     <!-- Footer / Version -->
     <div class="splash-footer" style="font-family: 'Outfit', sans-serif;">
         <span style="font-size: 11px; font-weight: 800; color: #a8a29e; letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Simplifiez vos finances</span>
-        <span id="splash_version_label" style="font-size: 12px; font-weight: 900; background: rgba(0,0,0,0.05); color: #78716c; padding: 0.25rem 0.75rem; border-radius: 9999px; border: 1px solid rgba(0,0,0,0.05); display: inline-block;">v3.0.0</span>
+        <span id="splash_version_label" style="font-size: 12px; font-weight: 900; background: rgba(0,0,0,0.05); color: #78716c; padding: 0.25rem 0.75rem; border-radius: 9999px; border: 1px solid rgba(0,0,0,0.05); display: inline-block;">v4.0.0</span>
     </div>
 </div>
 
@@ -1390,10 +1419,11 @@
 
                     <!-- Libellé + Montant -->
                     <div class="grid grid-cols-3 gap-2">
-                        <div class="col-span-2">
+                        <div class="col-span-2 relative">
                             <input type="text" id="exp_title" placeholder="Libellé (ex: Carrefour...)"
                                    class="form-input h-11 text-xs font-mono font-bold bg-stone-950/[0.03] dark:bg-black/40 text-stone-800 dark:text-stone-100 border border-stone-300 dark:border-stone-800/80 rounded-xl shadow-[inset_0_2.5px_5px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)] focus:ring-1 focus:ring-brand-500 placeholder-stone-400 dark:placeholder-stone-600"
                                    required autocomplete="off" maxlength="25" onblur="this.value = toTitleCase(this.value)">
+                            <div id="exp_title_autocomplete" class="absolute left-0 right-0 mt-1 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800/80 rounded-xl shadow-lg max-h-48 overflow-y-auto hidden z-50 divide-y divide-stone-100 dark:divide-stone-850"></div>
                         </div>
                         <div class="relative">
                             <input type="text" id="exp_amount" inputmode="decimal" placeholder="0,00"
@@ -2060,7 +2090,7 @@
                     </a>
                 </div>
                 <div onclick="openVersionUpdateModal()" class="text-[9px] font-bold opacity-60 tracking-wider cursor-pointer hover:underline hover:opacity-100 transition-opacity select-none">
-					BUDGETHMR — Version 3.0.0
+					BUDGETHMR — Version 4.0.0
 				</div>
             </div>
         </div>
@@ -2444,7 +2474,7 @@
                 <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
                     Le <strong>Cochon</strong> est une cagnotte virtuelle déconnectée du renouvellement mensuel. Elle représente de l'argent laissé sur ton compte bancaire, que tu as pris soin de ne pas dépenser.<br><br>
                     <strong>Comment il se remplit ?</strong> — Automatiquement ! À chaque dépense, BUDGETHMR applique un <strong>pourboire cochon</strong> correspondant au pourcentage choisi (ex&nbsp;: pour 3%, une dépense de 10,00&nbsp;€ génère +0,30&nbsp;€). Le pourboire est versé dans ton cochon.<br><br>
-                    <strong>Quand l'utiliser ?</strong> — Depuis la golden card, clique sur le badge cochon 🐷 pour gérer ta cagnotte&nbsp;: retirer de l'argent, le placer en épargne réelle (virement bancaire), ou combler un déficit en urgence.<br><br>
+                    <strong>Quand l'utiliser ?</strong> — Depuis la golden card, clique sur le badge cochon 🐷 pour gérer ta cagnotte&nbsp;: remettre de l'argent en budget, déplacer le zéro (plancher de sécurité) ou combler un déficit en urgence.<br><br>
                     <em class="text-[10px]">🔒 Rappel&nbsp;: BUDGETHMR n'est pas un tiroir-caisse de poche, mais le reflet virtuel du budget disponible sur ton compte bancaire.</em>
                 </p>
             </div>
@@ -2627,14 +2657,13 @@
         </div>
 
 		<div class="space-y-3">
-            <h4 class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-wider font-display">Version 3.0.0 disponible</h4>
+            <h4 class="text-sm font-black text-stone-800 dark:text-stone-100 uppercase tracking-wider font-display">Version 4.0.0 disponible</h4>
             <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-semibold">
-                L'application a été mise à jour en version 3.0.0. Voici les nouveautés :<br><br>
-                - 💳 <strong>Paiement Fractionné</strong> : Saisie et report automatique des paiements en plusieurs fois, avec option de remboursement anticipé.<br>
-                - ⚙️ <strong>Frais Fixes Intelligents</strong> : Configure la périodicité exacte de tes charges (hebdomadaire, mensuelle, annuelle ou mois spécifiques).<br>
-                - 🎨 <strong>Design & Golden Card Premium</strong> : Nouvelle carte avec microchip et ondes, plus une cohérence visuelle stricte sur tous les tickets de caisse.<br>
-                - 🛡️ <strong>Certification Renforcée</strong> : La batterie de tests locaux est plus complète que jamais pour assurer 100% de fiabilité.<br>
-                - 🔒 <strong>Sécurité Anti-Erreur</strong> : Verrouillage intelligent des montants et gestion optimisée des tags.<br><br>
+                L'application a été mise à jour en version 4.0.0. Voici les nouveautés :<br><br>
+                - 🐷 <strong>Cagnotte Cochon (Tirelire)</strong> : Mets de côté ton argent non dépensé, pioche dedans pour combler un déficit ou déplace le zéro avec le plancher de sécurité.<br>
+                - 📈 <strong>Progression & Célébration</strong> : Jauge de progression animée dans une modale en verre foncé premium et pluie de confettis de cochons à la réussite de tes objectifs.<br>
+                - ⚙️ <strong>Ajustement Confortable</strong> : Réglage dynamique et intelligent de l'incrément du curseur (slider) de retrait selon ton solde de cagnotte.<br>
+                - 🔒 <strong>Sécurité & Cohérence</strong> : Désactivation intelligente du bouton remboursement lorsque le mode Cochon est activé pour garantir l'intégrité de tes comptes.<br><br>
                 <em>Note : Suite à cette mise à jour majeure, la certification de l'application doit être renouvelée.</em>
             </p>
         </div>
@@ -2674,6 +2703,13 @@
                 🏷️ Choisir une catégorie
             </h3>
             <button onclick="closeTagSelectionModal()" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-xs shadow-sm">✕</button>
+        </div>
+        
+        <!-- Recherche de tag -->
+        <div class="shrink-0">
+            <input type="text" id="tag_search_input" placeholder="🔍 Rechercher un tag..." 
+                   class="form-input w-full h-10 text-xs font-mono font-bold bg-stone-950/[0.03] dark:bg-black/40 text-stone-800 dark:text-stone-100 border border-stone-300 dark:border-stone-800/80 rounded-xl px-2.5 placeholder-stone-400 dark:placeholder-stone-600 focus:ring-1 focus:ring-brand-500"
+                   autocomplete="off">
         </div>
         
         <div class="overflow-y-auto hide-scrollbar pb-2">
@@ -2899,6 +2935,57 @@
         </div>
     </div>
 </div>
+<!-- MODALE DIAGNOSTIC & DEBUG (EASTER EGG) -->
+<div id="debug_modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[68] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-md transform scale-95 transition-transform duration-300 flex flex-col p-5 space-y-4 max-h-[85vh]">
+        <!-- Header -->
+        <div class="flex justify-between items-center pb-2 border-b border-stone-200 dark:border-stone-800">
+            <h3 class="text-base font-black text-stone-800 dark:text-stone-100 uppercase tracking-tight flex items-center gap-1.5">
+                <span>🛠️</span> Diagnostic & Debug
+            </h3>
+            <button onclick="closeDebugModal()"
+                    class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center active:scale-90 transition-all text-[10px] shadow-sm">✕</button>
+        </div>
+        
+        <!-- Scrollable Content -->
+        <div class="space-y-4 overflow-y-auto pr-1 hide-scrollbar text-xs font-semibold leading-relaxed text-stone-600 dark:text-stone-300 flex-1">
+            <!-- System Stats -->
+            <div class="bg-stone-50 dark:bg-stone-950 p-3 rounded-xl border border-stone-200 dark:border-stone-800 space-y-1.5">
+                <span class="block text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider">Statut Système</span>
+                <div class="grid grid-cols-2 gap-y-1 font-mono text-[10px]">
+                    <div>Version :</div><div id="debug_version" class="text-right text-stone-800 dark:text-stone-200">v4.0.0</div>
+                    <div>Plateforme :</div><div id="debug_platform" class="text-right text-stone-800 dark:text-stone-200">-</div>
+                    <div>Mémoire Local :</div><div id="debug_storage_used" class="text-right text-stone-800 dark:text-stone-200">0.0 KB (0%)</div>
+                </div>
+            </div>
+
+            <!-- Auto-diagnostic Results -->
+            <div class="bg-stone-50 dark:bg-stone-950 p-3 rounded-xl border border-stone-200 dark:border-stone-800 space-y-1.5">
+                <span class="block text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider">Autodiagnostic de Données</span>
+                <div id="debug_diagnostic_results" class="space-y-1 text-[10px] font-mono">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Error Log -->
+            <div class="bg-stone-50 dark:bg-stone-950 p-3 rounded-xl border border-stone-200 dark:border-stone-800 space-y-1.5">
+                <span class="block text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider">Boîte Noire (Erreurs Récentes)</span>
+                <div id="debug_error_log" class="space-y-1 text-[9px] font-mono text-red-500 dark:text-red-400 max-h-24 overflow-y-auto divide-y divide-stone-200 dark:divide-stone-900">
+                    Aucune erreur détectée.
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-stone-200 dark:border-stone-800">
+            <button onclick="runDebugSelfTests()" class="py-2.5 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold text-xs active:scale-95 transition-all shadow-md">🧪 Lancer tests</button>
+            <button onclick="copyDiagnosticReport()" class="py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs active:scale-95 transition-all shadow-md">📋 Copier Rapport</button>
+            <button onclick="copyRawStateJSON()" class="py-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs border border-stone-200 dark:border-stone-700 active:scale-95 transition-all">💾 Copier State JSON</button>
+            <button onclick="closeDebugModal()" class="py-2.5 rounded-xl bg-stone-200 dark:bg-stone-900 text-stone-700 dark:text-stone-300 font-bold text-xs active:scale-95 transition-all">✕ Fermer</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODALE COCHON (CAGNOTTE / RÉSERVE) — MONOCHROME FINE ART -->
 <div id="cochon_modal" class="fixed inset-0 z-[65] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300 bg-black/80 backdrop-blur-sm">
     <div class="cochon-panel w-full max-w-sm transform scale-95 transition-all duration-300 rounded-3xl flex flex-col max-h-[90vh] overflow-y-auto hide-scrollbar relative">
@@ -3000,6 +3087,6 @@
     </div>
 </div>
 
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

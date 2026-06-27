@@ -1,0 +1,8 @@
+Dossier : src/config/
+Rôle : Stockage des données de configuration statiques de l'application.
+
+Fichiers inclus :
+- tags.js : Contient la configuration d'origine de tous les tags système (icônes, labels, catégories), les listes d'emojis pour la création personnalisée et les tags favoris par défaut.
+
+Pourquoi cette structure ?
+Isoler les données statiques évite d'encombrer le code logique de l'application. Cela facilite les futures éditions ou ajouts de catégories et de tags sans risquer d'altérer le comportement des calculs.

@@ -29,7 +29,12 @@ Le projet respecte l'organisation propre suivante :
 ├── node_modules/            # Dependances npm locales (ignorees par Git)
 ├── src/                     # DOSSIER SOURCES (Fichiers de developpement)
 │   ├── assets/              # Polices, CSS, Javascript additionnels, images
-│   ├── app.js               # Logique de l'application
+│   ├── components/          # Composants UI (ex: tagsUI.js)
+│   ├── config/              # Fichiers de configuration statiques (ex: tags.js)
+│   ├── services/            # Services de calculs et regles metier (ex: tagService.js)
+│   ├── store/               # Boutique d'etat et persistance (ex: state.js)
+│   ├── utils/               # Outils transverses (ex: stringUtils.js, domUtils.js)
+│   ├── app.js               # Logique globale, coordinateur et pont de compatibilite
 │   ├── BUDGET-HMR.APK       # APK source compile officiellement (a distribuer)
 │   ├── google*.html         # Fichier SEO de validation Google Webmaster
 │   ├── icon.svg             # Logo vectoriel source (512x512)

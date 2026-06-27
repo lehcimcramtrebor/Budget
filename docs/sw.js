@@ -1,4 +1,4 @@
-const CACHE_NAME = "budget-hmr-cache-v3.04";
+const CACHE_NAME = "budget-hmr-cache-v4.00";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,7 +8,13 @@ const ASSETS = [
   "./icon.svg",
   "./assets/js/tailwind.js",
   "./assets/css/inter.css",
-  "./assets/css/premium-fonts.css"
+  "./assets/css/premium-fonts.css",
+  "./config/tags.js",
+  "./store/state.js",
+  "./utils/stringUtils.js",
+  "./utils/domUtils.js",
+  "./services/tagService.js",
+  "./components/tagsUI.js"
 ];
 
 // Install Event
