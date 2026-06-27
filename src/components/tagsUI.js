@@ -474,6 +474,15 @@ export function getAvailableEmojisForPicker() {
             });
         }
     });
+
+    // Ajoute les emojis des tags personnalisés
+    if (state.customTags && state.customTags.length > 0) {
+        state.customTags.forEach(tag => {
+            if (tag.icon) {
+                emojis.add(tag.icon);
+            }
+        });
+    }
     
     return Array.from(emojis);
 }
@@ -493,7 +502,7 @@ export function openCreateTagModal(defaultLabel = '') {
     if (pickerGrid) {
         const availableEmojis = getAvailableEmojisForPicker();
         pickerGrid.innerHTML = availableEmojis.map(emoji => `
-            <button class="emoji-picker-btn w-10 h-10 rounded-xl text-xl flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" 
+            <button class="emoji-picker-btn w-12 h-12 rounded-xl text-2xl flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" 
                 onclick="window.selectTagEmoji('${emoji}', this)">${emoji}</button>
         `).join('');
     }

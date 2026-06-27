@@ -999,4 +999,18 @@
             animation: tagPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 		
-    
+        /* Custom thin scrollbar */
+        .thin-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .thin-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .thin-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(168, 162, 158, 0.4);
+            border-radius: 10px;
+        }
+        .dark .thin-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(168, 162, 158, 0.2);
+        }
