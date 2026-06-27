@@ -2,11 +2,11 @@ const CACHE_NAME = "budget-hmr-cache-v4.00";
 const ASSETS = [
   "./",
   "./index.html",
-  "./tailwind.config.js",
   "./app.js",
   "./manifest.json",
   "./icon.svg",
-  "./assets/js/tailwind.js",
+  "./assets/js/html2pdf.bundle.min.js",
+  "./assets/css/output.css",
   "./assets/css/inter.css",
   "./assets/css/premium-fonts.css",
   "./config/tags.js",

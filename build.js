@@ -1,5 +1,15 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
+
+console.log('Compiling Tailwind CSS...');
+try {
+    execSync('npm run build:css', { stdio: 'inherit' });
+    console.log('Tailwind CSS compiled successfully.');
+} catch (err) {
+    console.error('Error compiling Tailwind CSS:', err.message);
+    process.exit(1);
+}
 
 const srcDir = path.join(__dirname, 'src');
 const wwwDir = path.join(__dirname, 'www');
@@ -13,7 +23,6 @@ const filesToCopy = [
     'sitemap.xml',
     'sw.js',
     'icon.svg',
-    'tailwind.config.js',
     'google8ff5eebdaef4d9d9.html'
 ];
 

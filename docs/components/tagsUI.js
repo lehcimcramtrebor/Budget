@@ -459,6 +459,26 @@ export function bulkSetTags(active) {
 }
 
 /**
+ * Récupère l'ensemble des emojis uniques issus des tags prédéfinis et du sélecteur par défaut.
+ */
+export function getAvailableEmojisForPicker() {
+    const emojis = new Set(TAG_EMOJI_PICKER);
+    
+    // Ajoute les emojis de la configuration prédéfinie
+    Object.values(TAG_DATA).forEach(category => {
+        if (category.items) {
+            Object.values(category.items).forEach(item => {
+                if (item.icon) {
+                    emojis.add(item.icon);
+                }
+            });
+        }
+    });
+    
+    return Array.from(emojis);
+}
+
+/**
  * Ouvre la modale de création d'un nouveau tag personnalisé.
  */
 export function openCreateTagModal(defaultLabel = '') {
@@ -467,6 +487,17 @@ export function openCreateTagModal(defaultLabel = '') {
     if (!modal) return;
     modal.querySelector('#new_tag_label').value = defaultLabel;
     modal.querySelector('#new_tag_emoji_preview').textContent = '?';
+    
+    // Injecte dynamiquement les boutons d'emojis
+    const pickerGrid = document.getElementById('new_tag_emoji_picker_grid');
+    if (pickerGrid) {
+        const availableEmojis = getAvailableEmojisForPicker();
+        pickerGrid.innerHTML = availableEmojis.map(emoji => `
+            <button class="emoji-picker-btn w-10 h-10 rounded-xl text-xl flex items-center justify-center hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all active:scale-90 border border-transparent hover:border-brand-300/50" 
+                onclick="window.selectTagEmoji('${emoji}', this)">${emoji}</button>
+        `).join('');
+    }
+    
     modal.querySelectorAll('.emoji-picker-btn').forEach(b => b.classList.remove('ring-2','ring-brand-500','scale-110'));
     modal.classList.remove('hidden');
     setTimeout(() => { 

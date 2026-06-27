@@ -4,6 +4,7 @@
   "description": "Suivi de budget mensuel simple, rapide et gratuit",
   "main": "index.html",
   "scripts": {
+    "build:css": "npx tailwindcss -i ./src/input.css -o ./src/assets/css/output.css --minify",
     "build": "node build.js",
     "cap-sync": "npx cap sync",
     "build-apk": "npm run build && npx cap sync && cd android && cmd /c \"set JAVA_HOME=C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr&& gradlew.bat assembleDebug\""
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
-    "sharp": "^0.33.2"
+    "sharp": "^0.33.2",
+    "tailwindcss": "^3.4.19"
   }
 }
