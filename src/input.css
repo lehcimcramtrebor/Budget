@@ -150,6 +150,7 @@
             }
             .golden-card {
                 @apply px-6 py-4 rounded-3xl transition-all duration-300 relative overflow-hidden;
+                aspect-ratio: 8560 / 5398;
                 /* Gradient directionnel basé sur les vars CSS — répond aux thèmes dynamiques */
                 background: linear-gradient(
                     145deg,

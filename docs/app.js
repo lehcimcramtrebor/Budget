@@ -669,15 +669,22 @@ function updateUI() {
     // Toggle tabs visibility based on budgets count
     const tabsContainer = document.getElementById("dashboard_tabs_container");
     const hasBudgets = state.budgets && state.budgets.some(b => !b.closed);
+    
+    const dateWrapper = document.getElementById("date_label_wrapper");
+    const chipBlock = document.getElementById("card_chip_block");
+    const ligne1 = document.getElementById("card_ligne_1");
+
     if (tabsContainer) {
         if (hasBudgets) {
             tabsContainer.classList.remove("hidden");
+            if (dateWrapper && ligne1) ligne1.appendChild(dateWrapper);
         } else {
             tabsContainer.classList.add("hidden");
             // If we are currently on the budgets tab but there are no budgets left, switch back to main
             if (activeTab === "budgets") {
                 switchDashboardTab('main');
             }
+            if (dateWrapper && chipBlock) chipBlock.appendChild(dateWrapper);
         }
     }
 
@@ -691,7 +698,7 @@ function updateUI() {
     const cardHolderEl = document.getElementById("card_holder_name");
     if (cardHolderEl) {
         const rawName = state.settings?.username?.trim();
-        cardHolderEl.textContent = rawName ? rawName.toUpperCase() : "BUDGET HMR";
+        cardHolderEl.textContent = rawName ? rawName.toUpperCase() : "HMR";
     }
 
     // Play overdraft sound if transition from non-negative to negative occurs

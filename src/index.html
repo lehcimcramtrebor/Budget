@@ -278,7 +278,7 @@
 
     <!-- MAIN BANNER: RESTE A VIVRE -->
     <div id="sticky_banner_container" class="z-30 bg-stone-100/90 dark:bg-stone-950/90 backdrop-blur-md pt-2 pb-3 -mx-4 px-4 transition-colors duration-300">
-        <div class="golden-card text-white transition-none">
+        <div class="golden-card text-white transition-none flex flex-col" style="aspect-ratio: 85.6 / 53.98;">
             <!-- Card Vector Waves -->
             <svg class="absolute right-0 bottom-0 w-2/3 h-full text-white/5 pointer-events-none select-none z-0" viewBox="0 0 100 100" preserveAspectRatio="none" fill="currentColor">
                 <path d="M0,100 C30,40 70,60 100,0 L100,100 Z"></path>
@@ -307,29 +307,17 @@
             </div>
 
             <!-- ZONE CENTRALE -->
-            <div class="relative z-10 flex flex-col flex-1 py-1 min-h-[75px] justify-center">
+            <div class="relative z-10 flex flex-col flex-1 pt-8 pb-2 min-h-[75px] justify-center">
                 <!-- LIGNE 1 : Reste à dépenser & Nom de carte -->
-                <div class="flex justify-between items-end w-full mb-1">
+                <div class="flex justify-between items-center w-full mb-1" id="card_ligne_1">
                     <p class="text-xs font-bold text-white/80 uppercase tracking-wider leading-none">Reste à dépenser</p>
-                    <span id="card_holder_name"
-                          class="uppercase font-bold pointer-events-none leading-none"
-                          style="
-                              font-family: 'Courier New', Courier, monospace;
-                              font-size: 13px;
-                              letter-spacing: 0.25em;
-                              color: rgba(255,255,255,0.7);
-                              text-shadow:
-                                  0 1px 0 rgba(255,255,255,0.55),
-                                  0 2px 0 rgba(255,255,255,0.18),
-                                  0 -1px 0 rgba(0,0,0,0.55),
-                                  0 -2px 0 rgba(0,0,0,0.2),
-                                  0 0 12px rgba(255,255,255,0.1);
-                          "
-                    >HMR</span>
+                    <div class="text-right shrink-0 ml-auto" id="date_label_wrapper">
+                        <span class="inline-block px-3 py-1 bg-white/20 text-white font-black text-xs rounded-full border border-white/10" id="current_date_label">Budget</span>
+                    </div>
                 </div>
 
                 <!-- LIGNE 2 : Solde+Cochon & Mois -->
-                <div class="flex justify-between items-center w-full flex-1">
+                <div class="flex justify-between items-center w-full">
                     <div class="flex flex-col justify-center items-start">
                         <h2 class="text-3xl font-black text-white drop-shadow-sm truncate leading-none py-1" id="remaining_balance_disp">0.00 €</h2>
                         <div id="cochon_badge_container" class="cochon-hidden pointer-events-auto mt-1">
@@ -379,9 +367,24 @@
                             </button>
                         </div>
                     </div>
-                    <div class="text-right shrink-0">
-                        <span class="inline-block px-3 py-1 bg-white/20 text-white font-black text-xs rounded-full border border-white/10" id="current_date_label">Budget</span>
-                    </div>
+                </div>
+                
+                <div class="absolute bottom-0 right-0 text-right shrink-0">
+                    <span id="card_holder_name"
+                          class="uppercase font-bold pointer-events-none leading-none"
+                          style="
+                              font-family: 'Courier New', Courier, monospace;
+                              font-size: 13px;
+                              letter-spacing: 0.25em;
+                              color: rgba(255,255,255,0.7);
+                              text-shadow:
+                                  0 1px 0 rgba(255,255,255,0.55),
+                                  0 2px 0 rgba(255,255,255,0.18),
+                                  0 -1px 0 rgba(0,0,0,0.55),
+                                  0 -2px 0 rgba(0,0,0,0.2),
+                                  0 0 12px rgba(255,255,255,0.1);
+                          "
+                    >HMR</span>
                 </div>
             </div>
 
