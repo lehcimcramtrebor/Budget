@@ -5,6 +5,15 @@
 
         /* --- DESIGN SYSTEM (Je-DIY & RE-FLEX) --- */
         @layer base {
+            /* Masquer les barres de défilement pour un look application mobile natif */
+            ::-webkit-scrollbar {
+                display: none;
+            }
+            * {
+                -ms-overflow-style: none;  /* IE and Edge */
+                scrollbar-width: none;  /* Firefox */
+            }
+
             h1, h2, h3, h4, h5, h6, .font-display {
                 font-family: 'Outfit', sans-serif;
             }
