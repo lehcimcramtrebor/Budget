@@ -43,6 +43,7 @@
             padding: 4rem 2rem;
             background: linear-gradient(135deg, #f5f5f4 0%, #e7e5e4 100%);
             transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            overflow: hidden;
         }
         html.dark #app_splash_screen {
             background: linear-gradient(135deg, #0c0a09 0%, #1c1917 100%) !important;
@@ -77,14 +78,11 @@
         }
         
         .splash-logo-suffix {
-            color: #4f46e5;
-            transition: color 0.3s;
+            color: rgb(var(--brand-500, 79 70 229));
+            transition: all 0.3s;
         }
         html.dark .splash-logo-suffix {
-            color: #818cf8 !important;
-        }
-        html.theme-feminin .splash-logo-suffix {
-            color: #db2777 !important;
+            color: rgb(var(--brand-400, 129 140 248)) !important;
         }
 
         .splash-loader {
@@ -95,20 +93,30 @@
             border-radius: 50%;
             background: rgba(0, 0, 0, 0.02);
             border: 2.5px solid rgba(0, 0, 0, 0.05);
-            border-top-color: #4f46e5;
+            border-top-color: rgb(var(--brand-500, 79 70 229));
             animation: splashSpin 1s infinite linear;
         }
         html.dark .splash-loader {
             background: rgba(255, 255, 255, 0.02);
             border: 2.5px solid rgba(255, 255, 255, 0.05);
-            border-top-color: #818cf8;
-        }
-        html.theme-feminin .splash-loader {
-            border-top-color: #db2777 !important;
+            border-top-color: rgb(var(--brand-400, 129 140 248));
         }
         
         @keyframes splashSpin {
             to { transform: rotate(360deg); }
+        }
+
+        @keyframes fireWave1 {
+            0% { transform: scale(1) translateY(0) skewX(0); opacity: 0.6; }
+            100% { transform: scale(1.05, 1.15) translateY(-2px) skewX(2deg); opacity: 1; }
+        }
+        @keyframes fireWave2 {
+            0% { transform: scale(1) translateY(0) skewX(0); opacity: 0.4; }
+            100% { transform: scale(1.02, 1.1) translateY(-4px) skewX(-3deg); opacity: 0.8; }
+        }
+        @keyframes fireGlow {
+            0% { opacity: 0.2; transform: translateX(-50%) scale(1); }
+            100% { opacity: 0.5; transform: translateX(-50%) scale(1.3); }
         }
 
         .splash-footer {
@@ -218,10 +226,29 @@
     <!-- Logo Container -->
     <div class="splash-logo-container">
         <!-- Glowing Ambient Circle behind the logo -->
-        <div style="position: absolute; width: 180px; height: 180px; background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, transparent 70%); z-index: -1;" id="splash_glow"></div>
+        <div style="position: absolute; width: 180px; height: 180px; background: radial-gradient(circle, rgb(var(--brand-500, 79 70 229) / 0.15) 0%, transparent 70%); z-index: -1;" id="splash_glow"></div>
+        
+        <!-- Image de CB en pixel art en feu avec superposition de flammes animées -->
+        <div style="position: relative; width: 120px; height: 120px; margin-bottom: 1rem; display: flex; justify-content: center; align-items: flex-end;">
+            <!-- Glow dynamique en arrière-plan -->
+            <div style="position: absolute; top: 10%; left: 50%; width: 60px; height: 60px; background: rgb(var(--brand-500, 79 70 229)); filter: blur(20px); transform: translateX(-50%); animation: fireGlow 0.8s infinite alternate ease-in-out; z-index: -1;"></div>
+            
+            <!-- Carte statique complète (Base) -->
+            <img src="assets/burning_pixel_card.png" alt="Burning Card" style="width: 120px; height: 120px; object-fit: contain; position: absolute; bottom: 0; filter: drop-shadow(0 4px 12px rgb(var(--brand-500, 79 70 229) / 0.3));">
+            
+            <!-- Masque pour les flammes uniquement (Coupe le bas de l'image) -->
+            <div style="position: absolute; bottom: 0; width: 120px; height: 120px; clip-path: inset(-50% -50% 45% -50%); pointer-events: none;">
+                <!-- Couche Flammes 1 -->
+                <img src="assets/burning_pixel_card.png" style="width: 120px; height: 120px; object-fit: contain; position: absolute; bottom: 0; left: 0; transform-origin: center 55%; animation: fireWave1 0.4s infinite alternate ease-in-out; filter: hue-rotate(15deg);">
+                
+                <!-- Couche Flammes 2 -->
+                <img src="assets/burning_pixel_card.png" style="width: 120px; height: 120px; object-fit: contain; position: absolute; bottom: 0; left: 0; transform-origin: center 55%; animation: fireWave2 0.6s infinite alternate ease-in-out; filter: hue-rotate(-10deg);">
+            </div>
+        </div>
+        
         <h1 style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Outfit', sans-serif; font-style: italic; font-weight: 900; letter-spacing: -0.05em; font-size: 2.25rem;">
             <span class="splash-logo-main">BUDGET</span>
-            <span class="splash-logo-suffix" style="filter: drop-shadow(0 2px 8px rgba(79, 70, 229, 0.25)); font-size: 2.5rem; margin-top: -0.25rem;">HMR</span>
+            <span class="splash-logo-suffix" style="filter: drop-shadow(0 2px 8px rgb(var(--brand-500, 79 70 229) / 0.25)); font-size: 2.5rem; margin-top: -0.25rem;">HMR</span>
         </h1>
         <p style="font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.3em; margin-top: 0.75rem; white-space: nowrap;">
             Gestion Mensuelle
