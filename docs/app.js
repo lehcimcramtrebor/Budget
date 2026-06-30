@@ -1162,6 +1162,53 @@ function deleteExpense(id) {
     const expense = state.expenses.find(e => e.id === id);
     if (!expense) return;
 
+    // Avertissement cochon si la dépense avait généré un pourboire cochon, utilisé la pioche cochon ou une action manuelle cochon
+    let cochonWarning = '';
+    if (expense.roundingDelta && expense.roundingDelta > 0) {
+        const delta    = expense.roundingDelta;
+        const canGet   = Math.min(delta, state.cochon);
+        const isFull   = canGet >= delta;
+        const cochonFmt = canGet.toFixed(2).replace('.', ',');
+        const deltaFmt  = delta.toFixed(2).replace('.', ',');
+        cochonWarning = `
+            <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px; background:rgba(244,63,94,0.08); border:1px solid rgba(244,63,94,0.25); border-radius:10px; padding:8px 10px;">
+                <span style="font-size:20px; line-height:1; flex-shrink:0;">🐷</span>
+                <div style="font-size:10px; font-weight:700; color:rgba(244,63,94,0.9); line-height:1.5;">
+                    ${isFull
+                        ? `Cette dépense avait généré un pourboire cochon de <strong>${deltaFmt}&nbsp;€</strong> dans le cochon.<br>En supprimant, <strong>${cochonFmt}&nbsp;€</strong> seront retirés du cochon.`
+                        : `Cette dépense avait généré un pourboire cochon de <strong>${deltaFmt}&nbsp;€</strong> dans le cochon, mais il ne contient que <strong>${state.cochon.toFixed(2).replace('.', ',')}&nbsp;€</strong>.<br>Seulement <strong>${cochonFmt}&nbsp;€</strong> seront récupérés — le budget crédité sera réduit d'autant.`
+                    }
+                </div>
+            </div>`;
+    } else if (expense.piocheCochon && expense.piocheCochon > 0) {
+        const piocheFmt = expense.piocheCochon.toFixed(2).replace('.', ',');
+        cochonWarning = `
+            <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:8px 10px;">
+                <span style="font-size:20px; line-height:1; flex-shrink:0;">🐷</span>
+                <div style="font-size:10px; font-weight:700; color:rgb(5,150,105); line-height:1.5;">
+                    Cette dépense a été co-payée avec le cochon à hauteur de <strong>${piocheFmt}&nbsp;€</strong>.<br>En la supprimant, <strong>${piocheFmt}&nbsp;€</strong> seront reversés dans votre réserve cochon.
+                </div>
+            </div>`;
+    } else if (expense.isCochonWithdrawal) {
+        const amtFmt = Math.abs(expense.amount).toFixed(2).replace('.', ',');
+        cochonWarning = `
+            <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:8px 10px;">
+                <span style="font-size:20px; line-height:1; flex-shrink:0;">🐷</span>
+                <div style="font-size:10px; font-weight:700; color:rgb(5,150,105); line-height:1.5;">
+                    Cette opération est un retrait du cochon de <strong>${amtFmt}&nbsp;€</strong>.<br>En la supprimant, <strong>${amtFmt}&nbsp;€</strong> seront reversés dans votre réserve cochon.
+                </div>
+            </div>`;
+    } else if (expense.isFloorShift) {
+        const amtFmt = expense.amount.toFixed(2).replace('.', ',');
+        cochonWarning = `
+            <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:8px 10px;">
+                <span style="font-size:20px; line-height:1; flex-shrink:0;">🐷</span>
+                <div style="font-size:10px; font-weight:700; color:rgb(5,150,105); line-height:1.5;">
+                    Cette opération est un déplacement de plancher de sécurité de <strong>${amtFmt}&nbsp;€</strong>.<br>En la supprimant, <strong>${amtFmt}&nbsp;€</strong> seront reversés dans votre réserve cochon.
+                </div>
+            </div>`;
+    }
+
     if (expense.isBudgetReference) {
         const budget = state.budgets.find(b => b.mainTransactionId === id || b.id === expense.budgetId);
         if (budget && !budget.closed) {
@@ -1258,9 +1305,22 @@ function deleteExpense(id) {
             `Vous êtes sur le point de supprimer <strong>"${expense.title}"</strong> — <strong>échéance ${instCur}/${instTotal}</strong>.<br><br>
             <strong>${remaining} échéance${remaining > 1 ? 's' : ''} seront annulée${remaining > 1 ? 's' : ''}</strong> (dont ${remaining - 1} future${remaining - 1 > 1 ? 's' : ''}) :
             ${detailHTML}
+            ${cochonWarning}
             <br><span style="font-size:9px;color:#9ca3af">Cette action est irréversible. Les échéances futures ne seront plus reportées automatiquement.</span>`,
             "💳",
             () => {
+                // Sécurité cochon : si pourboire cochon delta ou pioche cochon sur l'échéance courante, réajuster
+                if (expense.roundingDelta) {
+                    state.cochon = Math.max(0, Math.round((state.cochon - expense.roundingDelta) * 100) / 100);
+                } else if (expense.piocheCochon) {
+                    state.cochon = Math.round((state.cochon + expense.piocheCochon) * 100) / 100;
+                } else if (expense.isCochonWithdrawal) {
+                    state.cochon = Math.round((state.cochon + Math.abs(expense.amount)) * 100) / 100;
+                } else if (expense.isFloorShift) {
+                    state.cochon = Math.round((state.cochon + expense.amount) * 100) / 100;
+                }
+                updateCochonBadge();
+
                 state.expenses = state.expenses.filter(e =>
                     !(e.installment && e.installment.groupId === groupId &&
                       e.installment.current >= instCur)
@@ -1279,35 +1339,6 @@ function deleteExpense(id) {
     const titleWord  = isRefund ? "le remboursement" : "la dépense";
     const emoji      = isRefund ? "💵" : "🗑️";
 
-    // Avertissement cochon si la dépense avait généré un pourboire cochon ou utilisé la pioche cochon
-    let cochonWarning = '';
-    if (expense.roundingDelta && expense.roundingDelta > 0) {
-        const delta    = expense.roundingDelta;
-        const canGet   = Math.min(delta, state.cochon);
-        const isFull   = canGet >= delta;
-        const cochonFmt = canGet.toFixed(2).replace('.', ',');
-        const deltaFmt  = delta.toFixed(2).replace('.', ',');
-        cochonWarning = `
-            <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px; background:rgba(244,63,94,0.08); border:1px solid rgba(244,63,94,0.25); border-radius:10px; padding:8px 10px;">
-                <span style="font-size:20px; line-height:1; flex-shrink:0;">🐷</span>
-                <div style="font-size:10px; font-weight:700; color:rgba(244,63,94,0.9); line-height:1.5;">
-                    ${isFull
-                        ? `Cette dépense avait généré un pourboire cochon de <strong>${deltaFmt}&nbsp;€</strong> dans le cochon.<br>En supprimant, <strong>${cochonFmt}&nbsp;€</strong> seront retirés du cochon.`
-                        : `Cette dépense avait généré un pourboire cochon de <strong>${deltaFmt}&nbsp;€</strong> dans le cochon, mais il ne contient que <strong>${state.cochon.toFixed(2).replace('.', ',')}&nbsp;€</strong>.<br>Seulement <strong>${cochonFmt}&nbsp;€</strong> seront récupérés — le budget crédité sera réduit d'autant.`
-                    }
-                </div>
-            </div>`;
-    } else if (expense.piocheCochon && expense.piocheCochon > 0) {
-        const piocheFmt = expense.piocheCochon.toFixed(2).replace('.', ',');
-        cochonWarning = `
-            <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:8px 10px;">
-                <span style="font-size:20px; line-height:1; flex-shrink:0;">🐷</span>
-                <div style="font-size:10px; font-weight:700; color:rgb(5,150,105); line-height:1.5;">
-                    Cette dépense a été co-payée avec le cochon à hauteur de <strong>${piocheFmt}&nbsp;€</strong>.<br>En la supprimant, <strong>${piocheFmt}&nbsp;€</strong> seront reversés dans votre réserve cochon.
-                </div>
-            </div>`;
-    }
-
     showGenericConfirm(
         isRefund ? "Supprimer le remboursement ? (1/2)" : "Supprimer la dépense ? (1/2)",
         `Voulez-vous vraiment supprimer ${titleWord} <strong>"${expense.title}"</strong> de <strong>${absAmount.toFixed(2).replace('.', ',')} €</strong> ?${cochonWarning}`,
@@ -1319,16 +1350,19 @@ function deleteExpense(id) {
                     `Êtes-vous absolument sûr ? Cette action effacera définitivement ${titleWord} <strong>"${expense.title}"</strong>.`,
                     "⚠️",
                     () => {
-                        // Sécurité cochon : si pourboire cochon delta ou pioche cochon, réajuster
+                        // Sécurité cochon : si pourboire cochon delta, pioche cochon ou action manuelle, réajuster
                         const toDelete = state.expenses.find(e => e.id === id);
                         if (toDelete) {
                             if (toDelete.roundingDelta) {
                                 state.cochon = Math.max(0, Math.round((state.cochon - toDelete.roundingDelta) * 100) / 100);
-                                updateCochonBadge();
                             } else if (toDelete.piocheCochon) {
                                 state.cochon = Math.round((state.cochon + toDelete.piocheCochon) * 100) / 100;
-                                updateCochonBadge();
+                            } else if (toDelete.isCochonWithdrawal) {
+                                state.cochon = Math.round((state.cochon + Math.abs(toDelete.amount)) * 100) / 100;
+                            } else if (toDelete.isFloorShift) {
+                                state.cochon = Math.round((state.cochon + toDelete.amount) * 100) / 100;
                             }
+                            updateCochonBadge();
                         }
                         state.expenses = state.expenses.filter(e => e.id !== id);
                         saveState();
@@ -3002,7 +3036,10 @@ function earlyRepayInstallment() {
                     title:  expense.title,
                     amount: totalDue,
                     date:   expense.date,
-                    tag:    expense.tag || 'divers'
+                    tag:    expense.tag || 'divers',
+                    // Conserver les informations du cochon pour restitution éventuelle lors d'une future suppression
+                    roundingDelta: expense.roundingDelta || undefined,
+                    piocheCochon:  expense.piocheCochon || undefined
                 };
                 state.expenses.push(repaidExpense);
                 saveState();
@@ -7175,7 +7212,7 @@ let isTestingRunning = false;
 
 function openCertification() {
     // Nombre total de tests = longueur du tableau dans runCertificationTests (13 actuellement)
-    const TOTAL_TESTS = 13;
+    const TOTAL_TESTS = 14;
     for (let i = 0; i < TOTAL_TESTS; i++) {
         updateTestRowStatus(i, "pending");
     }
@@ -7258,6 +7295,7 @@ function runCertificationTests() {
         { name: "Paiements fractionnés", fn: testInstallmentPayments },
         { name: "Cas limites fractionnés", fn: testInstallmentEdgeCases },
         { name: "Montants d'échéances personnalisés", fn: testInstallmentCustomAmounts },
+        { name: "Intégrité ultime des flux",            fn: testUltimateFlowIntegrity },
         { name: "Pourboire intelligent cochon",          fn: testSmartRounding },
         { name: "Dépôt, retrait & remboursement cochon", fn: testCochonLogic },
         { name: "Export PDF & flux fin de mois",        fn: testPdfExportFlow }
@@ -8068,10 +8106,460 @@ function testInstallmentCustomAmounts() {
     // 5. Report : l'échéance 3 porte son montant propre
     if (amounts[2] !== 46.67) throw new Error(`Report éch.3 : attendu 46.67, obtenu ${amounts[2]}`);
 
+    // 6. Test de suppression d'un paiement fractionné et ajustement cochon
+    state.cochon = 10.00;
+    const expId = "test_inst_cochon";
+    const testExp = {
+        id: expId,
+        title: "Test Cochon Inst",
+        amount: 47.25,
+        date: "2026-06-30",
+        tag: "divers",
+        roundingDelta: 2.25,
+        installment: {
+            groupId: "grp_test_cochon",
+            current: 1,
+            total: 4,
+            totalAmount: 120.00,
+            amounts: [45.00, 25.00, 25.00, 25.00]
+        }
+    };
+    state.expenses = [testExp];
+    
+    // Simulation de deleteExpense pour paiement fractionné
+    const groupId = testExp.installment.groupId;
+    const instCur = testExp.installment.current;
+    
+    if (testExp.roundingDelta) {
+        state.cochon = Math.max(0, Math.round((state.cochon - testExp.roundingDelta) * 100) / 100);
+    } else if (testExp.piocheCochon) {
+        state.cochon = Math.round((state.cochon + testExp.piocheCochon) * 100) / 100;
+    }
+    state.expenses = state.expenses.filter(e =>
+        !(e.installment && e.installment.groupId === groupId && e.installment.current >= instCur)
+    );
+    
+    if (state.expenses.length !== 0) throw new Error("Suppression inst : la dépense n'a pas été supprimée");
+    if (state.cochon !== 7.75) throw new Error(`Suppression inst : cochon attendu 7.75, obtenu ${state.cochon}`);
+
+    // 7. Test de remboursement anticipé (early repayment) et conservation des infos cochon
+    state.cochon = 10.00;
+    const testExp2 = {
+        id: "test_inst_repay",
+        title: "Test Repay Inst",
+        amount: 47.25, 
+        date: "2026-06-30",
+        tag: "divers",
+        roundingDelta: 2.25,
+        installment: {
+            groupId: "grp_test_repay",
+            current: 1,
+            total: 4,
+            totalAmount: 120.00,
+            amounts: [45.00, 25.00, 25.00, 25.00]
+        }
+    };
+    state.expenses = [testExp2];
+    
+    // Calcul du montant dû lors de earlyRepayInstallment
+    const inst2 = testExp2.installment;
+    const amountsArray = inst2.amounts;
+    let totalDueSum = 0;
+    for (let i = inst2.current; i <= inst2.total; i++) {
+        let amt = 0;
+        if (i === inst2.current) {
+            amt = Math.abs(testExp2.amount);
+        } else {
+            amt = amountsArray[i - 1];
+        }
+        totalDueSum += amt;
+    }
+    
+    if (totalDueSum !== 122.25) throw new Error(`EarlyRepay : total due attendu 122.25, obtenu ${totalDueSum}`);
+    
+    // Création de repaidExpense
+    const repaidExpense = {
+        id: "test_repaid_consolidated",
+        title: testExp2.title,
+        amount: totalDueSum,
+        date: testExp2.date,
+        tag: testExp2.tag,
+        roundingDelta: testExp2.roundingDelta || undefined,
+        piocheCochon: testExp2.piocheCochon || undefined
+    };
+    
+    state.expenses = state.expenses.filter(e =>
+        !(e.installment && e.installment.groupId === inst2.groupId && e.installment.current >= inst2.current)
+    );
+    state.expenses.push(repaidExpense);
+    
+    if (state.expenses.length !== 1) throw new Error("EarlyRepay : devrait avoir 1 seule dépense consolidée");
+    if (state.expenses[0].amount !== 122.25) throw new Error(`EarlyRepay : montant consolidé attendu 122.25, obtenu ${state.expenses[0].amount}`);
+    if (state.expenses[0].roundingDelta !== 2.25) throw new Error(`EarlyRepay : roundingDelta non conservé`);
+
+    // 8. Test de suppression du remboursement anticipé consolidé
+    const toDelete = state.expenses[0];
+    if (toDelete.roundingDelta) {
+        state.cochon = Math.max(0, Math.round((state.cochon - toDelete.roundingDelta) * 100) / 100);
+    }
+    state.expenses = state.expenses.filter(e => e.id !== toDelete.id);
+    
+    if (state.cochon !== 7.75) throw new Error(`DeleteRepay : cochon attendu 7.75, obtenu ${state.cochon}`);
+    if (state.expenses.length !== 0) throw new Error("DeleteRepay : la dépense n'a pas été supprimée");
+
     return true;
 }
 
-// --- TESTS COCHON ---
+function testUltimateFlowIntegrity() {
+    // 1. Sauvegarder l'état de départ
+    const initialCochon = 50.00;
+    state.cochon = initialCochon;
+    state.expenses = [];
+    state.fixedCharges = [];
+    state.revenues = [];
+    state.budgets = [];
+    
+    // --- UTILS POUR LES SIMULATIONS ---
+    function simAddExpense(title, amount, options = {}) {
+        const exp = {
+            id: Date.now().toString() + Math.random().toString(),
+            title,
+            amount,
+            date: getTodayDateString(),
+            tag: "divers"
+        };
+        
+        if (options.useCochonPioche) {
+            const piocheDelta = Math.min(exp.amount, state.cochon);
+            if (piocheDelta > 0) {
+                exp.piocheCochon = piocheDelta;
+                exp.amount = Math.round((exp.amount - piocheDelta) * 100) / 100;
+                state.cochon = Math.round((state.cochon - piocheDelta) * 100) / 100;
+            }
+        } else if (options.useRounding) {
+            const rounding = calculateSmartRounding(exp.amount);
+            if (rounding && rounding.delta > 0) {
+                exp.roundingDelta = rounding.delta;
+                exp.amount = rounding.roundedAmount;
+                state.cochon = Math.round((state.cochon + rounding.delta) * 100) / 100;
+            }
+        }
+        state.expenses.push(exp);
+        return exp;
+    }
+
+    function simEditExpense(id, newTitle, newAmount) {
+        const exp = state.expenses.find(e => e.id === id);
+        if (!exp) return;
+        
+        if (exp.roundingDelta) {
+            state.cochon = Math.max(0, Math.round((state.cochon - exp.roundingDelta) * 100) / 100);
+            delete exp.roundingDelta;
+        } else if (exp.piocheCochon) {
+            state.cochon = Math.round((state.cochon + exp.piocheCochon) * 100) / 100;
+            delete exp.piocheCochon;
+        }
+        
+        exp.title = newTitle;
+        exp.amount = newAmount;
+    }
+
+    function simDeleteExpense(id) {
+        const exp = state.expenses.find(e => e.id === id);
+        if (!exp) return;
+        
+        if (exp.installment && exp.installment.groupId) {
+            const groupId = exp.installment.groupId;
+            const instCur = exp.installment.current;
+            
+            if (exp.roundingDelta) {
+                state.cochon = Math.max(0, Math.round((state.cochon - exp.roundingDelta) * 100) / 100);
+            } else if (exp.piocheCochon) {
+                state.cochon = Math.round((state.cochon + exp.piocheCochon) * 100) / 100;
+            }
+            
+            state.expenses = state.expenses.filter(e =>
+                !(e.installment && e.installment.groupId === groupId && e.installment.current >= instCur)
+            );
+        } else {
+            if (exp.roundingDelta) {
+                state.cochon = Math.max(0, Math.round((state.cochon - exp.roundingDelta) * 100) / 100);
+            } else if (exp.piocheCochon) {
+                state.cochon = Math.round((state.cochon + exp.piocheCochon) * 100) / 100;
+            }
+            state.expenses = state.expenses.filter(e => e.id !== id);
+        }
+    }
+
+    function simAddInstallment(title, totalAmount, total, amountsArray = null, options = {}) {
+        const groupId = "grp_" + Date.now().toString() + Math.random().toString();
+        const baseAmount = amountsArray ? amountsArray[0] : (Math.round((totalAmount / total) * 100) / 100);
+        
+        const exp = {
+            id: Date.now().toString() + Math.random().toString(),
+            title,
+            amount: baseAmount,
+            date: getTodayDateString(),
+            tag: "divers",
+            installment: {
+                groupId,
+                current: 1,
+                total,
+                totalAmount,
+                amounts: amountsArray ? [...amountsArray] : null
+            }
+        };
+        
+        if (options.useCochonPioche) {
+            const piocheDelta = Math.min(exp.amount, state.cochon);
+            if (piocheDelta > 0) {
+                exp.piocheCochon = piocheDelta;
+                exp.amount = Math.round((exp.amount - piocheDelta) * 100) / 100;
+                state.cochon = Math.round((state.cochon - piocheDelta) * 100) / 100;
+            }
+        } else if (options.useRounding) {
+            const rounding = calculateSmartRounding(exp.amount);
+            if (rounding && rounding.delta > 0) {
+                exp.roundingDelta = rounding.delta;
+                exp.amount = rounding.roundedAmount;
+                state.cochon = Math.round((state.cochon + rounding.delta) * 100) / 100;
+            }
+        }
+        state.expenses.push(exp);
+        return exp;
+    }
+
+    function simEarlyRepay(id) {
+        const expense = state.expenses.find(e => e.id === id);
+        if (!expense || !expense.installment) return;
+        
+        const inst = expense.installment;
+        const groupId = inst.groupId;
+        
+        let totalDueSum = 0;
+        for (let i = inst.current; i <= inst.total; i++) {
+            let amt = 0;
+            if (i === inst.current) {
+                amt = Math.abs(expense.amount);
+            } else {
+                if (inst.amounts && inst.amounts.length === inst.total) {
+                    amt = inst.amounts[i - 1];
+                } else {
+                    amt = Math.round((inst.totalAmount / inst.total) * 100) / 100;
+                    if (i === inst.total) {
+                        const equalAmount = Math.round((inst.totalAmount / inst.total) * 100) / 100;
+                        const diff = Math.round((inst.totalAmount - equalAmount * inst.total) * 100) / 100;
+                        if (diff !== 0) amt = Math.round((amt + diff) * 100) / 100;
+                    }
+                }
+            }
+            totalDueSum += amt;
+        }
+        
+        const repaid = {
+            id: id + "_repaid",
+            title: expense.title,
+            amount: totalDueSum,
+            date: expense.date,
+            tag: expense.tag,
+            roundingDelta: expense.roundingDelta || undefined,
+            piocheCochon: expense.piocheCochon || undefined
+        };
+        
+        state.expenses = state.expenses.filter(e =>
+            !(e.installment && e.installment.groupId === groupId && e.installment.current >= inst.current)
+        );
+        state.expenses.push(repaid);
+        return repaid;
+    }
+
+    // --- SÉQUENCE DES SCÉNARIOS ---
+
+    // Scenario 1: Dépense classique sans cochon
+    const e1 = simAddExpense("Courses", 50);
+    simEditExpense(e1.id, "Courses Bio", 60);
+    simDeleteExpense(e1.id);
+
+    // Scenario 2: Dépense classique avec arrondi cochon
+    state.settings.isRoundingEnabled = true;
+    state.settings.roundingCeiling = 10;
+    const e2 = simAddExpense("Vape", 45.10, { useRounding: true });
+    simEditExpense(e2.id, "Vape Mod", 50.00); 
+    simDeleteExpense(e2.id);
+
+    // Scenario 3: Dépense classique avec pioche cochon
+    const e3 = simAddExpense("Resto", 30.00, { useCochonPioche: true });
+    simDeleteExpense(e3.id);
+
+    // Scenario 4: Paiement fractionné symétrique sans cochon (200 € en 4 fois)
+    const f1 = simAddInstallment("Canap", 200, 4);
+    simDeleteExpense(f1.id);
+
+    // Scenario 5: Paiement fractionné asymétrique sans cochon (120 € en 4 fois: 45, 25, 25, 25)
+    const f2 = simAddInstallment("Télé", 120, 4, [45, 25, 25, 25]);
+    const r2 = simEarlyRepay(f2.id); 
+    simDeleteExpense(r2.id);
+
+    // Scenario 6: Paiement fractionné asymétrique avec arrondi cochon
+    const f3 = simAddInstallment("Vélo", 120, 4, [45, 25, 25, 25], { useRounding: true });
+    simDeleteExpense(f3.id);
+
+    // Scenario 7: Paiement fractionné asymétrique avec pioche cochon
+    const f4 = simAddInstallment("Trottinette", 120, 4, [45, 25, 25, 25], { useCochonPioche: true });
+    const r4 = simEarlyRepay(f4.id); 
+    simDeleteExpense(r4.id); 
+
+    // Scenario 8: Frais fixe (Ajout / Modif / Suppr)
+    const fc = { id: "fc1", title: "Loyer", amount: 600 };
+    state.fixedCharges.push(fc);
+    fc.amount = 650; 
+    state.fixedCharges = state.fixedCharges.filter(c => c.id !== fc.id); 
+
+    // Scenario 9: Revenu (Ajout / Modif / Suppr)
+    const rev = { id: "rev1", title: "Salaire", amount: 2000 };
+    state.revenues.push(rev);
+    rev.amount = 2100; 
+    state.revenues = state.revenues.filter(r => r.id !== rev.id); 
+
+    // Scenario 10: Enveloppe dédiée classique (Ajout ➡️ Opération ➡️ Clôture ➡️ Réouverture ➡️ Suppression)
+    const bId1 = "env_classic_test";
+    const mainTxId1 = "main_tx_env_classic";
+    const envClassic = {
+        id: bId1,
+        title: "Restaurants",
+        allocated: 150,
+        originalAllocated: 150,
+        type: "deducted",
+        subType: "classic",
+        expenses: [],
+        archivedExpenses: [],
+        mainTransactionId: mainTxId1,
+        createdDate: getTodayDateString()
+    };
+    state.budgets.push(envClassic);
+    state.expenses.push({
+        id: mainTxId1,
+        title: `Enveloppe : Restaurants`,
+        amount: 150,
+        date: getTodayDateString(),
+        isBudgetReference: true,
+        budgetId: bId1
+    });
+
+    envClassic.expenses.push({
+        id: "env_op_1",
+        title: "Pizzeria",
+        amount: 35.00,
+        date: getTodayDateString()
+    });
+    syncMainBudgetReference(envClassic);
+
+    executeCloseBudgetLogic(envClassic);
+    executeReopenBudgetLogic(envClassic);
+
+    state.expenses = state.expenses.filter(e => e.budgetId !== envClassic.id && e.id !== mainTxId1);
+    state.budgets  = state.budgets.filter(b => b.id !== envClassic.id);
+
+    // Scenario 11: Enveloppe de groupe / Amis (Ajout ➡️ Opération ➡️ Suppression)
+    const bId2 = "env_friends_test";
+    const mainTxId2 = "main_tx_env_friends";
+    const envFriends = {
+        id: bId2,
+        title: "Weekend",
+        allocated: 100,
+        originalAllocated: 100,
+        type: "deducted",
+        subType: "friends",
+        expenses: [],
+        archivedExpenses: [],
+        mainTransactionId: mainTxId2,
+        createdDate: getTodayDateString()
+    };
+    state.budgets.push(envFriends);
+    state.expenses.push({
+        id: mainTxId2,
+        title: `Enveloppe : Weekend`,
+        amount: 100,
+        date: getTodayDateString(),
+        isBudgetReference: true,
+        budgetId: bId2
+    });
+
+    envFriends.expenses.push({
+        id: "env_op_2",
+        title: "Essence",
+        amount: 40.00,
+        date: getTodayDateString()
+    });
+    syncMainBudgetReference(envFriends);
+
+    state.expenses = state.expenses.filter(e => e.budgetId !== envFriends.id && e.id !== mainTxId2);
+    state.budgets  = state.budgets.filter(b => b.id !== envFriends.id);
+
+    // Scenario 12: Retrait manuel Cochon -> Budget (Ajout ➡️ Suppression)
+    state.cochon = 50.00;
+    const w1 = {
+        id: "cochon_withdrawal_test",
+        title: "Retrait Cochon → Budget",
+        amount: -10.00, 
+        date: getTodayDateString(),
+        tag: "epargne",
+        isCochonWithdrawal: true
+    };
+    state.cochon = Math.round((state.cochon - 10.00) * 100) / 100; 
+    state.expenses.push(w1);
+    simDeleteExpense(w1.id); 
+
+    // Scenario 13: Plancher de sécurité Cochon (Ajout ➡️ Suppression)
+    state.cochon = 50.00;
+    const fs1 = {
+        id: "cochon_floor_test",
+        title: "Plancher sécurité (+15,00 €)",
+        amount: 15.00,
+        date: getTodayDateString(),
+        tag: "epargne",
+        isFloorShift: true
+    };
+    state.cochon = Math.round((state.cochon - 15.00) * 100) / 100; 
+    state.expenses.push(fs1);
+    simDeleteExpense(fs1.id); 
+
+    // Scenario 14: Interaction Cochon - Dépense avec arrondi ➡️ Déplacement de plancher (oublier) ➡️ Suppression de la dépense (récupération partielle) ➡️ Suppression du plancher
+    state.cochon = 0.00; 
+    const eArrondi = simAddExpense("Courses Cochon", 45.10, { useRounding: true });
+    if (state.cochon !== 4.51) throw new Error(`Scénario 14 (1) : Cochon attendu 4.51, obtenu ${state.cochon}`);
+
+    state.cochon = Math.round((state.cochon - 2.00) * 100) / 100; 
+    const ePlancher = {
+        id: "test_floor_interaction",
+        title: "Plancher sécurité (+2,00 €)",
+        amount: 2.00,
+        date: getTodayDateString(),
+        tag: "epargne",
+        isFloorShift: true
+    };
+    state.expenses.push(ePlancher);
+    if (state.cochon !== 2.51) throw new Error(`Scénario 14 (2) : Cochon attendu 2.51, obtenu ${state.cochon}`);
+
+    simDeleteExpense(eArrondi.id);
+    if (state.cochon !== 0.00) throw new Error(`Scénario 14 (3) : Cochon attendu 0.00, obtenu ${state.cochon}`);
+
+    simDeleteExpense(ePlancher.id);
+    if (state.cochon !== 2.00) throw new Error(`Scénario 14 (4) : Cochon attendu 2.00, obtenu ${state.cochon}`);
+
+    state.cochon = initialCochon;
+
+    // --- VÉRIFICATION DE L'INVARIANT DE L'ÉTAT ---
+    if (state.expenses.length !== 0) throw new Error("Flux ultime : Il reste des dépenses non nettoyées");
+    if (state.fixedCharges.length !== 0) throw new Error("Flux ultime : Il reste des frais fixes non nettoyés");
+    if (state.revenues.length !== 0) throw new Error("Flux ultime : Il reste des revenus non nettoyés");
+    if (state.budgets.length !== 0) throw new Error("Flux ultime : Il reste des enveloppes non nettoyées");
+    if (state.cochon !== initialCochon) {
+        throw new Error(`Flux ultime : ÉCHEC DE L'INVARIANT COCHON. Attendu: ${initialCochon} €, Obtenu: ${state.cochon} €`);
+    }
+
+    return true;
+}
 
 /**
  * Test 11 : Pourboire Cochon - vérifie que calculateSmartRounding
@@ -9459,6 +9947,7 @@ window.testPeriodicityCalculations = testPeriodicityCalculations;
 window.testInstallmentPayments = testInstallmentPayments;
 window.testInstallmentEdgeCases = testInstallmentEdgeCases;
 window.testInstallmentCustomAmounts = testInstallmentCustomAmounts;
+window.testUltimateFlowIntegrity = testUltimateFlowIntegrity;
 window.testSmartRounding = testSmartRounding;
 window.testCochonLogic = testCochonLogic;
 window.testPdfExportFlow = testPdfExportFlow;
