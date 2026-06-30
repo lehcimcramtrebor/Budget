@@ -2547,7 +2547,7 @@ function openEditItem(type, id, parentId = null) {
     } else if (type === "budgetOperation") {
         const budget = state.budgets.find(b => b.id === parentId);
         if (budget) {
-            item = (budget.expenses || []).find(op => op.id === id) || (budget.archivedExpenses || []).find(op => op.id === id);
+            item = (budget.expenses || []).find(op => op.id === id) || (budget.archivedExpenses && budget.archivedExpenses.find(op => op.id === id));
             if (item) {
                 modalTitle = item.amount < 0 ? "Modifier le remboursement" : "Modifier la dépense";
             }
@@ -2564,54 +2564,101 @@ function openEditItem(type, id, parentId = null) {
 
     currentEditingItem = { type, id, parentId };
 
-    document.getElementById("edit_modal_title").innerHTML = `✏️ ${modalTitle}`;
-    document.getElementById("edit_title").value = item.title;
-    
-    const absAmount = Math.abs(item.amount);
-    document.getElementById("edit_amount").value = absAmount.toFixed(2).replace(".", ",");
-
-    // Hide or show date picker section inside edit modal
+    const isInstallment = (type === "expense" && item.installment && item.installment.total > 1);
+    const titleInput = document.getElementById("edit_title");
+    const amountInput = document.getElementById("edit_amount");
     const dateSection = document.getElementById("edit_date_section");
-    if (type === "expense" || type === "budgetOperation") {
-        dateSection.classList.remove("hidden");
-        const dateVal = document.getElementById("edit_expense_date_value");
-        const dateLabel = document.getElementById("edit_expense_date_label");
+    const tagSection = document.getElementById("edit_tag_section");
+    const submitBtn = document.getElementById("edit_submit_btn");
+    const cancelBtn = document.getElementById("edit_cancel_btn");
+
+    if (isInstallment) {
+        document.getElementById("edit_modal_title").innerHTML = `💳 Paiement fractionné`;
         
-        dateVal.value = item.date || "";
-        if (item.date) {
-            if (/^\d{4}-\d{2}-\d{2}$/.test(item.date)) {
-                const [y, m, d] = item.date.split("-").map(Number);
-                const dObj = new Date(y, m - 1, d);
-                dateLabel.textContent = dObj.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-            } else {
-                dateLabel.textContent = item.date;
-            }
-        } else {
-            dateLabel.textContent = "Date : Aujourd'hui";
+        // Rendre les champs de saisie en lecture seule
+        if (titleInput) {
+            titleInput.value = item.title;
+            titleInput.readOnly = true;
+            titleInput.classList.add('opacity-60', 'cursor-not-allowed', 'bg-stone-50/50', 'dark:bg-stone-950/20');
+        }
+        if (amountInput) {
+            amountInput.value = Math.abs(item.amount).toFixed(2).replace(".", ",");
+            amountInput.readOnly = true;
+            amountInput.classList.add('opacity-60', 'cursor-not-allowed', 'bg-stone-50/50', 'dark:bg-stone-950/20');
+        }
+        
+        // Cacher la date et la catégorie car elles ne sont pas modifiables individuellement
+        if (dateSection) dateSection.classList.add("hidden");
+        if (tagSection) tagSection.classList.add("hidden");
+        
+        // Ajuster les boutons d'action (consultatif)
+        if (submitBtn) submitBtn.classList.add("hidden");
+        if (cancelBtn) {
+            cancelBtn.textContent = "Fermer";
+            cancelBtn.classList.add("col-span-2");
         }
     } else {
-        dateSection.classList.add("hidden");
-    }
-
-// Gestion de l'affichage du tag en édition
-    const editTagSection = document.getElementById("edit_tag_section");
-    if (editTagSection) {
-	if (type === "expense" || type === "budget") {
-		editTagSection.classList.remove("hidden");
-            let currentTag = "divers";
-            
-            if (type === "expense") {
-                const exp = state.expenses.find(e => e.id === id);
-                if (exp && exp.tag) currentTag = exp.tag;
-            } else if (type === "budget") {
-                const budget = state.budgets.find(b => b.id === id);
-                if (budget && budget.tag) currentTag = budget.tag;
+        document.getElementById("edit_modal_title").innerHTML = `✏️ ${modalTitle}`;
+        
+        if (titleInput) {
+            titleInput.value = item.title;
+            titleInput.readOnly = false;
+            titleInput.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-stone-50/50', 'dark:bg-stone-950/20');
+        }
+        if (amountInput) {
+            amountInput.value = Math.abs(item.amount).toFixed(2).replace(".", ",");
+            amountInput.readOnly = false;
+            amountInput.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-stone-50/50', 'dark:bg-stone-950/20');
+        }
+        
+        // Gérer la date
+        if (dateSection) {
+            if (type === "expense" || type === "budgetOperation") {
+                dateSection.classList.remove("hidden");
+                const dateVal = document.getElementById("edit_expense_date_value");
+                const dateLabel = document.getElementById("edit_expense_date_label");
+                dateVal.value = item.date || "";
+                if (item.date) {
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(item.date)) {
+                        const [y, m, d] = item.date.split("-").map(Number);
+                        const dObj = new Date(y, m - 1, d);
+                        dateLabel.textContent = dObj.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+                    } else {
+                        dateLabel.textContent = item.date;
+                    }
+                } else {
+                    dateLabel.textContent = "Date : Aujourd'hui";
+                }
+            } else {
+                dateSection.classList.add("hidden");
             }
-            const editTagInput = document.getElementById("edit_exp_tag");
-			if (editTagInput) editTagInput.value = currentTag;
-			renderCompactTags("edit_tag_selector_container", "edit_exp_tag", item.title);
-        } else {
-            editTagSection.classList.add("hidden");
+        }
+        
+        // Gérer la catégorie (tag)
+        if (tagSection) {
+            if (type === "expense" || type === "budget") {
+                tagSection.classList.remove("hidden");
+                let currentTag = "divers";
+                if (type === "expense") {
+                    const exp = state.expenses.find(e => e.id === id);
+                    if (exp && exp.tag) currentTag = exp.tag;
+                } else if (type === "budget") {
+                    const budget = state.budgets.find(b => b.id === id);
+                    if (budget && budget.tag) currentTag = budget.tag;
+                }
+                const editTagInput = document.getElementById("edit_exp_tag");
+                if (editTagInput) editTagInput.value = currentTag;
+                renderCompactTags("edit_tag_selector_container", "edit_exp_tag", item.title);
+            } else {
+                tagSection.classList.add("hidden");
+            }
+        }
+        
+        // Ajuster les boutons d'action
+        if (submitBtn) submitBtn.classList.remove("hidden");
+        if (cancelBtn) {
+            cancelBtn.textContent = "Annuler";
+            cancelBtn.classList.remove("col-span-2");
         }
     }
 
@@ -2631,13 +2678,72 @@ function openEditItem(type, id, parentId = null) {
     if (earlyRepaySection) {
         if (type === "expense" && item.installment && item.installment.total > 1) {
             earlyRepaySection.classList.remove("hidden");
-            const inst    = item.installment;
-            const perMonth = Math.abs(item.amount);
+            const inst      = item.installment;
+            const amounts    = inst.amounts;
+            const totalAmount = inst.totalAmount || (Math.abs(item.amount) * inst.total);
             const remaining = inst.total - inst.current + 1;
-            const totalDue  = (perMonth * remaining).toFixed(2).replace('.', ',');
+
+            let totalDueSum = 0;
+            let rows = '';
+            for (let i = 1; i <= inst.total; i++) {
+                let amt = 0;
+                let status = '';
+                if (i < inst.current) {
+                    if (amounts && amounts.length === inst.total) {
+                        amt = amounts[i - 1];
+                    } else {
+                        amt = Math.round((totalAmount / inst.total) * 100) / 100;
+                    }
+                    status = '<span class="text-stone-400 dark:text-stone-600 font-black">payé</span>';
+                } else if (i === inst.current) {
+                    amt = Math.abs(item.amount);
+                    status = '<span class="text-violet-500 font-black">ce mois</span>';
+                } else {
+                    if (amounts && amounts.length === inst.total) {
+                        amt = amounts[i - 1];
+                    } else {
+                        amt = Math.round((totalAmount / inst.total) * 100) / 100;
+                        if (i === inst.total) {
+                            const equalAmount = Math.round((totalAmount / inst.total) * 100) / 100;
+                            const diff = Math.round((totalAmount - equalAmount * inst.total) * 100) / 100;
+                            if (diff !== 0) amt = Math.round((amt + diff) * 100) / 100;
+                        }
+                    }
+                    status = '<span class="text-stone-400 dark:text-stone-500 font-black">futur</span>';
+                }
+                totalDueSum += amt;
+                
+                rows += `
+                <tr style="border-bottom: 1px solid rgba(139, 92, 246, 0.1)">
+                    <td style="padding: 4px 0; font-weight: 900; color: rgb(139,92,246); text-align: left; font-size: 10px;">${i}/${inst.total}</td>
+                    <td style="padding: 4px 0; font-family: monospace; font-weight: 700; color: #6b7280; text-align: right; font-size: 10px;">${amt.toFixed(2).replace('.', ',')} €</td>
+                    <td style="padding: 4px 0; text-align: right; font-size: 8px; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 16px;">${status}</td>
+                </tr>`;
+            }
+            
+            const tableHTML = `
+            <div style="margin-top: 8px; background-color: rgba(139, 92, 246, 0.03); border: 1px solid rgba(139, 92, 246, 0.15); border-radius: 12px; padding: 10px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(139, 92, 246, 0.2)">
+                            <th style="text-align: left; font-size: 8px; font-weight: 900; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 4px;">Échéance</th>
+                            <th style="text-align: right; font-size: 8px; font-weight: 900; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 4px;">Montant</th>
+                            <th style="text-align: right; font-size: 8px; font-weight: 900; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 4px;">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 6px; border-top: 1px solid rgba(139, 92, 246, 0.2); margin-top: 6px; font-weight: 900; font-size: 10px;">
+                    <span style="color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; font-size: 8px;">TOTAL DUÉ (PAYÉ+RESTANT)</span>
+                    <span style="color: rgb(139,92,246); font-family: monospace;">${totalDueSum.toFixed(2).replace('.', ',')} €</span>
+                </div>
+            </div>`;
+
             const infoEl   = document.getElementById('edit_installment_info');
             if (infoEl) {
-                infoEl.innerHTML = `Échéance <strong class="text-violet-500">${inst.current}/${inst.total}</strong> — ${remaining} paiement${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''} à ${perMonth.toFixed(2).replace('.',',')} € = <strong>${totalDue} €</strong> au total`;
+                infoEl.innerHTML = `Échéance actuelle : <strong class="text-violet-500">${inst.current}/${inst.total}</strong><br>${tableHTML}`;
             }
         } else {
             earlyRepaySection.classList.add("hidden");
