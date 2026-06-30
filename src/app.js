@@ -1209,21 +1209,40 @@ function deleteExpense(id) {
         const groupId    = expense.installment.groupId;
         const instCur    = expense.installment.current;
         const instTotal  = expense.installment.total;
-        const perMonth   = Math.abs(expense.amount);
+        const amounts    = expense.installment.amounts;
+        const totalAmount = expense.installment.totalAmount || (Math.abs(expense.amount) * instTotal);
 
         // Échéances restantes à annuler (current à total)
         const remaining  = instTotal - instCur + 1;
-        const totalDue   = (perMonth * remaining).toFixed(2).replace('.', ',');
+        let totalDueSum  = 0;
 
         // Construire le détail des échéances en tableau HTML
         let rows = '';
         for (let i = instCur; i <= instTotal; i++) {
+            let amt = 0;
+            if (i === instCur) {
+                amt = Math.abs(expense.amount);
+            } else {
+                if (amounts && amounts.length === instTotal) {
+                    amt = amounts[i - 1];
+                } else {
+                    amt = Math.round((totalAmount / instTotal) * 100) / 100;
+                    if (i === instTotal) {
+                        const equalAmount = Math.round((totalAmount / instTotal) * 100) / 100;
+                        const diff = Math.round((totalAmount - equalAmount * instTotal) * 100) / 100;
+                        if (diff !== 0) amt = Math.round((amt + diff) * 100) / 100;
+                    }
+                }
+            }
+            totalDueSum += amt;
             rows += `<tr>
                 <td style="padding:2px 6px 2px 0;font-weight:900;color:rgb(139,92,246)">${i}/${instTotal}</td>
-                <td style="padding:2px 0;color:#6b7280">− ${perMonth.toFixed(2).replace('.',',')} €</td>
+                <td style="padding:2px 0;color:#6b7280">− ${amt.toFixed(2).replace('.',',')} €</td>
                 <td style="padding:2px 0 2px 8px;font-size:9px;color:#9ca3af">${i === instCur ? '← ce mois' : 'futur'}</td>
             </tr>`;
         }
+
+        const totalDue = totalDueSum.toFixed(2).replace('.', ',');
 
         const detailHTML = `
             <table style="width:100%;font-family:monospace;font-size:10px;margin-top:8px;border-collapse:collapse">
@@ -2814,20 +2833,38 @@ function earlyRepayInstallment() {
     if (!expense || !expense.installment) return;
 
     const inst      = expense.installment;
-    const perMonth  = Math.abs(expense.amount);
     const remaining = inst.total - inst.current + 1;
-    const totalDue  = perMonth * remaining;
     const groupId   = inst.groupId;
+    const amounts    = inst.amounts;
+    const totalAmount = inst.totalAmount || (Math.abs(expense.amount) * inst.total);
 
+    let totalDueSum = 0;
     // Construire le tableau récap
     let rows = '';
     for (let i = inst.current; i <= inst.total; i++) {
+        let amt = 0;
+        if (i === inst.current) {
+            amt = Math.abs(expense.amount);
+        } else {
+            if (amounts && amounts.length === inst.total) {
+                amt = amounts[i - 1];
+            } else {
+                amt = Math.round((totalAmount / inst.total) * 100) / 100;
+                if (i === inst.total) {
+                    const equalAmount = Math.round((totalAmount / inst.total) * 100) / 100;
+                    const diff = Math.round((totalAmount - equalAmount * inst.total) * 100) / 100;
+                    if (diff !== 0) amt = Math.round((amt + diff) * 100) / 100;
+                }
+            }
+        }
+        totalDueSum += amt;
         rows += `<tr>
             <td style="padding:2px 6px 2px 0;font-weight:900;color:rgb(139,92,246)">${i}/${inst.total}</td>
-            <td style="padding:2px 0;color:#6b7280">${perMonth.toFixed(2).replace('.',',')} €</td>
+            <td style="padding:2px 0;color:#6b7280">${amt.toFixed(2).replace('.', ',')} €</td>
             <td style="padding:2px 0 2px 8px;font-size:9px;color:#9ca3af">${i === inst.current ? '← ce mois' : 'soldé'}</td>
         </tr>`;
     }
+    const totalDue  = totalDueSum;
     const detailHTML = `<table style="width:100%;font-family:monospace;font-size:10px;margin-top:8px;border-collapse:collapse">
         ${rows}
         <tr style="border-top:1px solid rgba(139,92,246,0.25)">
