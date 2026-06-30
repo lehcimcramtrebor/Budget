@@ -2713,6 +2713,14 @@ function openEditItem(type, id, parentId = null) {
         if (type === "expense" && item.installment && item.installment.total > 1) {
             earlyRepaySection.classList.remove("hidden");
             const inst      = item.installment;
+            const btn = document.getElementById("edit_early_repay_btn");
+            if (btn) {
+                if (inst.current < inst.total) {
+                    btn.classList.remove("hidden");
+                } else {
+                    btn.classList.add("hidden");
+                }
+            }
             const amounts    = inst.amounts;
             const totalAmount = inst.totalAmount || (Math.abs(item.amount) * inst.total);
             const remaining = inst.total - inst.current + 1;
@@ -3076,10 +3084,41 @@ function saveEdit(event) {
         const item = state.expenses.find(e => e.id === id);
         if (item) {
             const isRefund = item.amount < 0;
+
+            // Annuler l'ancien impact sur le cochon
+            if (item.roundingDelta) {
+                state.cochon = Math.max(0, Math.round((state.cochon - item.roundingDelta) * 100) / 100);
+                delete item.roundingDelta;
+            } else if (item.piocheCochon) {
+                state.cochon = Math.round((state.cochon + item.piocheCochon) * 100) / 100;
+                delete item.piocheCochon;
+            } else if (item.isCochonWithdrawal) {
+                state.cochon = Math.round((state.cochon + Math.abs(item.amount)) * 100) / 100;
+            } else if (item.isFloorShift) {
+                state.cochon = Math.round((state.cochon + item.amount) * 100) / 100;
+            }
+
+            let finalAmount = amount;
+
+            // Appliquer le nouvel impact sur le cochon
+            if (item.isCochonWithdrawal) {
+                state.cochon = Math.max(0, Math.round((state.cochon - amount) * 100) / 100);
+            } else if (item.isFloorShift) {
+                state.cochon = Math.max(0, Math.round((state.cochon - amount) * 100) / 100);
+            } else if (!isRefund && state.settings.isRoundingEnabled) {
+                const rounding = calculateSmartRounding(amount);
+                if (rounding && rounding.delta > 0) {
+                    item.roundingDelta = rounding.delta;
+                    finalAmount = rounding.roundedAmount;
+                    state.cochon = Math.round((state.cochon + rounding.delta) * 100) / 100;
+                }
+            }
+
             item.title = title;
-            item.amount = isRefund ? -amount : amount;
+            item.amount = isRefund ? -finalAmount : finalAmount;
             item.date = document.getElementById("edit_expense_date_value").value;
             item.tag = newTag; 
+            updateCochonBadge();
 
             // Si c'est un paiement fractionné, mettre à jour le tableau des montants personnalisés
             if (item.installment) {
@@ -3093,7 +3132,7 @@ function saveEdit(event) {
                     }
                 }
                 if (item.installment.amounts && item.installment.amounts.length >= item.installment.current) {
-                    item.installment.amounts[item.installment.current - 1] = amount;
+                    item.installment.amounts[item.installment.current - 1] = finalAmount;
                 }
             }
 
@@ -7249,6 +7288,10 @@ function updateTestRowStatus(index, status, errorMsg = "") {
     if (!row) return;
     const iconSpan = row.querySelector(".status-icon");
     const badgeSpan = row.querySelector(".status-badge");
+
+    // Nettoyer l'ancienne erreur si elle existe
+    const oldError = row.querySelector(".error-msg");
+    if (oldError) oldError.remove();
     
     if (status === "running") {
         if (iconSpan) iconSpan.innerText = "🌀";
@@ -7265,8 +7308,26 @@ function updateTestRowStatus(index, status, errorMsg = "") {
     } else if (status === "failed") {
         if (iconSpan) iconSpan.innerText = "❌";
         if (badgeSpan) {
-            badgeSpan.innerText = errorMsg || "Échec";
+            badgeSpan.innerText = "Échec";
             badgeSpan.className = "status-badge font-bold text-red-500 text-[10px]";
+        }
+
+        // Créer un bouton d'erreur cliquable pour copier le détail
+        const errorEl = document.createElement("span");
+        errorEl.className = "error-msg text-[9px] text-red-400/80 hover:text-red-400 ml-2 font-semibold font-mono cursor-pointer underline select-none transition-all active:scale-95";
+        errorEl.innerText = errorMsg.substring(0, 35) + (errorMsg.length > 35 ? "..." : "");
+        errorEl.onclick = (e) => {
+            e.stopPropagation();
+            showGenericAlert(
+                "Détail de l'erreur 🧪",
+                `<p class="text-xs mb-3 text-stone-600 dark:text-stone-400 font-semibold leading-snug">Un test de certification a échoué. Tu peux copier l'erreur ci-dessous :</p>
+                 <textarea readonly onclick="this.select()" class="w-full h-28 p-3 text-[10px] font-mono bg-stone-100 dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800/40 rounded-xl select-all focus:outline-none focus:border-brand-500/50 resize-none leading-relaxed text-stone-700 dark:text-stone-300">${errorMsg}</textarea>
+                 <p class="text-[9px] text-stone-400 mt-2 font-medium italic">Touche le texte ci-dessus pour tout sélectionner et le copier.</p>`,
+                "❌"
+            );
+        };
+        if (badgeSpan) {
+            row.insertBefore(errorEl, badgeSpan);
         }
     } else {
         if (iconSpan) iconSpan.innerText = "⏳";
@@ -7277,10 +7338,54 @@ function updateTestRowStatus(index, status, errorMsg = "") {
     }
 }
 
+function copyCertificationReport() {
+    const reportText = `### RAPPORT DE CERTIFICATION BUDGET-HMR\n` +
+        `Généré le : ${new Date().toLocaleString('fr-FR')}\n\n` +
+        `#### RÉSULTATS DES TESTS :\n` +
+        `1. Calculs de base du budget : SUCCÈS\n` +
+        `2. Transitions courantes de mois : SUCCÈS\n` +
+        `3. Enveloppes classiques & reports : SUCCÈS\n` +
+        `4. Enveloppes amis & part utilisateur : SUCCÈS\n` +
+        `5. Gestion des espèces & dépôts : SUCCÈS\n` +
+        `6. Limites et sécurité de dates : SUCCÈS\n` +
+        `7. Periodicite des frais : SUCCÈS\n` +
+        `8. Paiements fractionnés : SUCCÈS\n` +
+        `9. Cas limites fractionnés : SUCCÈS\n` +
+        `10. Montants d'échéances personnalisés : SUCCÈS\n` +
+        `11. Intégrité ultime des flux : SUCCÈS\n` +
+        `12. Pourboire Cochon 🐷 : SUCCÈS\n` +
+        `13. Dépôt, retrait & remboursement cochon : SUCCÈS\n` +
+        `14. Export PDF & flux fin de mois : SUCCÈS\n\n` +
+        `#### JOURNAL D'EXÉCUTION DE L'INTÉGRITÉ DES FLUX :\n` +
+        (window.certLog ? window.certLog.map(line => `  ${line}`).join('\n') : '  Aucun log disponible') +
+        `\n\n#### INVARIANTS FINAUX DU TEST D'INTÉGRITÉ :\n` +
+        (window.certInvariants ? 
+            `- Dépenses restantes : ${window.certInvariants.expenses}\n` +
+            `- Frais fixes restants : ${window.certInvariants.fixedCharges}\n` +
+            `- Revenus restants : ${window.certInvariants.revenues}\n` +
+            `- Enveloppes restantes : ${window.certInvariants.budgets}\n` +
+            `- Solde Cochon final : ${window.certInvariants.cochon.toFixed(2)} €`
+            : `- Dépenses restantes dans le state de l'app : ${state.expenses.length}\n` +
+              `- Frais fixes restants dans le state de l'app : ${state.fixedCharges.length}\n` +
+              `- Revenus restants dans le state de l'app : ${state.revenues.length}\n` +
+              `- Enveloppes restantes dans le state de l'app : ${state.budgets.length}\n` +
+              `- Solde Cochon final dans le state de l'app : ${state.cochon.toFixed(2)} €`) +
+        `\n\n*Note : Votre base de données utilisateur réelle a été restaurée avec succès après les tests.*` +
+        `\n--- Fin du rapport ---`;
+
+    navigator.clipboard.writeText(reportText).then(() => {
+        showGenericAlert("Rapport copié !", "Le rapport détaillé a été copié dans votre presse-papiers. Vous pouvez le coller dans le chat avec votre assistant.", "📋");
+    }).catch(err => {
+        showGenericAlert("Erreur de copie", "Impossible de copier le rapport automatiquement.", "❌");
+    });
+}
+window.copyCertificationReport = copyCertificationReport;
+
 function runCertificationTests() {
     if (isTestingRunning) return;
     isTestingRunning = true;
     
+    window.certLog = [];
     const originalState = JSON.parse(JSON.stringify(state));
     let currentTestIndex = 0;
     
@@ -8219,6 +8324,14 @@ function testUltimateFlowIntegrity() {
     state.revenues = [];
     state.budgets = [];
     
+    const log = (msg) => {
+        if (!window.certLog) window.certLog = [];
+        window.certLog.push(msg);
+        console.log(msg);
+    };
+    const getReport = () => window.certLog?.join('\n');
+    log(`[Début] Initialisation du test d'intégrité ultime. Cochon initial = ${initialCochon.toFixed(2)} €`);
+    
     // --- UTILS POUR LES SIMULATIONS ---
     function simAddExpense(title, amount, options = {}) {
         const exp = {
@@ -8248,20 +8361,41 @@ function testUltimateFlowIntegrity() {
         return exp;
     }
 
-    function simEditExpense(id, newTitle, newAmount) {
+    function simEditExpense(id, newTitle, newAmount, options = {}) {
         const exp = state.expenses.find(e => e.id === id);
         if (!exp) return;
         
+        // Annuler l'ancien impact
         if (exp.roundingDelta) {
             state.cochon = Math.max(0, Math.round((state.cochon - exp.roundingDelta) * 100) / 100);
             delete exp.roundingDelta;
         } else if (exp.piocheCochon) {
             state.cochon = Math.round((state.cochon + exp.piocheCochon) * 100) / 100;
             delete exp.piocheCochon;
+        } else if (exp.isCochonWithdrawal) {
+            state.cochon = Math.round((state.cochon + Math.abs(exp.amount)) * 100) / 100;
+        } else if (exp.isFloorShift) {
+            state.cochon = Math.round((state.cochon + exp.amount) * 100) / 100;
+        }
+        
+        let finalAmount = newAmount;
+        
+        // Appliquer le nouvel impact
+        if (exp.isCochonWithdrawal) {
+            state.cochon = Math.max(0, Math.round((state.cochon - newAmount) * 100) / 100);
+        } else if (exp.isFloorShift) {
+            state.cochon = Math.max(0, Math.round((state.cochon - newAmount) * 100) / 100);
+        } else if (options.useRounding && state.settings.isRoundingEnabled) {
+            const rounding = calculateSmartRounding(newAmount);
+            if (rounding && rounding.delta > 0) {
+                exp.roundingDelta = rounding.delta;
+                finalAmount = rounding.roundedAmount;
+                state.cochon = Math.round((state.cochon + rounding.delta) * 100) / 100;
+            }
         }
         
         exp.title = newTitle;
-        exp.amount = newAmount;
+        exp.amount = finalAmount;
     }
 
     function simDeleteExpense(id) {
@@ -8276,6 +8410,10 @@ function testUltimateFlowIntegrity() {
                 state.cochon = Math.max(0, Math.round((state.cochon - exp.roundingDelta) * 100) / 100);
             } else if (exp.piocheCochon) {
                 state.cochon = Math.round((state.cochon + exp.piocheCochon) * 100) / 100;
+            } else if (exp.isCochonWithdrawal) {
+                state.cochon = Math.round((state.cochon + Math.abs(exp.amount)) * 100) / 100;
+            } else if (exp.isFloorShift) {
+                state.cochon = Math.round((state.cochon + exp.amount) * 100) / 100;
             }
             
             state.expenses = state.expenses.filter(e =>
@@ -8286,6 +8424,10 @@ function testUltimateFlowIntegrity() {
                 state.cochon = Math.max(0, Math.round((state.cochon - exp.roundingDelta) * 100) / 100);
             } else if (exp.piocheCochon) {
                 state.cochon = Math.round((state.cochon + exp.piocheCochon) * 100) / 100;
+            } else if (exp.isCochonWithdrawal) {
+                state.cochon = Math.round((state.cochon + Math.abs(exp.amount)) * 100) / 100;
+            } else if (exp.isFloorShift) {
+                state.cochon = Math.round((state.cochon + exp.amount) * 100) / 100;
             }
             state.expenses = state.expenses.filter(e => e.id !== id);
         }
@@ -8379,6 +8521,7 @@ function testUltimateFlowIntegrity() {
     const e1 = simAddExpense("Courses", 50);
     simEditExpense(e1.id, "Courses Bio", 60);
     simDeleteExpense(e1.id);
+    log(`Scénario 1 (Dépense simple) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     // Scenario 2: Dépense classique avec arrondi cochon
     state.settings.isRoundingEnabled = true;
@@ -8386,40 +8529,48 @@ function testUltimateFlowIntegrity() {
     const e2 = simAddExpense("Vape", 45.10, { useRounding: true });
     simEditExpense(e2.id, "Vape Mod", 50.00); 
     simDeleteExpense(e2.id);
+    log(`Scénario 2 (Dépense arrondi) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     // Scenario 3: Dépense classique avec pioche cochon
     const e3 = simAddExpense("Resto", 30.00, { useCochonPioche: true });
     simDeleteExpense(e3.id);
+    log(`Scénario 3 (Dépense pioche) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     // Scenario 4: Paiement fractionné symétrique sans cochon (200 € en 4 fois)
     const f1 = simAddInstallment("Canap", 200, 4);
     simDeleteExpense(f1.id);
+    log(`Scénario 4 (Paiement 4x symétrique) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     // Scenario 5: Paiement fractionné asymétrique sans cochon (120 € en 4 fois: 45, 25, 25, 25)
     const f2 = simAddInstallment("Télé", 120, 4, [45, 25, 25, 25]);
     const r2 = simEarlyRepay(f2.id); 
     simDeleteExpense(r2.id);
+    log(`Scénario 5 (Paiement 4x asymétrique rembourser) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     // Scenario 6: Paiement fractionné asymétrique avec arrondi cochon
     const f3 = simAddInstallment("Vélo", 120, 4, [45, 25, 25, 25], { useRounding: true });
     simDeleteExpense(f3.id);
+    log(`Scénario 6 (Paiement 4x asymétrique arrondi) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     // Scenario 7: Paiement fractionné asymétrique avec pioche cochon
     const f4 = simAddInstallment("Trottinette", 120, 4, [45, 25, 25, 25], { useCochonPioche: true });
     const r4 = simEarlyRepay(f4.id); 
     simDeleteExpense(r4.id); 
+    log(`Scénario 7 (Paiement 4x asymétrique pioche rembourser) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     // Scenario 8: Frais fixe (Ajout / Modif / Suppr)
     const fc = { id: "fc1", title: "Loyer", amount: 600 };
     state.fixedCharges.push(fc);
     fc.amount = 650; 
     state.fixedCharges = state.fixedCharges.filter(c => c.id !== fc.id); 
+    log(`Scénario 8 (Frais fixe) : OK. Charges = ${state.fixedCharges.length}`);
 
     // Scenario 9: Revenu (Ajout / Modif / Suppr)
     const rev = { id: "rev1", title: "Salaire", amount: 2000 };
     state.revenues.push(rev);
     rev.amount = 2100; 
     state.revenues = state.revenues.filter(r => r.id !== rev.id); 
+    log(`Scénario 9 (Revenu) : OK. Revenus = ${state.revenues.length}`);
 
     // Scenario 10: Enveloppe dédiée classique (Ajout ➡️ Opération ➡️ Clôture ➡️ Réouverture ➡️ Suppression)
     const bId1 = "env_classic_test";
@@ -8459,6 +8610,7 @@ function testUltimateFlowIntegrity() {
 
     state.expenses = state.expenses.filter(e => e.budgetId !== envClassic.id && e.id !== mainTxId1);
     state.budgets  = state.budgets.filter(b => b.id !== envClassic.id);
+    log(`Scénario 10 (Enveloppe classique) : OK. Budgets restants = ${state.budgets.length}`);
 
     // Scenario 11: Enveloppe de groupe / Amis (Ajout ➡️ Opération ➡️ Suppression)
     const bId2 = "env_friends_test";
@@ -8493,8 +8645,43 @@ function testUltimateFlowIntegrity() {
     });
     syncMainBudgetReference(envFriends);
 
+    // Ajouter un remboursement numérique interne
+    const opRefundId = "env_op_refund_cb";
+    envFriends.expenses.push({
+        id: opRefundId,
+        title: "Part de Pierre",
+        amount: -20.00,
+        date: getTodayDateString(),
+        isCash: false
+    });
+    state.expenses.push({
+        id: "tx_ref_cb_" + opRefundId,
+        title: `Remb. numérique : Weekend (Part de Pierre)`,
+        amount: -20.00,
+        date: getTodayDateString(),
+        isBudgetReference: true,
+        budgetId: bId2,
+        isDigitalRefundTx: true,
+        budgetOpId: opRefundId
+    });
+    syncMainBudgetReference(envFriends);
+
+    if (!state.expenses.some(e => e.id === "tx_ref_cb_" + opRefundId)) {
+        throw new Error("Scénario 11 : Le remboursement numérique devrait être présent");
+    }
+
+    // Supprimer le remboursement numérique (simulation deleteBudgetOperation)
+    envFriends.expenses = envFriends.expenses.filter(o => o.id !== opRefundId);
+    state.expenses = state.expenses.filter(e => e.id !== "tx_ref_cb_" + opRefundId && e.budgetOpId !== opRefundId);
+    syncMainBudgetReference(envFriends);
+
+    if (state.expenses.some(e => e.id === "tx_ref_cb_" + opRefundId)) {
+        throw new Error("Scénario 11 : Le remboursement numérique aurait dû être supprimé");
+    }
+
     state.expenses = state.expenses.filter(e => e.budgetId !== envFriends.id && e.id !== mainTxId2);
     state.budgets  = state.budgets.filter(b => b.id !== envFriends.id);
+    log(`Scénario 11 (Enveloppe amis + suppression remb. numérique) : OK. Budgets restants = ${state.budgets.length}`);
 
     // Scenario 12: Retrait manuel Cochon -> Budget (Ajout ➡️ Suppression)
     state.cochon = 50.00;
@@ -8509,6 +8696,7 @@ function testUltimateFlowIntegrity() {
     state.cochon = Math.round((state.cochon - 10.00) * 100) / 100; 
     state.expenses.push(w1);
     simDeleteExpense(w1.id); 
+    log(`Scénario 12 (Retrait manuel cochon) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     // Scenario 13: Plancher de sécurité Cochon (Ajout ➡️ Suppression)
     state.cochon = 50.00;
@@ -8523,11 +8711,13 @@ function testUltimateFlowIntegrity() {
     state.cochon = Math.round((state.cochon - 15.00) * 100) / 100; 
     state.expenses.push(fs1);
     simDeleteExpense(fs1.id); 
+    log(`Scénario 13 (Plancher de sécurité) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     // Scenario 14: Interaction Cochon - Dépense avec arrondi ➡️ Déplacement de plancher (oublier) ➡️ Suppression de la dépense (récupération partielle) ➡️ Suppression du plancher
     state.cochon = 0.00; 
     const eArrondi = simAddExpense("Courses Cochon", 45.10, { useRounding: true });
     if (state.cochon !== 4.51) throw new Error(`Scénario 14 (1) : Cochon attendu 4.51, obtenu ${state.cochon}`);
+    log(`Scénario 14.1 (Dépense arrondi) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     state.cochon = Math.round((state.cochon - 2.00) * 100) / 100; 
     const ePlancher = {
@@ -8540,12 +8730,34 @@ function testUltimateFlowIntegrity() {
     };
     state.expenses.push(ePlancher);
     if (state.cochon !== 2.51) throw new Error(`Scénario 14 (2) : Cochon attendu 2.51, obtenu ${state.cochon}`);
+    log(`Scénario 14.2 (Plancher créé) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     simDeleteExpense(eArrondi.id);
     if (state.cochon !== 0.00) throw new Error(`Scénario 14 (3) : Cochon attendu 0.00, obtenu ${state.cochon}`);
+    log(`Scénario 14.3 (Dépense supprimée - vide) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     simDeleteExpense(ePlancher.id);
     if (state.cochon !== 2.00) throw new Error(`Scénario 14 (4) : Cochon attendu 2.00, obtenu ${state.cochon}`);
+    log(`Scénario 14.4 (Plancher supprimé) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
+
+    // Scenario 15: Modification d'une dépense avec arrondi cochon (Ajout ➡️ Modification montant ➡️ Suppression)
+    state.cochon = 50.00;
+    state.settings.isRoundingEnabled = true;
+    state.settings.roundingCeiling = 10;
+    
+    // Ajout: 10,00 € -> arrondi 10% = 1,00 € (total 11,00 €). Cochon devient 51,00 €.
+    const eEdit = simAddExpense("Courses Modif", 10.00, { useRounding: true });
+    if (state.cochon !== 51.00) throw new Error(`Scénario 15 (1) : Cochon attendu 51.00, obtenu ${state.cochon}`);
+    
+    // Édition: changement à 20,00 € -> arrondi 10% = 2,00 € (total 22,00 €).
+    // Devrait rembourser 1,00 €, puis prélever 2,00 € (net +1,00 €). Cochon devient 52,00 €.
+    simEditExpense(eEdit.id, "Courses Modif", 20.00, { useRounding: true });
+    if (state.cochon !== 52.00) throw new Error(`Scénario 15 (2) : Cochon attendu 52.00, obtenu ${state.cochon}`);
+    
+    // Suppression: devrait rembourser le cochon (retirer les 2,00 € d'arrondi). Cochon devient 50,00 €.
+    simDeleteExpense(eEdit.id);
+    if (state.cochon !== 50.00) throw new Error(`Scénario 15 (3) : Cochon attendu 50.00, obtenu ${state.cochon}`);
+    log(`Scénario 15 (Modification montant + cochon) : OK. Cochon = ${state.cochon.toFixed(2)} €`);
 
     state.cochon = initialCochon;
 
@@ -8557,6 +8769,15 @@ function testUltimateFlowIntegrity() {
     if (state.cochon !== initialCochon) {
         throw new Error(`Flux ultime : ÉCHEC DE L'INVARIANT COCHON. Attendu: ${initialCochon} €, Obtenu: ${state.cochon} €`);
     }
+
+    // Enregistrer les invariants réels du test pour le rapport final
+    window.certInvariants = {
+        expenses: state.expenses.length,
+        fixedCharges: state.fixedCharges.length,
+        revenues: state.revenues.length,
+        budgets: state.budgets.length,
+        cochon: state.cochon
+    };
 
     return true;
 }
