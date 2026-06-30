@@ -463,6 +463,7 @@ function onInstallmentAmountChange(index, rawVal) {
         const sum = installmentAmounts.reduce((s, a) => s + a, 0);
         totalSpan.textContent = String(sum.toFixed(2)).replace('.', ',') + ' €';
     }
+    updateInstallmentPreview();
 }
 
 function onInstallmentAmountBlur(index, rawVal) {
@@ -484,7 +485,10 @@ function updateInstallmentPreview() {
     if (!preview) return;
 
     if (total > 1) {
-        const mensualite = (amountRaw / total);
+        let mensualite = (amountRaw / total);
+        if (installmentAmounts && installmentAmounts.length === total) {
+            mensualite = installmentAmounts[current - 1];
+        }
         const mensualiteStr = mensualite.toFixed(2).replace('.', ',');
         const remaining = total - current + 1;
         preview.textContent = `Éch. ${current}/${total} — ${mensualiteStr} € / mois · ${remaining} paiement${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''}`;
@@ -519,7 +523,50 @@ function resetInstallmentUI() {
 // Synchroniser l'aperçu quand le montant change
 document.addEventListener('DOMContentLoaded', () => {
     const amtInput = document.getElementById('exp_amount');
-    if (amtInput) amtInput.addEventListener('input', updateInstallmentPreview);
+    if (amtInput) {
+        amtInput.addEventListener('input', () => {
+            const total = parseInt(document.getElementById('exp_installment_total').value) || 1;
+            if (total > 1) {
+                // Recalculer les mensualités à égalité sur le nouveau montant
+                const amountRaw = parseFloat((amtInput.value || '0').replace(',', '.')) || 0;
+                const mensualite = Math.round((amountRaw / total) * 100) / 100;
+                installmentAmounts = Array.from({ length: total }, () => mensualite);
+                const diff = Math.round((amountRaw - mensualite * total) * 100) / 100;
+                if (diff !== 0) installmentAmounts[total - 1] = Math.round((installmentAmounts[total - 1] + diff) * 100) / 100;
+            }
+            updateInstallmentPreview();
+        });
+    }
+
+    // Sélectionner automatiquement tout le texte lors de la mise au point d'un champ de montant
+    document.addEventListener('focusin', (e) => {
+        if (e.target && e.target.tagName === 'INPUT') {
+            const id = e.target.id || '';
+            const inputmode = e.target.getAttribute('inputmode') || '';
+            const type = e.target.type || 'text';
+            
+            const isAmountInput = inputmode === 'decimal' || 
+                                  inputmode === 'numeric' ||
+                                  id.includes('amount') ||
+                                  id.includes('amt') ||
+                                  id.includes('budget') ||
+                                  id.includes('threshold') ||
+                                  id.includes('target');
+                                  
+            const skipTypes = ['checkbox', 'radio', 'file', 'range', 'hidden', 'submit', 'button'];
+            
+            if (isAmountInput && !skipTypes.includes(type)) {
+                setTimeout(() => {
+                    try {
+                        e.target.select();
+                        e.target.setSelectionRange(0, 99999);
+                    } catch (err) {
+                        // Certains types d'inputs ne supportent pas setSelectionRange
+                    }
+                }, 85); // Délai optimal pour contrer le comportement natif sur mobile/tactile
+            }
+        }
+    });
 });
 
 // ============================================================
@@ -2853,6 +2900,22 @@ function saveEdit(event) {
             item.amount = isRefund ? -amount : amount;
             item.date = document.getElementById("edit_expense_date_value").value;
             item.tag = newTag; 
+
+            // Si c'est un paiement fractionné, mettre à jour le tableau des montants personnalisés
+            if (item.installment) {
+                if (!item.installment.amounts) {
+                    // Initialiser avec la répartition égale si elle était nulle
+                    const equalAmount = Math.round((item.installment.totalAmount / item.installment.total) * 100) / 100;
+                    item.installment.amounts = Array.from({ length: item.installment.total }, () => equalAmount);
+                    const diff = Math.round((item.installment.totalAmount - equalAmount * item.installment.total) * 100) / 100;
+                    if (diff !== 0) {
+                        item.installment.amounts[item.installment.total - 1] = Math.round((item.installment.amounts[item.installment.total - 1] + diff) * 100) / 100;
+                    }
+                }
+                if (item.installment.amounts && item.installment.amounts.length >= item.installment.current) {
+                    item.installment.amounts[item.installment.current - 1] = amount;
+                }
+            }
 
             // SYNCHRONISATION RETROACTIVE VERS L'ENVELOPPE LIEER
             if (item.budgetId) {
