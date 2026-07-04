@@ -343,75 +343,36 @@
                     </div>
                 </div>
 
-                <!-- LIGNE 2 : Solde+Cochon & Mois -->
+                <!-- LIGNE 2 : Solde restant -->
                 <div class="flex justify-between items-center w-full">
-                    <div class="flex flex-col justify-center items-start">
-                        <h2 class="text-3xl font-black text-white drop-shadow-sm truncate leading-none py-1" id="remaining_balance_disp">0.00 €</h2>
-                        <div id="cochon_badge_container" class="cochon-hidden pointer-events-auto mt-1">
-                            <button type="button" onclick="openCochonModal()" title="Ouvrir ma réserve Cochon">
-                                <svg width="36" height="36" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0; filter: drop-shadow(0 2px 8px rgba(244,63,94,0.35));">
-                                    <defs>
-                                        <radialGradient id="pg-body" cx="38%" cy="32%" r="62%">
-                                            <stop offset="0%" stop-color="#ffd6e0" />
-                                            <stop offset="40%" stop-color="#ff8fab" />
-                                            <stop offset="80%" stop-color="#e63870" />
-                                            <stop offset="100%" stop-color="#c0254e" />
-                                        </radialGradient>
-                                        <radialGradient id="pg-ear" cx="50%" cy="40%" r="60%">
-                                            <stop offset="0%" stop-color="#ffdce8" />
-                                            <stop offset="100%" stop-color="#ff8fab" />
-                                        </radialGradient>
-                                        <radialGradient id="pg-snout" cx="45%" cy="38%" r="58%">
-                                            <stop offset="0%" stop-color="#ffe0ea" />
-                                            <stop offset="100%" stop-color="#ffb3c6" />
-                                        </radialGradient>
-                                        <radialGradient id="pg-shadow" cx="50%" cy="50%" r="50%">
-                                            <stop offset="0%" stop-color="rgba(0,0,0,0.22)" />
-                                            <stop offset="100%" stop-color="rgba(0,0,0,0)" />
-                                        </radialGradient>
-                                    </defs>
-                                    <ellipse cx="20" cy="36.5" rx="9" ry="2.2" fill="url(#pg-shadow)" />
-                                    <ellipse cx="10" cy="13" rx="4.5" ry="5.5" fill="url(#pg-ear)" transform="rotate(-18 10 13)" />
-                                    <ellipse cx="10.5" cy="13.5" rx="2.2" ry="3.2" fill="#ffb3c6" opacity="0.7" transform="rotate(-18 10 13)" />
-                                    <ellipse cx="30" cy="13" rx="4.5" ry="5.5" fill="url(#pg-ear)" transform="rotate(18 30 13)" />
-                                    <ellipse cx="29.5" cy="13.5" rx="2.2" ry="3.2" fill="#ffb3c6" opacity="0.7" transform="rotate(18 30 13)" />
-                                    <circle cx="20" cy="22" r="13" fill="url(#pg-body)" />
-                                    <circle cx="20" cy="22" r="13" fill="none" stroke="rgba(196,130,255,0.65)" stroke-width="1.5" style="filter: drop-shadow(0 0 4px rgba(196,130,255,0.5));"/>
-                                    <rect x="15.5" y="9.5" width="9" height="2.5" rx="1.25" fill="rgba(10,8,20,0.75)" />
-                                    <rect x="15.5" y="9.5" width="9" height="1" rx="0.5" fill="rgba(255,255,255,0.12)" />
-                                    <ellipse cx="20" cy="27" rx="6.5" ry="4.8" fill="url(#pg-snout)" />
-                                    <ellipse cx="17.5" cy="27.5" rx="1.4" ry="1.8" fill="#e63870" opacity="0.65" />
-                                    <ellipse cx="22.5" cy="27.5" rx="1.4" ry="1.8" fill="#e63870" opacity="0.65" />
-                                    <circle cx="14.8" cy="20" r="1.8" fill="#1a0a2e" />
-                                    <circle cx="25.2" cy="20" r="1.8" fill="#1a0a2e" />
-                                    <circle cx="15.5" cy="19.3" r="0.7" fill="rgba(255,255,255,0.75)" />
-                                    <circle cx="25.9" cy="19.3" r="0.7" fill="rgba(255,255,255,0.75)" />
-                                    <ellipse cx="11.5" cy="24.5" rx="2.8" ry="1.8" fill="#f43f5e" opacity="0.30" />
-                                    <ellipse cx="28.5" cy="24.5" rx="2.8" ry="1.8" fill="#f43f5e" opacity="0.30" />
-                                    <ellipse cx="15" cy="16" rx="4.5" ry="3" fill="rgba(255,255,255,0.28)" transform="rotate(-25 15 16)" />
-                                    <ellipse cx="14" cy="15" rx="2" ry="1.2" fill="rgba(255,255,255,0.45)" transform="rotate(-25 14 15)" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+                    <h2 class="text-3xl font-black text-white drop-shadow-sm truncate leading-none py-1" id="remaining_balance_disp">0.00 €</h2>
                 </div>
-                
-                <div class="absolute bottom-0 right-0 text-right shrink-0">
-                    <span id="card_holder_name"
-                          class="uppercase font-bold pointer-events-none leading-none"
-                          style="
-                              font-family: 'Courier New', Courier, monospace;
-                              font-size: 13px;
-                              letter-spacing: 0.25em;
-                              color: rgba(255,255,255,0.7);
-                              text-shadow:
-                                  0 1px 0 rgba(255,255,255,0.55),
-                                  0 2px 0 rgba(255,255,255,0.18),
-                                  0 -1px 0 rgba(0,0,0,0.55),
-                                  0 -2px 0 rgba(0,0,0,0.2),
-                                  0 0 12px rgba(255,255,255,0.1);
-                          "
-                    >HMR</span>
+
+                <!-- LIGNE 3 : Cochon (à gauche) et Prénom (à droite) -->
+                <div class="flex justify-between items-center w-full mt-2">
+                    <div id="cochon_badge_container" class="cochon-hidden pointer-events-auto shrink-0">
+                        <button type="button" onclick="openCochonModal()" title="Ouvrir ma réserve Cochon" class="cochon-reserve-badge">
+                            <span>🐷</span>
+                            <span>Réserve</span>
+                        </button>
+                    </div>
+                    <div class="text-right shrink-0 leading-none">
+                        <span id="card_holder_name"
+                              class="uppercase font-bold pointer-events-none leading-none"
+                              style="
+                                  font-family: 'Courier New', Courier, monospace;
+                                  font-size: 13px;
+                                  letter-spacing: 0.25em;
+                                  color: rgba(255,255,255,0.7);
+                                  text-shadow:
+                                      0 1px 0 rgba(255,255,255,0.55),
+                                      0 2px 0 rgba(255,255,255,0.18),
+                                      0 -1px 0 rgba(0,0,0,0.55),
+                                      0 -2px 0 rgba(0,0,0,0.2),
+                                      0 0 12px rgba(255,255,255,0.1);
+                              "
+                        >HMR</span>
+                    </div>
                 </div>
             </div>
 
@@ -524,13 +485,13 @@
                 <!-- Boutons d'action -->
                 <div class="flex flex-col gap-2 pt-3.5">
                     <!-- Bouton principal : Enregistrer Dépense -->
-                    <button type="submit" class="w-full h-11 bg-gradient-to-b from-brand-500 to-brand-600 dark:from-brand-600 dark:to-brand-700 text-white font-black rounded-xl border-t border-brand-400 dark:border-brand-500/30 shadow-[0_3px_0_var(--tw-shadow-color)] [--tw-shadow-color:theme(colors.brand.700)] dark:[--tw-shadow-color:#000000] transition-all active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider select-none">
+                    <button type="submit" class="w-full h-11 bg-gradient-to-b from-brand-400 to-brand-500 dark:from-brand-500 dark:to-brand-600 text-white font-black rounded-xl border-t border-brand-300 dark:border-brand-500/20 shadow-[0_3px_0_var(--tw-shadow-color)] [--tw-shadow-color:theme(colors.brand.600)] dark:[--tw-shadow-color:#000000] transition-all active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider select-none">
                         <span>💾</span> Enregistrer la Dépense
                     </button>
 
                     <div class="grid grid-cols-2 gap-2">
                         <!-- Remboursement -->
-                        <button id="btn_refund" type="button" onclick="confirmAddRefund()" class="h-11 bg-gradient-to-b from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 text-white font-black rounded-xl border-t border-emerald-400 dark:border-emerald-500/30 shadow-[0_3px_0_#047857] dark:shadow-[0_3px_0_#000000] transition-all active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-1 text-[9px] uppercase tracking-wider select-none">
+                        <button id="btn_refund" type="button" onclick="confirmAddRefund()" class="h-11 bg-gradient-to-b from-brand-500 to-brand-600 dark:from-brand-600 dark:to-brand-700 text-white font-black rounded-xl border-t border-brand-400 dark:border-brand-500/30 shadow-[0_3px_0_var(--tw-shadow-color)] [--tw-shadow-color:theme(colors.brand.700)] dark:[--tw-shadow-color:#000000] transition-all active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-1 text-[9px] uppercase tracking-wider select-none">
                             <span>↩️</span> Remboursement
                         </button>
 
@@ -954,7 +915,7 @@
 
             <div class="grid grid-cols-2 gap-2 pt-2">
                 <button type="button" id="edit_cancel_btn" onclick="closeEditModal()" class="h-11 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-xl font-black text-[10px] uppercase tracking-wider active:scale-95 transition-all border border-stone-200 dark:border-stone-700">Annuler</button>
-                <button type="submit" id="edit_submit_btn" class="h-11 bg-gradient-to-b from-brand-500 to-brand-600 dark:from-brand-600 dark:to-brand-700 text-white font-black rounded-xl border-t border-brand-400 dark:border-brand-500/30 shadow-[0_3px_0_var(--tw-shadow-color)] [--tw-shadow-color:theme(colors.brand.700)] dark:[--tw-shadow-color:#000000] transition-all active:translate-y-[3px] active:shadow-none text-[10px] uppercase tracking-wider select-none">✅ Enregistrer</button>
+                <button type="submit" id="edit_submit_btn" class="h-11 bg-gradient-to-b from-brand-400 to-brand-500 dark:from-brand-500 dark:to-brand-600 text-white font-black rounded-xl border-t border-brand-300 dark:border-brand-500/20 shadow-[0_3px_0_var(--tw-shadow-color)] [--tw-shadow-color:theme(colors.brand.600)] dark:[--tw-shadow-color:#000000] transition-all active:translate-y-[3px] active:shadow-none text-[10px] uppercase tracking-wider select-none">✅ Enregistrer</button>
             </div>
         </form>
     </div>

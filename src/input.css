@@ -118,20 +118,22 @@
             }
             .glass-card {
                 @apply bg-white dark:bg-stone-900 p-6 rounded-3xl transition-all duration-300;
-                box-shadow: 0 16px 36px -4px rgba(120, 113, 108, 0.16), 0 4px 16px -4px rgba(120, 113, 108, 0.08);
+                box-shadow: 
+                    0 4px 16px -4px rgba(120, 113, 108, 0.08),
+                    0 16px 36px -4px rgba(var(--brand-500) / 0.08);
                 border: 1px solid rgba(228, 228, 231, 0.8);
             }
             .dark .glass-card {
                 box-shadow:
-                    /* Ligne de lumière en haut — relief marqué */
-                    0 1px 0 rgba(255, 255, 255, 0.10) inset,
-                    /* Ombre portée profonde */
-                    0 4px 8px rgba(0, 0, 0, 0.5),
-                    0 16px 40px rgba(0, 0, 0, 0.65),
-                    /* Outline périphérique visible */
-                    0 0 0 1px rgba(255, 255, 255, 0.09);
-                border: 1px solid rgba(168, 162, 158, 0.38) !important; /* stone-400 à 38% */
-                border-top: 1px solid rgba(214, 211, 208, 0.32) !important; /* stone-300 à 32% — ligne lumière */
+                    /* Ligne de lumière supérieure renforcée */
+                    0 1px 0 rgba(255, 255, 255, 0.15) inset,
+                    /* Ombre d'occlusion très sombre et nette */
+                    0 4px 10px rgba(0, 0, 0, 0.6),
+                    0 12px 24px rgba(0, 0, 0, 0.7),
+                    /* Halo coloré dynamique basé sur le thème actif */
+                    0 24px 50px rgba(var(--brand-500) / 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.06) !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.20) !important; /* Ligne de lumière physique */
             }
 
             /* ============================================
@@ -160,25 +162,27 @@
             .golden-card {
                 @apply px-6 py-4 rounded-3xl transition-all duration-300 relative overflow-hidden;
                 aspect-ratio: 8560 / 5398;
-                /* Gradient directionnel basé sur les vars CSS — répond aux thèmes dynamiques */
+                /* Gradient directionnel semi-transparent pour effet verre dépoli coloré */
                 background: linear-gradient(
                     145deg,
-                    rgb(var(--brand-500)) 0%,
-                    rgb(var(--brand-600)) 42%,
-                    rgb(var(--brand-700)) 72%,
-                    rgb(var(--brand-700)) 100%
+                    rgba(var(--brand-500) / 0.88) 0%,
+                    rgba(var(--brand-600) / 0.85) 42%,
+                    rgba(var(--brand-700) / 0.82) 72%,
+                    rgba(var(--brand-700) / 0.80) 100%
                 ) !important;
-                border: 1px solid rgba(255, 255, 255, 0.18) !important;
-                border-top: 1px solid rgba(255, 255, 255, 0.40) !important;
-                border-left: 1px solid rgba(255, 255, 255, 0.25) !important;
-                /* Ombre neutre profonde — sans lueur colorée */
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border: 1px solid rgba(255, 255, 255, 0.22) !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.55) !important;
+                border-left: 1px solid rgba(255, 255, 255, 0.30) !important;
+                /* Double relief : ombre d'occlusion très nette + grand halo coloré diffus à 40% */
                 box-shadow:
-                    0 1px 0 rgba(255,255,255,0.22) inset,
+                    0 1px 0 rgba(255,255,255,0.30) inset,
                     0 -1px 0 rgba(0,0,0,0.25) inset,
                     1px 0 0 rgba(255,255,255,0.08) inset,
-                    0 4px 12px rgba(0,0,0,0.4),
-                    0 12px 32px rgba(0,0,0,0.3),
-                    0 28px 56px rgba(0,0,0,0.18) !important;
+                    0 4px 10px rgba(0,0,0,0.5),
+                    0 16px 36px rgba(0,0,0,0.4),
+                    0 32px 70px rgba(var(--brand-500) / 0.40) !important;
             }
             .golden-card::before {
                 content: "";
@@ -339,63 +343,45 @@
 
         /* --- COCHON (CAGNOTTE) --- Badge dans la rangée nom, gauche aligné sur la puce */
         #cochon_badge_container {
-            transition: opacity 0.4s cubic-bezier(0.34,1.56,0.64,1), transform 0.4s cubic-bezier(0.34,1.56,0.64,1), max-height 0.4s cubic-bezier(0.34,1.56,0.64,1), margin-top 0.4s cubic-bezier(0.34,1.56,0.64,1);
-            max-height: 50px;
+            transition: opacity 0.4s cubic-bezier(0.34,1.56,0.64,1), transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
         }
         #cochon_badge_container.cochon-hidden {
             opacity: 0;
             transform: scale(0.75);
             pointer-events: none;
-            max-height: 0px;
-            margin-top: 0px;
         }
         .tour-active #cochon_badge_container.cochon-hidden {
             opacity: 1 !important;
             transform: scale(1) !important;
-            max-height: 50px !important;
-            margin-top: 4px !important;
             pointer-events: auto !important;
         }
-        #cochon_badge_container button {
-            display: flex;
+        .cochon-reserve-badge {
+            display: inline-flex;
             align-items: center;
-            /* Pas de fond ni cadre : juste le cochon SVG flottant */
-            background: none;
-            border: none;
-            box-shadow: none;
-            padding: 4px;
-            cursor: pointer;
-            transition: transform 0.15s;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
-        }
-        #cochon_badge_container button:hover {
-            background: none;
-            box-shadow: none;
-            transform: scale(1.08);
-        }
-        #cochon_badge_container button:active {
-            transform: scale(0.93);
-        }
-        #cochon_badge_label {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            line-height: 1.1;
-        }
-        #cochon_badge_title {
-            font-size: 7.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: rgba(255,255,255,0.38);
-        }
-        #cochon_badge {
-            font-size: 12px;
+            gap: 5px;
+            padding: 4px 10px;
+            background: transparent;
+            border: 1.5px solid #ffffff;
+            border-radius: 9999px;
+            color: #ffffff;
+            font-size: 10px;
             font-weight: 900;
-            color: rgba(255,255,255,0.92);
-            letter-spacing: 0.02em;
-            font-variant-numeric: tabular-nums;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            line-height: 1;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
+        .cochon-reserve-badge:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #ffffff;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+            color: #ffffff;
+        }
+        .cochon-reserve-badge:active {
+            transform: scale(0.95);
         }
         /* ================================================ */
         /* MODALE COCHON — PREMIUM DARK GLASS               */
