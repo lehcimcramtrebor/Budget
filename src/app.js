@@ -3084,38 +3084,42 @@ function saveEdit(event) {
         const item = state.expenses.find(e => e.id === id);
         if (item) {
             const isRefund = item.amount < 0;
+            let finalAmount = Math.abs(item.amount);
+            const amountHasChanged = Math.abs(amount - finalAmount) >= 0.01;
 
-            // Annuler l'ancien impact sur le cochon
-            if (item.roundingDelta) {
-                state.cochon = Math.max(0, Math.round((state.cochon - item.roundingDelta) * 100) / 100);
-                delete item.roundingDelta;
-            } else if (item.piocheCochon) {
-                state.cochon = Math.round((state.cochon + item.piocheCochon) * 100) / 100;
-                delete item.piocheCochon;
-            } else if (item.isCochonWithdrawal) {
-                state.cochon = Math.round((state.cochon + Math.abs(item.amount)) * 100) / 100;
-            } else if (item.isFloorShift) {
-                state.cochon = Math.round((state.cochon + item.amount) * 100) / 100;
-            }
-
-            let finalAmount = amount;
-
-            // Appliquer le nouvel impact sur le cochon
-            if (item.isCochonWithdrawal) {
-                state.cochon = Math.max(0, Math.round((state.cochon - amount) * 100) / 100);
-            } else if (item.isFloorShift) {
-                state.cochon = Math.max(0, Math.round((state.cochon - amount) * 100) / 100);
-            } else if (!isRefund && state.settings.isRoundingEnabled) {
-                const rounding = calculateSmartRounding(amount);
-                if (rounding && rounding.delta > 0) {
-                    item.roundingDelta = rounding.delta;
-                    finalAmount = rounding.roundedAmount;
-                    state.cochon = Math.round((state.cochon + rounding.delta) * 100) / 100;
+            if (amountHasChanged) {
+                // Annuler l'ancien impact sur le cochon
+                if (item.roundingDelta) {
+                    state.cochon = Math.max(0, Math.round((state.cochon - item.roundingDelta) * 100) / 100);
+                    delete item.roundingDelta;
+                } else if (item.piocheCochon) {
+                    state.cochon = Math.round((state.cochon + item.piocheCochon) * 100) / 100;
+                    delete item.piocheCochon;
+                } else if (item.isCochonWithdrawal) {
+                    state.cochon = Math.round((state.cochon + Math.abs(item.amount)) * 100) / 100;
+                } else if (item.isFloorShift) {
+                    state.cochon = Math.round((state.cochon + item.amount) * 100) / 100;
                 }
+
+                finalAmount = amount;
+
+                // Appliquer le nouvel impact sur le cochon
+                if (item.isCochonWithdrawal) {
+                    state.cochon = Math.max(0, Math.round((state.cochon - amount) * 100) / 100);
+                } else if (item.isFloorShift) {
+                    state.cochon = Math.max(0, Math.round((state.cochon - amount) * 100) / 100);
+                } else if (!isRefund && state.settings.isRoundingEnabled) {
+                    const rounding = calculateSmartRounding(amount);
+                    if (rounding && rounding.delta > 0) {
+                        item.roundingDelta = rounding.delta;
+                        finalAmount = rounding.roundedAmount;
+                        state.cochon = Math.round((state.cochon + rounding.delta) * 100) / 100;
+                    }
+                }
+                item.amount = isRefund ? -finalAmount : finalAmount;
             }
 
             item.title = title;
-            item.amount = isRefund ? -finalAmount : finalAmount;
             item.date = document.getElementById("edit_expense_date_value").value;
             item.tag = newTag; 
             updateCochonBadge();
@@ -8365,37 +8369,43 @@ function testUltimateFlowIntegrity() {
         const exp = state.expenses.find(e => e.id === id);
         if (!exp) return;
         
-        // Annuler l'ancien impact
-        if (exp.roundingDelta) {
-            state.cochon = Math.max(0, Math.round((state.cochon - exp.roundingDelta) * 100) / 100);
-            delete exp.roundingDelta;
-        } else if (exp.piocheCochon) {
-            state.cochon = Math.round((state.cochon + exp.piocheCochon) * 100) / 100;
-            delete exp.piocheCochon;
-        } else if (exp.isCochonWithdrawal) {
-            state.cochon = Math.round((state.cochon + Math.abs(exp.amount)) * 100) / 100;
-        } else if (exp.isFloorShift) {
-            state.cochon = Math.round((state.cochon + exp.amount) * 100) / 100;
-        }
-        
-        let finalAmount = newAmount;
-        
-        // Appliquer le nouvel impact
-        if (exp.isCochonWithdrawal) {
-            state.cochon = Math.max(0, Math.round((state.cochon - newAmount) * 100) / 100);
-        } else if (exp.isFloorShift) {
-            state.cochon = Math.max(0, Math.round((state.cochon - newAmount) * 100) / 100);
-        } else if (options.useRounding && state.settings.isRoundingEnabled) {
-            const rounding = calculateSmartRounding(newAmount);
-            if (rounding && rounding.delta > 0) {
-                exp.roundingDelta = rounding.delta;
-                finalAmount = rounding.roundedAmount;
-                state.cochon = Math.round((state.cochon + rounding.delta) * 100) / 100;
+        const isRefund = exp.amount < 0;
+        let finalAmount = Math.abs(exp.amount);
+        const amountHasChanged = Math.abs(newAmount - finalAmount) >= 0.01;
+
+        if (amountHasChanged) {
+            // Annuler l'ancien impact
+            if (exp.roundingDelta) {
+                state.cochon = Math.max(0, Math.round((state.cochon - exp.roundingDelta) * 100) / 100);
+                delete exp.roundingDelta;
+            } else if (exp.piocheCochon) {
+                state.cochon = Math.round((state.cochon + exp.piocheCochon) * 100) / 100;
+                delete exp.piocheCochon;
+            } else if (exp.isCochonWithdrawal) {
+                state.cochon = Math.round((state.cochon + Math.abs(exp.amount)) * 100) / 100;
+            } else if (exp.isFloorShift) {
+                state.cochon = Math.round((state.cochon + exp.amount) * 100) / 100;
             }
+            
+            finalAmount = newAmount;
+            
+            // Appliquer le nouvel impact
+            if (exp.isCochonWithdrawal) {
+                state.cochon = Math.max(0, Math.round((state.cochon - newAmount) * 100) / 100);
+            } else if (exp.isFloorShift) {
+                state.cochon = Math.max(0, Math.round((state.cochon - newAmount) * 100) / 100);
+            } else if (options.useRounding && state.settings.isRoundingEnabled) {
+                const rounding = calculateSmartRounding(newAmount);
+                if (rounding && rounding.delta > 0) {
+                    exp.roundingDelta = rounding.delta;
+                    finalAmount = rounding.roundedAmount;
+                    state.cochon = Math.round((state.cochon + rounding.delta) * 100) / 100;
+                }
+            }
+            exp.amount = isRefund ? -finalAmount : finalAmount;
         }
         
         exp.title = newTitle;
-        exp.amount = finalAmount;
     }
 
     function simDeleteExpense(id) {
@@ -8749,6 +8759,13 @@ function testUltimateFlowIntegrity() {
     const eEdit = simAddExpense("Courses Modif", 10.00, { useRounding: true });
     if (state.cochon !== 51.00) throw new Error(`Scénario 15 (1) : Cochon attendu 51.00, obtenu ${state.cochon}`);
     
+    // Édition: modification du titre uniquement (montant soumis = 11,00 €)
+    // Ne devrait pas recalculer ni prélever à nouveau le cochon
+    simEditExpense(eEdit.id, "Courses Modif Nouveau Titre", 11.00, { useRounding: true });
+    if (state.cochon !== 51.00) throw new Error(`Scénario 15 (Titre uniquement) : Cochon attendu 51.00, obtenu ${state.cochon}`);
+    if (eEdit.roundingDelta !== 1.00) throw new Error(`Scénario 15 (Titre uniquement) : roundingDelta attendu 1.00, obtenu ${eEdit.roundingDelta}`);
+    if (eEdit.amount !== 11.00) throw new Error(`Scénario 15 (Titre uniquement) : montant attendu 11.00, obtenu ${eEdit.amount}`);
+
     // Édition: changement à 20,00 € -> arrondi 10% = 2,00 € (total 22,00 €).
     // Devrait rembourser 1,00 €, puis prélever 2,00 € (net +1,00 €). Cochon devient 52,00 €.
     simEditExpense(eEdit.id, "Courses Modif", 20.00, { useRounding: true });
