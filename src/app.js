@@ -9331,13 +9331,14 @@ function closeChargesModal() {
  * Met à jour le badge cochon sur la golden card.
  */
 function updateCochonBadge() {
-    // Ne plus afficher le montant — aide psychologique à "oublier" l'argent
-    // Le badge montre juste le cochon SVG (bouton cliquable)
-    const badge = document.getElementById('cochon_badge');
-    if (badge) badge.style.display = 'none'; // cacher le montant
-    const badgeTitle = document.getElementById('cochon_badge_title');
-    if (badgeTitle) badgeTitle.style.display = 'none'; // cacher le label "Réserve"
     const solde = state.cochon || 0;
+    
+    // Mettre à jour le texte du badge avec le montant de la réserve
+    const badgeText = document.getElementById('cochon_badge_text');
+    if (badgeText) {
+        badgeText.textContent = `Réserve • ${solde.toFixed(2).replace('.', ',')} €`;
+    }
+
     // Afficher/masquer le badge cochon sur la golden card (via classe cochon-hidden pour permettre la transition CSS)
     const container = document.getElementById('cochon_badge_container');
     if (container) {
@@ -9497,10 +9498,11 @@ function renderCochonModal() {
     const svgEl = document.getElementById('cochon_svg_container');
     if (svgEl) svgEl.innerHTML = renderCochonSVG(solde);
 
-    // Solde — nouveau design premium avec gradient text
+    // Solde — nouveau design premium avec gradient text et € stylisé
     const soldeEl = document.getElementById('cochon_solde_display');
     if (soldeEl) {
-        soldeEl.innerHTML = `<span class="cochon-balance-amount${isGoalReached ? ' goal-reached' : ''}">${formatCurrency(solde)}</span>
+        const formatted = solde.toFixed(2).replace('.', ',');
+        soldeEl.innerHTML = `<span class="cochon-balance-amount${isGoalReached ? ' goal-reached' : ''}">${formatted}<span class="cochon-currency-symbol">€</span></span>
         <p class="cochon-balance-label">${stateLabel}</p>`;
     }
 
