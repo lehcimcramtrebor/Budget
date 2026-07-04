@@ -393,21 +393,38 @@
         .cochon-reserve-badge:active {
             transform: scale(0.95);
         }
+
         /* ================================================ */
-        /* MODALE COCHON — PREMIUM DARK GLASS               */
+        /* MODALE COCHON — OVERLAY BACKDROP & GLASS PANEL   */
         /* ================================================ */
+        #cochon_modal {
+            background: rgba(255, 255, 255, 0.20);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+        }
+        .dark #cochon_modal {
+            background: rgba(12, 10, 9, 0.50);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
         #cochon_modal .cochon-panel {
-            background: linear-gradient(160deg, rgba(28, 25, 23, 0.72) 0%, rgba(12, 10, 9, 0.65) 100%);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.40) 0%, rgba(255, 255, 255, 0.20) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             border: 1.5px solid transparent;
             box-shadow:
-                0 0 0 1.5px rgba(255,255,255,0.05),
-                0 32px 80px rgba(0,0,0,0.75),
-                0 8px 32px rgba(0,0,0,0.5),
-                0 24px 60px rgba(var(--brand-500) / 0.18),
-                inset 0 1px 0 rgba(255,255,255,0.12);
-            color: #f1f5f9;
+                0 0 0 1.5px rgba(28, 25, 23, 0.08),
+                0 32px 80px rgba(0, 0, 0, 0.16),
+                0 12px 32px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            color: rgba(28, 25, 23, 0.95);
+            --cochon-text-primary: rgba(28, 25, 23, 0.95);
+            --cochon-text-secondary: rgba(28, 25, 23, 0.75);
+            --cochon-text-muted: rgba(28, 25, 23, 0.55);
+            --cochon-border: rgba(28, 25, 23, 0.12);
+            --cochon-track-bg: rgba(28, 25, 23, 0.08);
             font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
             position: relative;
             overflow: hidden;
@@ -420,9 +437,9 @@
             border-radius: inherit;
             padding: 1.5px;
             background: linear-gradient(135deg,
-                rgba(255, 255, 255, 0.35) 0%,
-                rgba(255, 255, 255, 0.10) 50%,
-                rgba(255, 255, 255, 0.22) 100%);
+                rgba(255, 255, 255, 0.75) 0%,
+                rgba(255, 255, 255, 0.35) 50%,
+                rgba(255, 255, 255, 0.60) 100%);
             -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: destination-out;
             mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -438,8 +455,44 @@
             background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
             pointer-events: none;
             z-index: 0;
+            opacity: 0.50;
+        }
+        .cochon-card-waves {
+            color: rgba(28, 25, 23, 0.035);
+            filter: blur(1.5px);
+        }
+
+        /* --- MODE SOMBRE OVERRIDES --- */
+        .dark #cochon_modal .cochon-panel {
+            background: linear-gradient(160deg, rgba(28, 25, 23, 0.45) 0%, rgba(12, 10, 9, 0.30) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow:
+                0 0 0 1.5px rgba(255,255,255,0.05),
+                0 32px 80px rgba(0,0,0,0.75),
+                0 8px 32px rgba(0,0,0,0.5),
+                0 24px 60px rgba(var(--brand-500) / 0.18),
+                inset 0 1px 0 rgba(255,255,255,0.12);
+            color: #f1f5f9;
+            --cochon-text-primary: rgba(255, 255, 255, 0.95);
+            --cochon-text-secondary: rgba(255, 255, 255, 0.75);
+            --cochon-text-muted: rgba(255, 255, 255, 0.55);
+            --cochon-border: rgba(255, 255, 255, 0.12);
+            --cochon-track-bg: rgba(255, 255, 255, 0.08);
+        }
+        .dark #cochon_modal .cochon-panel::after {
+            background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.35) 0%,
+                rgba(255, 255, 255, 0.10) 50%,
+                rgba(255, 255, 255, 0.22) 100%);
+        }
+        .dark #cochon_modal .cochon-panel::before {
             opacity: 0.85;
         }
+        .dark .cochon-card-waves {
+            color: rgba(255, 255, 255, 0.015);
+        }
+
         /* Glowing orb behind the pig SVG */
         #cochon_svg_container {
             position: relative;
@@ -463,7 +516,10 @@
             font-weight: 700;
             letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: rgba(255,255,255,0.65);
+            color: rgba(28, 25, 23, 0.65);
+        }
+        .dark .cochon-header-label {
+            color: rgba(255, 255, 255, 0.65);
         }
         /* Balance display */
         .cochon-balance-amount {
@@ -471,7 +527,13 @@
             font-weight: 700;
             letter-spacing: -0.05em;
             line-height: 1;
-            background: linear-gradient(135deg, #ffffff 30%, rgba(255,255,255,0.65) 100%);
+            background: linear-gradient(135deg, #1c1917 30%, rgba(28, 25, 23, 0.70) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .dark .cochon-balance-amount {
+            background: linear-gradient(135deg, #ffffff 30%, rgba(255, 255, 255, 0.65) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -493,16 +555,19 @@
             font-weight: 700;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: rgba(255,255,255,0.62);
+            color: rgba(28, 25, 23, 0.62);
             margin-top: 4px;
+        }
+        .dark .cochon-balance-label {
+            color: rgba(255, 255, 255, 0.62);
         }
         /* Progress bar — épaisse et bariolée */
         .cochon-progress-track {
             height: 12px;
             border-radius: 9999px;
-            background: rgba(255,255,255,0.07);
+            background: var(--cochon-track-bg);
             overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.08);
+            border: 1px solid var(--cochon-border);
         }
         .cochon-progress-fill {
             height: 100%;
@@ -560,9 +625,10 @@
             -webkit-appearance: none;
             appearance: none;
             width: 100%;
-            height: 5px;
+            height: 6px;
             border-radius: 9999px;
-            background: rgba(255,255,255,0.10);
+            background: var(--cochon-track-bg);
+            border: 1px solid var(--cochon-border);
             outline: none;
         }
         #cochon_action_slider::-webkit-slider-thumb {
@@ -696,8 +762,8 @@
             letter-spacing: 0.05em;
             transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
             cursor: pointer;
-            background: rgba(255,255,255,0.03);
-            color: rgba(255,255,255,0.82);
+            background: rgba(28, 25, 23, 0.04);
+            color: rgba(28, 25, 23, 0.82);
             position: relative;
             overflow: hidden;
         }
@@ -705,15 +771,15 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%);
+            background: linear-gradient(135deg, rgba(28, 25, 23, 0.04) 0%, transparent 60%);
             opacity: 0;
             transition: opacity 0.2s;
         }
         .cochon-action-btn:hover::before { opacity: 1; }
         .cochon-action-btn:active { transform: scale(0.97); }
         .cochon-action-btn:hover {
-            background: rgba(255,255,255,0.05);
-            color: rgba(255,255,255,0.78);
+            background: rgba(28, 25, 23, 0.07);
+            color: rgba(28, 25, 23, 0.95);
         }
         .cochon-action-btn .btn-icon {
             width: 32px;
@@ -725,62 +791,121 @@
             font-size: 15px;
             flex-shrink: 0;
         }
+
+        .dark .cochon-action-btn {
+            background: rgba(255,255,255,0.03);
+            color: rgba(255,255,255,0.82);
+        }
+        .dark .cochon-action-btn::before {
+            background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%);
+        }
+        .dark .cochon-action-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.78);
+        }
+
         /* Variantes: bordure complète, top/left clairs, bottom/right légèrement plus sombres */
         /* Bouton remettre en budget : bordure or comme la pièce de monnaie */
         .cochon-action-btn.btn-budget {
+            border: 1px solid rgba(217, 119, 6, 0.65);
+            border-bottom-color: rgba(180, 83, 9, 0.40);
+            border-right-color:  rgba(180, 83, 9, 0.40);
+            color: rgba(180, 83, 9, 0.98);
+            box-shadow: 0 0 8px rgba(251,191,36,0.04);
+        }
+        .cochon-action-btn.btn-budget .btn-icon { background: rgba(245,158,11,0.12); }
+        .cochon-action-btn.btn-budget:hover {
+            background: rgba(245,158,11,0.07);
+            border-color: rgba(245,158,11,0.85);
+            box-shadow: 0 0 16px rgba(251,191,36,0.12);
+        }
+
+        .dark .cochon-action-btn.btn-budget {
             border: 1px solid rgba(245,158,11,0.55);
             border-bottom-color: rgba(180,83,9,0.30);
             border-right-color:  rgba(180,83,9,0.30);
             color: rgba(253,224,71,0.95);
-            box-shadow: 0 0 8px rgba(251,191,36,0.08), inset 0 0 0 0 transparent;
+            box-shadow: 0 0 8px rgba(251,191,36,0.08);
         }
-        .cochon-action-btn.btn-budget .btn-icon { background: rgba(245,158,11,0.15); }
-        .cochon-action-btn.btn-budget:hover {
+        .dark .cochon-action-btn.btn-budget .btn-icon { background: rgba(245,158,11,0.15); }
+        .dark .cochon-action-btn.btn-budget:hover {
             background: rgba(245,158,11,0.09);
             border-color: rgba(245,158,11,0.75);
             box-shadow: 0 0 16px rgba(251,191,36,0.18);
         }
+
         .cochon-action-btn.btn-savings {
+            border: 1px solid rgba(5, 150, 105, 0.45);
+            border-bottom-color: rgba(4, 120, 87, 0.25);
+            border-right-color:  rgba(4, 120, 87, 0.25);
+            color: rgba(4, 120, 87, 0.95);
+        }
+        .cochon-action-btn.btn-savings .btn-icon { background: rgba(16,185,129,0.10); }
+        .cochon-action-btn.btn-savings:hover {
+            background: rgba(16,185,129,0.05);
+            border-color: rgba(16,185,129,0.60);
+        }
+
+        .dark .cochon-action-btn.btn-savings {
             border: 1px solid rgba(16,185,129,0.35);
             border-bottom-color: rgba(16,185,129,0.16);
             border-right-color:  rgba(16,185,129,0.16);
             color: rgba(110,231,183,0.9);
         }
-        .cochon-action-btn.btn-savings .btn-icon { background: rgba(16,185,129,0.12); }
-        .cochon-action-btn.btn-savings:hover {
+        .dark .cochon-action-btn.btn-savings .btn-icon { background: rgba(16,185,129,0.12); }
+        .dark .cochon-action-btn.btn-savings:hover {
             background: rgba(16,185,129,0.06);
             border-color: rgba(16,185,129,0.45);
         }
+
         .cochon-action-btn.btn-floor {
+            border: 1px solid rgba(37, 99, 235, 0.45);
+            border-bottom-color: rgba(29, 78, 216, 0.25);
+            border-right-color:  rgba(29, 78, 216, 0.25);
+            color: rgba(29, 78, 216, 0.95);
+        }
+        .cochon-action-btn.btn-floor .btn-icon { background: rgba(59,130,246,0.10); }
+        .cochon-action-btn.btn-floor:hover {
+            background: rgba(59,130,246,0.05);
+            border-color: rgba(59,130,246,0.60);
+        }
+
+        .dark .cochon-action-btn.btn-floor {
             border: 1px solid rgba(59,130,246,0.35);
             border-bottom-color: rgba(59,130,246,0.16);
             border-right-color:  rgba(59,130,246,0.16);
             color: rgba(147,197,253,0.9);
         }
-        .cochon-action-btn.btn-floor .btn-icon { background: rgba(59,130,246,0.12); }
-        .cochon-action-btn.btn-floor:hover {
+        .dark .cochon-action-btn.btn-floor .btn-icon { background: rgba(59,130,246,0.12); }
+        .dark .cochon-action-btn.btn-floor:hover {
             background: rgba(59,130,246,0.06);
             border-color: rgba(59,130,246,0.45);
         }
+
         .cochon-action-btn.btn-gap {
+            border: 1px solid rgba(220, 38, 38, 0.45);
+            border-bottom-color: rgba(185, 28, 28, 0.25);
+            border-right-color:  rgba(185, 28, 28, 0.25);
+            color: rgba(185, 28, 28, 0.95);
+        }
+        .cochon-action-btn.btn-gap .btn-icon { background: rgba(239,68,68,0.10); }
+        .cochon-action-btn.btn-gap:hover {
+            background: rgba(239,68,68,0.05);
+            border-color: rgba(239,68,68,0.60);
+        }
+
+        .dark .cochon-action-btn.btn-gap {
             border: 1px solid rgba(239,68,68,0.35);
             border-bottom-color: rgba(239,68,68,0.16);
             border-right-color:  rgba(239,68,68,0.16);
             color: rgba(252,165,165,0.9);
         }
-        .cochon-action-btn.btn-gap .btn-icon { background: rgba(239,68,68,0.12); }
-        .cochon-action-btn.btn-gap:hover {
+        .dark .cochon-action-btn.btn-gap .btn-icon { background: rgba(239,68,68,0.12); }
+        .dark .cochon-action-btn.btn-gap:hover {
             background: rgba(239,68,68,0.06);
             border-color: rgba(239,68,68,0.45);
         }
-        /* Barre de progression cochon -- épaisse et bariolée */
-        .cochon-progress-track {
-            height: 12px;
-            border-radius: 9999px;
-            background: rgba(255,255,255,0.07);
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
+
         .cochon-progress-fill {
             height: 100%;
             border-radius: 9999px;
