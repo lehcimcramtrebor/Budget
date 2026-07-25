@@ -32,7 +32,7 @@ export function getTopUsedTags(limit = 12) {
     let sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
     
     // Liste de tags par défaut si l'historique utilisateur est faible ou vierge
-    const defaultTop = ['courses', 'resto', 'loisirs', 'vape', 'numerique', 'auto', 'moto', 'brico', 'enfant', 'medical', 'vetements', 'animaux', 'cadeaux', 'divers'];
+    const defaultTop = ['courses', 'resto', 'loisirs', 'vape', 'numerique', 'carburant', 'entretien_auto', 'entretien_moto', 'brico_jardin', 'enfants', 'generaliste', 'pharmacie', 'vetements', 'animaux', 'cadeaux', 'divers'];
     
     // Injecte les valeurs par défaut manquantes en fin de liste
     defaultTop.forEach(tag => {
@@ -124,7 +124,7 @@ export function getSuggestedTags(titleVal) {
     }
 
     // 3. Si on a toujours moins de 2 suggestions, on complète avec des valeurs par défaut fixes
-    const fallbacks = ['courses', 'auto', 'resto', 'loisirs'];
+    const fallbacks = ['courses', 'carburant', 'resto', 'loisirs'];
     fallbacks.forEach(tag => {
         if (!disabledSet.has(tag) && !sortedTags.includes(tag) && sortedTags.length < 2) sortedTags.push(tag);
     });

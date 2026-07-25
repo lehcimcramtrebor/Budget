@@ -10,6 +10,19 @@ export const TAG_DATA = {
             divers: { icon: "➕", label: "Divers" }
         }
     },
+    vacances: {
+        label: "🏖️ Vacances & Tourisme",
+        items: {
+            voyage: { icon: "🏖️", label: "Voyage/Séjour" },
+            hebergement: { icon: "🏨", label: "Hôtel/Hébergement" },
+            camping: { icon: "⛺", label: "Camping/Gîte" },
+            souvenirs: { icon: "🏺", label: "Souvenirs & Artisanat" },
+            balade_bateau: { icon: "🛥️", label: "Balade Bateau" },
+            excursion_visite: { icon: "🗺️", label: "Excursion & Visite" },
+            location_loisirs: { icon: "🏄", label: "Location Loisirs" },
+            parc_attraction: { icon: "🎢", label: "Parc d'attractions" }
+        }
+    },
     alimentation: {
         label: "🍔 Alimentation",
         items: {
@@ -18,8 +31,14 @@ export const TAG_DATA = {
             fastfood: { icon: "🍔", label: "Fast-Food" },
             boulangerie: { icon: "🥖", label: "Boulangerie" },
             boucherie: { icon: "🥩", label: "Boucherie" },
+            poissonnerie: { icon: "🐟", label: "Poissonnerie" },
+            primeur: { icon: "🥦", label: "Primeur" },
             marche: { icon: "🍎", label: "Marché" },
+            produits_locaux: { icon: "🍯", label: "Produits locaux" },
+            glace_gaufre: { icon: "🍦", label: "Glace & Gaufre" },
+            cafe_the: { icon: "☕", label: "Café/Thé" },
             cantine: { icon: "🍱", label: "Cantine" },
+            traiteur: { icon: "🍱", label: "Traiteur" },
             bar: { icon: "🍺", label: "Bar" },
             livraison: { icon: "🛵", label: "Livraison" }
         }
@@ -30,12 +49,15 @@ export const TAG_DATA = {
             carburant: { icon: "⛽", label: "Carburant" },
             entretien_auto: { icon: "🔧", label: "Entretien Auto" },
             entretien_moto: { icon: "🏍️", label: "Entretien Moto" },
+            location_vehicule: { icon: "🚙", label: "Location Véhicule" },
+            charge_electrique: { icon: "🔌", label: "Recharge Élec" },
             transport: { icon: "🚌", label: "Transports" },
             train: { icon: "🚆", label: "Train" },
             avion: { icon: "✈️", label: "Avion" },
             taxi: { icon: "🚕", label: "Taxi" },
             peage: { icon: "🎫", label: "Péage" },
             parking: { icon: "🅿️", label: "Parking" },
+            lavage: { icon: "🧽", label: "Lavage" },
             velo: { icon: "🚲", label: "Vélo/Trot" }
         }
     },
@@ -60,6 +82,9 @@ export const TAG_DATA = {
             vetements: { icon: "👕", label: "Vêtements" },
             chaussures: { icon: "👟", label: "Chaussures" },
             accessoires: { icon: "⌚", label: "Accessoires" },
+            bijoux: { icon: "💍", label: "Bijoux" },
+            parfumerie: { icon: "🧴", label: "Parfumerie" },
+            seconde_main: { icon: "♻️", label: "Seconde main" },
             cadeaux: { icon: "🎁", label: "Cadeaux" }
         }
     },
@@ -72,10 +97,14 @@ export const TAG_DATA = {
             gaming: { icon: "🎮", label: "Gaming" },
             musique: { icon: "🎵", label: "Musique" },
             streaming: { icon: "📺", label: "Streaming" },
+            concert_festival: { icon: "🎤", label: "Concert/Festival" },
+            spectacle_theatre: { icon: "🎭", label: "Spectacle/Théâtre" },
+            musee_exposition: { icon: "🏛️", label: "Musée/Exposition" },
+            spa_bienetre: { icon: "🧖", label: "Spa & Bien-être" },
+            bowling_escape: { icon: "🎳", label: "Bowling/Escape" },
             lecture: { icon: "📚", label: "Lecture" },
             presse: { icon: "📰", label: "Presse" },
             sorties: { icon: "🎟️", label: "Sorties" },
-            voyage: { icon: "🏖️", label: "Voyage" },
             tabac: { icon: "🚬", label: "Tabac" },
             numerique: { icon: "📱", label: "Logiciels/Apps" },
             abonnements: { icon: "💳", label: "Abonnements" }
@@ -193,9 +222,12 @@ Object.keys(TAG_DATA).forEach(catKey => {
 
 export const TAG_EMOJI_PICKER = [
     '🏠','🛒','🍽️','🍺','🎁','🏖️','✈️','🚗','🚐','🛴',
+    '🍦','🧇','🐟','🥦','🍯','🛥️','⛵','🏄','⛺','🎢',
+    '🎤','🎭','🏛️','🧖','🎳','💍','🚙','🔌','🧽','🏺',
     '🎮','🕹️','💻','🖥️','☁️','🎵','🎬','📚','🎯','🏋️',
     '🐶','🦴','👧','🧸','💰','🐷','💳','📱','💼','🔧',
     '🛠️','⚙️','🦺','🌿','🥑','🥩','🧪','💨','⭐','🎰',
     '✂️','🍕','☕','🧴','💊','🩺','🎪','🕯️','🏊','🚴',
-    '⚽','🎾','🏔️','🌊','🎣','🎨','🍷','🧁','✨','🎭'
+    '⚽','🎾','🏔️','🌊','🎣','🎨','🍷','🧁','✨','🗺️'
 ];
+

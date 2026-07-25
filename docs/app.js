@@ -3678,6 +3678,11 @@ function applyImportFull(imported) {
     } else {
         state.budgets = [];
     }
+    if (typeof imported.cochon === 'number') state.cochon = imported.cochon;
+    if (Array.isArray(imported.customTags)) state.customTags = imported.customTags;
+    if (Array.isArray(imported.disabledTags)) state.disabledTags = imported.disabledTags;
+    mergeCustomTagsIntoExpenseTags();
+
     saveState();
     initUI();
 }
@@ -3694,7 +3699,11 @@ function applyImportPartial(imported, targetMonth) {
     state.budgetMonth = targetMonth;
     if (typeof imported.darkMode === 'boolean') state.darkMode = imported.darkMode;
     if (imported.settings) state.settings = { ...state.settings, ...imported.settings };
-    
+    if (typeof imported.cochon === 'number') state.cochon = imported.cochon;
+    if (Array.isArray(imported.customTags)) state.customTags = imported.customTags;
+    if (Array.isArray(imported.disabledTags)) state.disabledTags = imported.disabledTags;
+    mergeCustomTagsIntoExpenseTags();
+
     saveState();
     initUI();
 }
@@ -3709,6 +3718,10 @@ function startImportRevenuesReview(imported, targetMonth) {
     state.fixedCharges = imported.fixedCharges;
     state.expenses = [];
     state.budgets = [];
+    if (typeof imported.cochon === 'number') state.cochon = imported.cochon;
+    if (Array.isArray(imported.customTags)) state.customTags = imported.customTags;
+    if (Array.isArray(imported.disabledTags)) state.disabledTags = imported.disabledTags;
+    mergeCustomTagsIntoExpenseTags();
     
     // Set budgetMonth temporarily to the previous month so executeRenewal transitions to targetMonth
     state.budgetMonth = getPreviousMonth(targetMonth);
