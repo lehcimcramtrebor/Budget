@@ -22,15 +22,10 @@ export let state = {
     darkMode: true,
     budgetMonth: "",      // Mois actif du budget courant (format YYYY-MM)
     isCertified: false,
-    cochon: 0,            // Solde de la tirelire Cochon (euros, persiste d'un mois à l'autre)
     settings: {
         username: "",
         genderTheme: "masculin",
-        warningThreshold: 150,
-        cochonThresholds: [0, 20, 50, 100],  // Paliers d'images pour le cochon (vide/bas/moyen/plein)
-        cochonTarget: 60,                     // Objectif d'épargne cochon (€)
-        roundingCeiling: 3.0,                 // Pourcentage plafond autorisé pour le pourboire cochon (1-10)
-        isRoundingEnabled: true               // Activation/désactivation globale du pourboire cochon
+        warningThreshold: 150
     },
     ticketArchives: [],   // Liste des tickets de caisse scannés archivés
     customTags: [],       // Liste des tags personnalisés créés par l'utilisateur
@@ -214,7 +209,7 @@ export function initDatabase() {
                 state.isCertified = false;
             }
 
-            // --- MIGRATION 8 : Restauration et sécurité des réglages Cochon ---
+            // --- MIGRATION 8 : Restauration des réglages utilisateur ---
             if (parsed.settings) {
                 state.settings = { ...state.settings, ...parsed.settings };
             }
@@ -223,30 +218,6 @@ export function initDatabase() {
             }
             if (typeof state.settings.warningThreshold !== 'number') {
                 state.settings.warningThreshold = 150;
-            }
-            if (typeof parsed.cochon === 'number') {
-                state.cochon = parsed.cochon;
-            } else {
-                state.cochon = 0;
-            }
-            if (!Array.isArray(state.settings.cochonThresholds)) {
-                state.settings.cochonThresholds = [0, 20, 50, 100];
-            }
-            if (typeof state.settings.cochonTarget !== 'number') {
-                state.settings.cochonTarget = 60;
-            }
-            if (typeof state.settings.roundingCeiling !== 'number') {
-                state.settings.roundingCeiling = 3.0;
-            }
-            if (!parsed.settings || !('isRoundingEnabled' in parsed.settings) || parsed.settings.isRoundingEnabled === undefined) {
-                state.settings.isRoundingEnabled = true;
-            }
-
-            // --- MIGRATION 9 (Migration unique v3 cochon) : Force l'activation du pourboire cochon ---
-            if (!localStorage.getItem('budgethmr_cochon_migration_v3')) {
-                state.settings.isRoundingEnabled = true;
-                localStorage.setItem('budgethmr_cochon_migration_v3', '1');
-                migrationPerformed = true;
             }
 
             // --- MIGRATION 10 : Restauration des tags configurés ---
