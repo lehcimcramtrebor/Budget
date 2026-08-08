@@ -29,7 +29,8 @@ export let state = {
     },
     ticketArchives: [],   // Liste des tickets de caisse scannés archivés
     customTags: [],       // Liste des tags personnalisés créés par l'utilisateur
-    disabledTags: []      // Clés des tags système désactivés par l'utilisateur
+    disabledTags: [],     // Clés des tags système désactivés par l'utilisateur
+    historicalOps: []     // Mémoire des opérations passées pour les suggestions de tags
 };
 
 // Variables d'état complémentaires non persistées ou variables de contrôle de l'application
@@ -223,6 +224,13 @@ export function initDatabase() {
             // --- MIGRATION 10 : Restauration des tags configurés ---
             if (Array.isArray(parsed.customTags)) state.customTags = parsed.customTags;
             if (Array.isArray(parsed.disabledTags)) state.disabledTags = parsed.disabledTags;
+
+            // --- MIGRATION 11 : Restauration de l'historique des opérations pour les suggestions de tags ---
+            if (Array.isArray(parsed.historicalOps)) {
+                state.historicalOps = parsed.historicalOps;
+            } else {
+                state.historicalOps = [];
+            }
 
             // Si des migrations ont modifié la structure, on force une sauvegarde immédiate
             if (migrationPerformed) {

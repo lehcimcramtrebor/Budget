@@ -1971,6 +1971,24 @@ function executeRenewal() {
     });
     
     // 3. Bascule des données vers le mois suivant
+    // --- MEMORISATION DES TAGS POUR LES SUGGESTIONS ---
+    if (!state.historicalOps) state.historicalOps = [];
+    
+    const addToHistory = (e) => {
+        if (e.title && e.tag) state.historicalOps.push({ t: e.title, g: e.tag });
+    };
+    
+    (state.expenses || []).forEach(addToHistory);
+    (state.budgets || []).forEach(b => {
+        (b.expenses || []).forEach(addToHistory);
+        (b.archivedExpenses || []).forEach(addToHistory);
+    });
+    
+    // Garder seulement les 1500 dernières opérations pour ne pas surcharger le localStorage
+    if (state.historicalOps.length > 1500) {
+        state.historicalOps = state.historicalOps.slice(state.historicalOps.length - 1500);
+    }
+
     // --- REPORT DES PAIEMENTS EN PLUSIEURS FOIS ---
     const pendingInstallments = (state.expenses || []).filter(
         e => e.installment && e.installment.current < e.installment.total

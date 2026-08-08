@@ -28,6 +28,13 @@ export function getTopUsedTags(limit = 12) {
         if (op.tag) counts[op.tag] = (counts[op.tag] || 0) + 1;
     });
 
+    // Ajoute l'historique des mois précédents
+    if (state.historicalOps) {
+        state.historicalOps.forEach(op => {
+            if (op.g) counts[op.g] = (counts[op.g] || 0) + 1;
+        });
+    }
+
     // Trie par fréquence d'utilisation décroissante
     let sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
     
@@ -69,6 +76,11 @@ export function getSuggestedTags(titleVal) {
         if (b.archivedExpenses) allOps.push(...b.archivedExpenses);
     });
 
+    let searchableOps = allOps.map(op => ({ t: op.title, g: op.tag }));
+    if (state.historicalOps) {
+        searchableOps.push(...state.historicalOps);
+    }
+
     let matchedOps = [];
     if (titleLower.length >= 2) {
         // Découpe la saisie de l'utilisateur en mots (ignorant les mots courts de moins de 3 lettres)
@@ -80,9 +92,9 @@ export function getSuggestedTags(titleVal) {
         }
 
         // Filtre l'historique pour trouver des correspondances de titres
-        matchedOps = allOps.filter(op => {
-            if (!op.title) return false;
-            const opTitleLower = normalizeStr(op.title);
+        matchedOps = searchableOps.filter(op => {
+            if (!op.t) return false;
+            const opTitleLower = normalizeStr(op.t);
             
             // Critère A : Le titre tapé est inclus dans le titre historique (ex: tapé="Boul", historique="Boulangerie")
             if (opTitleLower.includes(titleLower)) return true;
@@ -98,7 +110,7 @@ export function getSuggestedTags(titleVal) {
     // Incrémente le poids des tags trouvés dans les correspondances historiques
     if (matchedOps.length > 0) {
         matchedOps.forEach(op => {
-            if (op.tag && op.tag !== 'divers') counts[op.tag] = (counts[op.tag] || 0) + 1;
+            if (op.g && op.g !== 'divers') counts[op.g] = (counts[op.g] || 0) + 1;
         });
     }
 
