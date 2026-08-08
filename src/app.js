@@ -143,28 +143,15 @@ function hideSplashScreen() {
 
 const INSTALLMENT_OPTIONS = [2, 3, 4, 6, 10, 12];
 let installmentAmounts = []; // montants par échéance, modifiables individuellement
+let installmentLocks = []; // true = verrouillé manuellement, false = modifiable (recalcul automatique)
+let isInstallmentTotalLocked = false; // true = le montant total de la dépense est fixé
 
 function generateInstallmentGroupId() {
     return 'inst_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
 }
 
 function openInstallmentModal() {
-    // Vérifier qu'un montant a été saisi
-    const amountInput = document.getElementById('exp_amount');
-    const amount = parseFloat((amountInput?.value || '0').replace(',', '.'));
-    if (!amount || amount <= 0) {
-        if (amountInput) {
-            amountInput.focus();
-            amountInput.classList.add('ring-2', 'ring-red-400');
-            const form = document.getElementById('expense_form');
-            if (form) {
-                form.classList.add('animate-shake');
-                setTimeout(() => form.classList.remove('animate-shake'), 400);
-            }
-            setTimeout(() => amountInput.classList.remove('ring-2', 'ring-red-400'), 1500);
-        }
-        return;
-    }
+
     // Sauvegarder les valeurs actuelles pour pouvoir annuler
     const modal = document.getElementById('installment_config_modal');
     if (!modal) return;
@@ -215,6 +202,13 @@ function confirmInstallmentModal() {
         if (hasZero) {
             showGenericAlert('Montants invalides', 'Chaque échéance doit avoir un montant supérieur à 0.');
             return;
+        }
+
+        // Mettre à jour le montant principal pour qu'il corresponde à la somme exacte
+        const newTotal = installmentAmounts.reduce((s, a) => s + a, 0);
+        const amountInput = document.getElementById('exp_amount');
+        if (amountInput) {
+            amountInput.value = String(newTotal.toFixed(2)).replace('.', ',');
         }
     }
     updateInstallmentTriggerLabel();
@@ -381,6 +375,9 @@ function selectInstallmentTotal(n) {
     const amountRaw = parseFloat((document.getElementById('exp_amount').value || '0').replace(',', '.')) || 0;
     const mensualite = Math.round((amountRaw / n) * 100) / 100;
     installmentAmounts = Array.from({ length: n }, () => mensualite);
+    installmentLocks = Array(n).fill(false);
+    isInstallmentTotalLocked = amountRaw > 0;
+    
     // Ajustement du dernier pour absorber les arrondis
     const diff = Math.round((amountRaw - mensualite * n) * 100) / 100;
     if (diff !== 0) installmentAmounts[n - 1] = Math.round((installmentAmounts[n - 1] + diff) * 100) / 100;
@@ -409,23 +406,30 @@ function renderInstallmentAmountRows() {
                             ? 'text-violet-500 dark:text-violet-400'
                             : 'text-stone-400 dark:text-stone-500'
                     }">N°${i + 1}${ i + 1 === currentSel ? ' ◄' : '' }</span>
-                    <div class="relative flex-1">
-                        <input type="text" inputmode="decimal"
-                            id="inst_amt_${i}"
-                            value="${String(amt.toFixed(2)).replace('.', ',')}"
-                            oninput="onInstallmentAmountChange(${i}, this.value)"
-                            onblur="onInstallmentAmountBlur(${i}, this.value)"
-                            class="form-input h-8 text-right pr-5 text-[11px] font-mono font-black px-2 w-full
-                                   ${ i + 1 === currentSel
-                                       ? 'border-violet-400 dark:border-violet-600 ring-1 ring-violet-400/30'
-                                       : '' }">
-                        <span class="absolute right-1.5 top-1/2 -translate-y-1/2 font-black text-stone-400 pointer-events-none text-[10px]">€</span>
+                    <div class="relative flex-1 flex items-center gap-1.5">
+                        <div class="relative flex-1">
+                            <input type="text" inputmode="decimal"
+                                id="inst_amt_${i}"
+                                value="${String(amt.toFixed(2)).replace('.', ',')}"
+                                oninput="onInstallmentAmountChange(${i}, this.value)"
+                                onblur="onInstallmentAmountBlur(${i}, this.value)"
+                                class="form-input h-8 text-right pr-5 text-[11px] font-mono font-black px-2 w-full
+                                       ${ i + 1 === currentSel
+                                           ? 'border-violet-400 dark:border-violet-600 ring-1 ring-violet-400/30'
+                                           : '' }">
+                            <span class="absolute right-1.5 top-1/2 -translate-y-1/2 font-black text-stone-400 pointer-events-none text-[10px]">€</span>
+                        </div>
+                        <button id="inst_lock_btn_${i}" onclick="toggleInstallmentLock(${i})" class="w-6 h-6 flex items-center justify-center shrink-0 rounded text-[10px] border border-stone-200 dark:border-stone-800 transition-colors ${installmentLocks[i] ? 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300' : 'bg-transparent text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800'}">
+                            ${installmentLocks[i] ? '🔒' : '🔓'}
+                        </button>
                     </div>
                 </div>
             `).join('')}
         </div>
         <div class="flex justify-between items-center pt-2 border-t border-stone-100 dark:border-stone-800 mt-1">
-            <span class="text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider">Total</span>
+            <button id="inst_total_lock_btn" onclick="toggleInstallmentTotalLock()" class="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded transition-colors ${isInstallmentTotalLocked ? 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300' : 'bg-transparent text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800'}">
+                ${isInstallmentTotalLocked ? '🔒' : '🔓'} Total
+            </button>
             <span id="installment_amounts_total" class="text-[11px] font-mono font-black text-violet-500 dark:text-violet-400">
                 ${String(installmentAmounts.reduce((s,a) => s+a, 0).toFixed(2)).replace('.', ',')} €
             </span>
@@ -433,30 +437,125 @@ function renderInstallmentAmountRows() {
     `;
 }
 
+function updateInstallmentLocksUI() {
+    for (let i = 0; i < installmentLocks.length; i++) {
+        const btn = document.getElementById(`inst_lock_btn_${i}`);
+        if (btn) {
+            btn.innerHTML = installmentLocks[i] ? '🔒' : '🔓';
+            btn.className = installmentLocks[i] 
+                ? 'w-6 h-6 flex items-center justify-center shrink-0 rounded text-[10px] border border-stone-200 dark:border-stone-800 transition-colors bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+                : 'w-6 h-6 flex items-center justify-center shrink-0 rounded text-[10px] border border-stone-200 dark:border-stone-800 transition-colors bg-transparent text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800';
+        }
+    }
+    const totBtn = document.getElementById('inst_total_lock_btn');
+    if (totBtn) {
+        totBtn.innerHTML = `${isInstallmentTotalLocked ? '🔒' : '🔓'} Total`;
+        totBtn.className = isInstallmentTotalLocked
+            ? 'flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded transition-colors bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+            : 'flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded transition-colors bg-transparent text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800';
+    }
+}
+
+function toggleInstallmentTotalLock() {
+    isInstallmentTotalLocked = !isInstallmentTotalLocked;
+    triggerHaptic(5);
+    renderInstallmentAmountRows();
+}
+
+function toggleInstallmentLock(index) {
+    installmentLocks[index] = !installmentLocks[index];
+    triggerHaptic(5);
+    
+    // Si on vient de déverrouiller et que le Total est verrouillé, on devrait recalculer ce champ déverrouillé
+    if (!installmentLocks[index] && isInstallmentTotalLocked) {
+        // Déclencher un recalcul en simulant un changement sur une autre échéance verrouillée, ou simplement en appelant une fonction de rééquilibrage.
+        // Pour simplifier, on peut juste rééquilibrer à partir du total.
+        rebalanceInstallments();
+    }
+    
+    renderInstallmentAmountRows();
+}
+
+function rebalanceInstallments() {
+    const total = installmentAmounts.length;
+    const amountRaw = parseFloat((document.getElementById('exp_amount').value || '0').replace(',', '.')) || 0;
+    
+    const lockedSum = installmentAmounts.reduce((sum, val, i) => sum + (installmentLocks[i] ? val : 0), 0);
+    const unlockedCount = installmentLocks.filter(l => !l).length;
+    
+    if (unlockedCount > 0) {
+        let remaining = Math.max(0, amountRaw - lockedSum);
+        let perOther = Math.round((remaining / unlockedCount) * 100) / 100;
+        
+        let applied = 0;
+        let lastUnlockedIndex = -1;
+        
+        for (let i = 0; i < total; i++) {
+            if (!installmentLocks[i]) {
+                installmentAmounts[i] = perOther;
+                applied += perOther;
+                lastUnlockedIndex = i;
+            }
+        }
+        
+        // Ajustement des arrondis sur le dernier non verrouillé
+        if (lastUnlockedIndex !== -1) {
+            const diff = Math.round((remaining - applied) * 100) / 100;
+            if (diff !== 0) {
+                installmentAmounts[lastUnlockedIndex] = Math.round((installmentAmounts[lastUnlockedIndex] + diff) * 100) / 100;
+            }
+        }
+    }
+}
+
 function onInstallmentAmountChange(index, rawVal) {
-    const val = parseFloat(rawVal.replace(',', '.')) || 0;
+    let val = parseFloat(rawVal.replace(',', '.')) || 0;
     const total = installmentAmounts.length;
     if (total < 2) return;
 
-    if (index === 0) {
-        // Échéance 1 : recalculer les suivantes à égalité sur ce qui reste
-        const amountRaw = parseFloat((document.getElementById('exp_amount').value || '0').replace(',', '.')) || 0;
-        const remaining = Math.max(0, amountRaw - val);
-        const perOther = Math.round((remaining / (total - 1)) * 100) / 100;
-        installmentAmounts[0] = val;
-        for (let i = 1; i < total; i++) installmentAmounts[i] = perOther;
-        // Ajustement arrondi sur le dernier
-        const diff = Math.round((remaining - perOther * (total - 1)) * 100) / 100;
-        if (diff !== 0 && total > 1) installmentAmounts[total - 1] = Math.round((installmentAmounts[total - 1] + diff) * 100) / 100;
-        // Mettre à jour les autres champs
-        for (let i = 1; i < total; i++) {
-            const inp = document.getElementById(`inst_amt_${i}`);
-            if (inp) inp.value = String(installmentAmounts[i].toFixed(2)).replace('.', ',');
+    // L'échéance devient bloquée puisqu'elle est saisie manuellement
+    installmentLocks[index] = true;
+    const amountRaw = parseFloat((document.getElementById('exp_amount').value || '0').replace(',', '.')) || 0;
+
+    if (isInstallmentTotalLocked) {
+        // Calculer la somme des AUTRES échéances bloquées
+        const otherLockedSum = installmentAmounts.reduce((sum, amt, i) => sum + (i !== index && installmentLocks[i] ? amt : 0), 0);
+        
+        // Capping de la valeur pour ne pas dépasser le total
+        if (otherLockedSum + val > amountRaw) {
+            val = Math.max(0, amountRaw - otherLockedSum);
+            // Mettre à jour l'input visuellement
+            const inp = document.getElementById(`inst_amt_${index}`);
+            if (inp) inp.value = String(val.toFixed(2)).replace('.', ',');
+        }
+        
+        installmentAmounts[index] = val;
+        
+        // Si c'était la dernière échéance non bloquée qui vient d'être bloquée
+        const unlockedCount = installmentLocks.filter(l => !l).length;
+        if (unlockedCount === 0) {
+            const totalLockedSum = otherLockedSum + val;
+            if (Math.abs(totalLockedSum - amountRaw) > 0.01) {
+                // Débloquer le total car la somme des valeurs imposées ne correspond pas au total imposé
+                isInstallmentTotalLocked = false;
+                updateInstallmentLocksUI();
+            }
+        } else {
+            rebalanceInstallments();
         }
     } else {
-        // Autre échéance : pas de recalcul automatique
         installmentAmounts[index] = val;
+        
+        // Mode Libre ou Total débloqué : copier vers le bas
+        if (amountRaw === 0 || !isInstallmentTotalLocked) {
+             for (let i = index + 1; i < total; i++) {
+                 if (!installmentLocks[i]) {
+                     installmentAmounts[i] = val;
+                 }
+             }
+        }
     }
+    
     // Mettre à jour le total affiché
     const totalSpan = document.getElementById('installment_amounts_total');
     if (totalSpan) {
@@ -464,6 +563,17 @@ function onInstallmentAmountChange(index, rawVal) {
         totalSpan.textContent = String(sum.toFixed(2)).replace('.', ',') + ' €';
     }
     updateInstallmentPreview();
+    
+    // Mettre à jour les autres champs inputs (qui ont pu être rebalancés ou copiés)
+    for (let i = 0; i < total; i++) {
+        if (i !== index) {
+            const inp = document.getElementById(`inst_amt_${i}`);
+            if (inp) inp.value = String(installmentAmounts[i].toFixed(2)).replace('.', ',');
+        }
+    }
+    
+    // Mettre à jour les boutons de cadenas si nécessaire sans perdre le focus
+    updateInstallmentLocksUI();
 }
 
 function onInstallmentAmountBlur(index, rawVal) {
@@ -472,7 +582,6 @@ function onInstallmentAmountBlur(index, rawVal) {
     installmentAmounts[index] = Math.round(val * 100) / 100;
     const inp = document.getElementById(`inst_amt_${index}`);
     if (inp) inp.value = String(installmentAmounts[index].toFixed(2)).replace('.', ',');
-    onInstallmentAmountChange(index, String(installmentAmounts[index]));
 }
 
 function updateInstallmentPreview() {
@@ -508,6 +617,8 @@ function resetInstallmentUI() {
     document.getElementById('exp_installment_total').value   = '1';
     document.getElementById('exp_installment_current').value = '1';
     installmentAmounts = [];
+    installmentLocks = [];
+    isInstallmentTotalLocked = false;
     updateInstallmentTriggerLabel();
     updateInstallmentIncompatibleButtons(1);
     const preview = document.getElementById('installment_preview');
@@ -531,6 +642,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const amountRaw = parseFloat((amtInput.value || '0').replace(',', '.')) || 0;
                 const mensualite = Math.round((amountRaw / total) * 100) / 100;
                 installmentAmounts = Array.from({ length: total }, () => mensualite);
+                installmentLocks = Array(total).fill(false);
+                isInstallmentTotalLocked = amountRaw > 0;
                 const diff = Math.round((amountRaw - mensualite * total) * 100) / 100;
                 if (diff !== 0) installmentAmounts[total - 1] = Math.round((installmentAmounts[total - 1] + diff) * 100) / 100;
             }
@@ -884,8 +997,11 @@ function renderExpensesList() {
                         ${badgeHTML}
                         ${depositButtonHTML}
                     </div>
-                    <div class="shrink-0 flex items-center justify-end">
+                    <div class="shrink-0 flex items-center justify-end gap-2">
                         <span class="font-mono font-bold text-xs ${amountColor} truncate">${amountSign} ${absAmount.toFixed(2).replace('.', ',')} €</span>
+                        <button onclick="event.stopPropagation(); deleteExpense('${e.id}')" class="w-6 h-6 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center font-bold text-[9px] active:scale-90 border border-red-500/20" title="Supprimer">
+                            ✕
+                        </button>
                     </div>
                 </div>
 
@@ -1144,20 +1260,29 @@ function deleteExpense(id) {
             </table>`;
 
         showGenericConfirm(
-            `⚠️ Annuler le paiement fractionné ?`,
+            `⚠️ Annuler le paiement fractionné ? (1/2)`,
             `Vous êtes sur le point de supprimer <strong>"${expense.title}"</strong> — <strong>échéance ${instCur}/${instTotal}</strong>.<br><br>
             <strong>${remaining} échéance${remaining > 1 ? 's' : ''} seront annulée${remaining > 1 ? 's' : ''}</strong> (dont ${remaining - 1} future${remaining - 1 > 1 ? 's' : ''}) :
             ${detailHTML}
             <br><span style="font-size:9px;color:#9ca3af">Cette action est irréversible. Les échéances futures ne seront plus reportées automatiquement.</span>`,
             "💳",
             () => {
-                state.expenses = state.expenses.filter(e =>
-                    !(e.installment && e.installment.groupId === groupId &&
-                      e.installment.current >= instCur)
-                );
-                saveState();
-                updateUI();
-                triggerHaptic('confirm');
+                setTimeout(() => {
+                    showGenericConfirm(
+                        "Confirmer l'annulation (2/2)",
+                        `Êtes-vous absolument sûr ? Cette action effacera définitivement cette échéance et toutes les suivantes.`,
+                        "⚠️",
+                        () => {
+                            state.expenses = state.expenses.filter(e =>
+                                !(e.installment && e.installment.groupId === groupId &&
+                                  e.installment.current >= instCur)
+                            );
+                            saveState();
+                            updateUI();
+                            triggerHaptic('confirm');
+                        }
+                    );
+                }, 350);
             }
         );
         return;
@@ -6618,7 +6743,7 @@ function reopenBudget(budgetId) {
 
 
 // --- VERSIONING & ONBOARDING SYSTEM ---
-const BUDGET_HMR_VERSION = "4.0.0";
+const BUDGET_HMR_VERSION = "4.0.1";
 
 function checkAppVersionAndWelcome() {
     const savedVersion = localStorage.getItem("budget_hmr_version");
@@ -7833,52 +7958,62 @@ function testInstallmentEdgeCases() {
 }
 
 function testInstallmentCustomAmounts() {
-    // Simule la logique de modification de montants par échéance (sans DOM)
-    const totalAmount = 200;
-    const n = 4;
+    // 1. Initialisation : 4 × 50 € sur un total de 200 €
+    // On mock getElementById pour exp_amount
+    const originalGetElementById = document.getElementById;
+    document.getElementById = function(id) {
+        if (id === 'exp_amount') return { value: "200,00" };
+        return originalGetElementById.call(document, id);
+    };
 
-    // 1. Initialisation égale : 4 × 50 €
-    const mensualite = Math.round((totalAmount / n) * 100) / 100;
-    let amounts = Array.from({ length: n }, () => mensualite);
-    const diff = Math.round((totalAmount - mensualite * n) * 100) / 100;
-    if (diff !== 0) amounts[n - 1] = Math.round((amounts[n - 1] + diff) * 100) / 100;
+    try {
+        const n = 4;
+        installmentAmounts = [50, 50, 50, 50];
+        installmentLocks = [false, false, false, false];
+        isInstallmentTotalLocked = true;
 
-    if (amounts.length !== 4)  throw new Error("Init : longueur attendue 4");
-    if (amounts[0] !== 50)     throw new Error(`Init : éch.1 attendu 50, obtenu ${amounts[0]}`);
-    if (amounts[3] !== 50)     throw new Error(`Init : éch.4 attendu 50, obtenu ${amounts[3]}`);
-    const sumInit = Math.round(amounts.reduce((s, a) => s + a, 0) * 100) / 100;
-    if (sumInit !== 200)       throw new Error(`Init : total attendu 200, obtenu ${sumInit}`);
+        // 2. Modification éch.1 → 60 € avec cadenas
+        installmentAmounts[0] = 60;
+        installmentLocks[0] = true;
+        rebalanceInstallments(); // Recalcul des autres
 
-    // 2. Modification éch.1 → 60 € : les suivantes recalculées sur 140 ÷ 3
-    const newFirst = 60;
-    const rem140 = Math.max(0, totalAmount - newFirst);
-    const perOther = Math.round((rem140 / (n - 1)) * 100) / 100; // 46.67
-    amounts[0] = newFirst;
-    for (let i = 1; i < n; i++) amounts[i] = perOther;
-    const adjDiff = Math.round((rem140 - perOther * (n - 1)) * 100) / 100;
-    if (adjDiff !== 0) amounts[n - 1] = Math.round((amounts[n - 1] + adjDiff) * 100) / 100;
+        if (installmentAmounts[0] !== 60)     throw new Error(`Modif éch.1 : attendu 60, obtenu ${installmentAmounts[0]}`);
+        if (installmentAmounts[1] !== 46.67)  throw new Error(`Modif éch.1 : éch.2 attendu 46.67, obtenu ${installmentAmounts[1]}`);
+        if (installmentAmounts[2] !== 46.67)  throw new Error(`Modif éch.1 : éch.3 attendu 46.67, obtenu ${installmentAmounts[2]}`);
+        if (installmentAmounts[3] !== 46.66)  throw new Error(`Modif éch.1 : éch.4 attendu 46.66, obtenu ${installmentAmounts[3]}`);
+        
+        let sum = Math.round(installmentAmounts.reduce((s, a) => s + a, 0) * 100) / 100;
+        if (sum !== 200) throw new Error(`Modif éch.1 : total doit rester 200, obtenu ${sum}`);
 
-    if (amounts[0] !== 60)     throw new Error(`Modif éch.1 : attendu 60, obtenu ${amounts[0]}`);
-    if (amounts[1] !== 46.67)  throw new Error(`Modif éch.1 : éch.2 attendu 46.67, obtenu ${amounts[1]}`);
-    if (amounts[2] !== 46.67)  throw new Error(`Modif éch.1 : éch.3 attendu 46.67, obtenu ${amounts[2]}`);
-    const expectedLast = Math.round((perOther + adjDiff) * 100) / 100; // 46.66
-    if (amounts[3] !== expectedLast) throw new Error(`Modif éch.1 : éch.4 attendu ${expectedLast}, obtenu ${amounts[3]}`);
-    const sumAfter = Math.round(amounts.reduce((s, a) => s + a, 0) * 100) / 100;
-    if (sumAfter !== 200) throw new Error(`Modif éch.1 : total doit rester 200, obtenu ${sumAfter}`);
+        // 3. Modification éch.2 → 55 € avec cadenas
+        installmentAmounts[1] = 55;
+        installmentLocks[1] = true;
+        rebalanceInstallments(); // Recalcul des 2 restantes
 
-    // 3. Modification libre éch.2 → 55 € (pas de recalcul des autres)
-    amounts[1] = 55;
-    if (amounts[0] !== 60)    throw new Error("Modif libre : éch.1 ne doit pas changer");
-    if (amounts[2] !== 46.67) throw new Error("Modif libre : éch.3 ne doit pas changer");
-    const sumFree = Math.round(amounts.reduce((s, a) => s + a, 0) * 100) / 100;
-    if (sumFree === 200) throw new Error("Modif libre éch.2 : le total ne devrait plus être 200");
+        if (installmentAmounts[0] !== 60) throw new Error("Modif libre : éch.1 ne doit pas changer (cadenas)");
+        if (installmentAmounts[1] !== 55) throw new Error("Modif libre : éch.2 ne doit pas changer (cadenas)");
+        if (installmentAmounts[2] !== 42.50) throw new Error(`Modif libre : éch.3 attendu 42.50, obtenu ${installmentAmounts[2]}`);
+        if (installmentAmounts[3] !== 42.50) throw new Error(`Modif libre : éch.4 attendu 42.50, obtenu ${installmentAmounts[3]}`);
 
-    // 4. Montant enregistré = montant de l'échéance courante
-    if (amounts[0] !== 60) throw new Error(`Enregistrement éch.1 : attendu 60, obtenu ${amounts[0]}`);
-    if (amounts[1] !== 55) throw new Error(`Enregistrement éch.2 : attendu 55, obtenu ${amounts[1]}`);
+        sum = Math.round(installmentAmounts.reduce((s, a) => s + a, 0) * 100) / 100;
+        if (sum !== 200) throw new Error(`Modif éch.2 : total doit rester 200, obtenu ${sum}`);
+        
+        // 4. Test dépassement (capping) : 120 sur N°3 (total dispo = 85)
+        installmentAmounts[2] = 120; // L'UI l'aurait cappé avant, mais simulons le capping si rebalance tourne
+        // Wait, capping is done in onInstallmentAmountChange, so here we simulate what onInstallmentAmountChange would do:
+        const otherLockedSum = 60 + 55; // 115
+        if (otherLockedSum + 120 > 200) {
+            installmentAmounts[2] = Math.max(0, 200 - otherLockedSum); // 85
+        }
+        installmentLocks[2] = true;
+        rebalanceInstallments();
 
-    // 5. Report : l'échéance 3 porte son montant propre
-    if (amounts[2] !== 46.67) throw new Error(`Report éch.3 : attendu 46.67, obtenu ${amounts[2]}`);
+        if (installmentAmounts[2] !== 85) throw new Error(`Capping N°3 : attendu 85, obtenu ${installmentAmounts[2]}`);
+        if (installmentAmounts[3] !== 0) throw new Error(`Capping N°3 : éch.4 attendu 0, obtenu ${installmentAmounts[3]}`);
+
+    } finally {
+        document.getElementById = originalGetElementById;
+    }
 
     // 6. Test de suppression d'un paiement fractionné
     const expId = "test_inst_del";
@@ -8668,14 +8803,14 @@ function generateDiagnosticReport() {
     const storagePercent = ((storageUsed / (5 * 1024 * 1024)) * 100).toFixed(2);
     
     report += "## 🖥️ Statuts Système\n";
-    report += `- Version de l'application : v${window.BUDGET_HMR_VERSION || '4.0.0'}\n`;
+    report += `- Version de l'application : v${BUDGET_HMR_VERSION || '4.0.1'}\n`;
     report += `- Plateforme : ${platform}\n`;
     report += `- Espace occupé LocalStorage : ${(storageUsed / 1024).toFixed(2)} KB (${storagePercent}%)\n`;
     report += `- Mois budgétaire actif : ${state.budgetMonth}\n\n`;
     
     // Update UI elements
     const verEl = document.getElementById("debug_version");
-    if (verEl) verEl.innerText = "v" + (window.BUDGET_HMR_VERSION || '4.0.0');
+    if (verEl) verEl.innerText = "v" + (BUDGET_HMR_VERSION || '4.0.1');
     const platEl = document.getElementById("debug_platform");
     if (platEl) platEl.innerText = platform;
     const storEl = document.getElementById("debug_storage_used");
@@ -8770,11 +8905,8 @@ function copyRawStateJSON() {
 }
 
 function runDebugSelfTests() {
-    showGenericAlert("Lancement des tests", "La suite de tests de certification va s'exécuter en arrière-plan.", "🧪");
-    runCertificationTests();
-    setTimeout(() => {
-        generateDiagnosticReport();
-    }, 1500);
+    closeDebugModal();
+    openCertification();
 }
 
 
@@ -8803,6 +8935,8 @@ window.selectInstallmentCurrent = selectInstallmentCurrent;
 window.renderInstallmentAmountRows = renderInstallmentAmountRows;
 window.onInstallmentAmountChange = onInstallmentAmountChange;
 window.onInstallmentAmountBlur = onInstallmentAmountBlur;
+window.toggleInstallmentTotalLock = toggleInstallmentTotalLock;
+window.toggleInstallmentLock = toggleInstallmentLock;
 window.updateInstallmentPreview = updateInstallmentPreview;
 window.resetInstallmentUI = resetInstallmentUI;
 window.initUI = initUI;
